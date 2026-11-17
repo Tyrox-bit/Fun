@@ -2,7 +2,7 @@
 // Times in seconds. Voice should follow the caption timings (see out/untertitel.srt).
 
 export const FPS = 30;
-export const DURATION = 60.0;
+export const DURATION = 63.0;
 export const W = 1080;
 export const H = 1920;
 
@@ -17,8 +17,8 @@ export const SEGMENTS = [
   { id: 'truck',  start: 39.6, end: 43.5, hour: 48, cont: true },
   { id: 'market', start: 43.5, end: 46.1, hour: 72 },
   { id: 'door',   start: 46.1, end: 51.0, hour: 72, cont: true },
-  { id: 'outro',  start: 51.0, end: 58.9, hour: 72, cont: true },
-  { id: 'loop',   start: 58.9, end: 60.0, hour: 0 },
+  { id: 'outro',  start: 51.0, end: 61.9, hour: 72, cont: true },
+  { id: 'loop',   start: 61.9, end: 63.0, hour: 0 },
 ];
 
 // Captions: [start, text, opts]. Words in opts.hl are highlighted (yellow), opts.red -> red.
@@ -99,10 +99,14 @@ export const CAPTIONS = [
   [53.80, 'DU HAST WAHRSCHEINLICH', {}],
   [55.00, 'NICHT MAL WELCHE', {}],
   [55.80, 'FÜR 3.', { red: ['3.'] }],
-  [56.75, 'DENN GENAU SO', {}],
-  [57.55, 'FÄNGT ES AN …', { hl: ['AN', '…'] }],
+  [56.75, 'WIE LANGE WÜRDEST', {}],
+  [57.45, 'DU DURCHHALTEN?', { hl: ['DURCHHALTEN?'] }],
+  [58.30, "SCHREIB'S IN", {}],
+  [58.80, 'DIE KOMMENTARE!', { hl: ['KOMMENTARE!'] }],
+  [59.75, 'DENN GENAU SO', {}],
+  [60.55, 'FÄNGT ES AN …', { hl: ['AN', '…'] }],
 ];
-export const CAPTION_END = 58.85;
+export const CAPTION_END = 61.85;
 
 // Popup word visualisations (emoji cards / big text). type: 'icon' | 'big'
 // x/y are relative (0..1) screen positions; x:'row' places icons in a row.
@@ -191,8 +195,11 @@ export const FX = [
   { t: 52.80, type: 'shake', d: 0.3, a: 0.5 },
   { t: 55.80, type: 'punch', d: 0.35, a: 0.06 },
   { t: 55.80, type: 'flash', d: 0.2, a: 0.35, c: [1, 0.1, 0.1] },
-  { t: 58.35, type: 'glitch', d: 0.55, a: 1.4 },
-  { t: 58.90, type: 'flash', d: 0.2, a: 0.4, c: [1, 1, 1] },
+  { t: 57.45, type: 'punch', d: 0.25, a: 0.035 },
+  { t: 58.80, type: 'punch', d: 0.3, a: 0.05 },
+  { t: 58.80, type: 'shake', d: 0.25, a: 0.35 },
+  { t: 61.35, type: 'glitch', d: 0.55, a: 1.4 },
+  { t: 61.90, type: 'flash', d: 0.2, a: 0.4, c: [1, 1, 1] },
 ];
 
 // Sound effects: name, time, gain (linear), optional dur
@@ -298,10 +305,15 @@ export const SFX = [
   { s: 'impact', t: 52.80, g: 0.95 },
   { s: 'swipe', t: 53.75, g: 0.45 },
   { s: 'impact', t: 55.80, g: 1.0 },
-  { s: 'riser', t: 56.6, g: 0.6, d: 1.75 },
-  { s: 'rewind', t: 58.35, g: 0.7 },
-  { s: 'boom', t: 58.90, g: 0.7 },
+  { s: 'whoosh_soft', t: 56.6, g: 0.55 },
+  { s: 'pop', t: 56.75, g: 0.5 },
+  { s: 'swipe', t: 58.25, g: 0.45 },
+  { s: 'impact', t: 58.80, g: 0.7 },
+  { s: 'tickroll', t: 59.0, g: 0.3 },
+  { s: 'riser', t: 59.6, g: 0.6, d: 1.75 },
+  { s: 'rewind', t: 61.35, g: 0.7 },
+  { s: 'boom', t: 61.90, g: 0.7 },
 ];
 
 // Music bed: tension drone, which stops at the loop point so the loop feels seamless
-export const MUSIC = { start: 0, end: 60.0, gain: 0.15 };
+export const MUSIC = { start: 0, end: 63.0, gain: 0.15 };

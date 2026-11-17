@@ -4,7 +4,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { W, H, SEGMENTS, CAPTIONS, CAPTION_END, POPUPS, FX } from './timeline.js';
+import { W, H, DURATION, SEGMENTS, CAPTIONS, CAPTION_END, POPUPS, FX } from './timeline.js';
 
 // ---------------------------------------------------------------- utils
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -761,7 +761,7 @@ function flashAt(t) {
 function update(t) {
   const seg = segAt(t); const lt = t - seg.start;
   const isLoop = seg.id === 'loop';
-  const tau = isLoop ? t - 60 : t;
+  const tau = isLoop ? t - DURATION : t;
   const cityVis = !['water', 'market', 'door'].includes(seg.id);
   city.visible = cityVis; setX.visible = seg.id === 'water'; setM.visible = seg.id === 'market'; setD.visible = seg.id === 'door';
 
@@ -773,7 +773,7 @@ function update(t) {
   else if (seg.id === 'market' || seg.id === 'door') preset = 'indoor';
   applyPreset(PRESETS[preset]);
   if (seg.id === 'hook') skyMat.uniforms.glowAmt.value = 0.55 * (1 - smooth((t - 0.95) / 1.2));
-  if (seg.id === 'outro' && t > 58.35) skyMat.uniforms.glowAmt.value = 0.55 * hash(Math.floor(t * 20)) * smooth((t - 58.35) / 0.5);
+  if (seg.id === 'outro' && t > 61.35) skyMat.uniforms.glowAmt.value = 0.55 * hash(Math.floor(t * 20)) * smooth((t - 61.35) / 0.5);
 
   // building windows
   const night = preset === 'nightLit' || preset === 'nightDark';
@@ -785,14 +785,14 @@ function update(t) {
       if (t < b.off - 0.18) I = 1;
       else if (t < b.off) I = hash(b.seed + Math.floor(t * 30)) > 0.45 ? 1 : 0.05;
       else I = 0;
-    } else if (seg.id === 'outro' && t > 58.35) {
-      I = hash(b.seed * 3 + Math.floor(t * 24)) < smooth((t - 58.35) / 0.5) ? 1 : 0;
+    } else if (seg.id === 'outro' && t > 61.35) {
+      I = hash(b.seed * 3 + Math.floor(t * 24)) < smooth((t - 61.35) / 0.5) ? 1 : 0;
     } else if (night && b.candle && t > 11) { map = candleTex; I = 0.75 + 0.25 * noise1(t * 6 + b.seed); }
     if (b.mat.emissiveMap !== map) b.mat.emissiveMap = map;
     b.mat.emissiveIntensity = I;
   }
   // street lamps
-  const lampOn = (l) => isLoop || (seg.id === 'hook' && t < l.off) || (seg.id === 'outro' && t > 58.35 && hash(l.x * 0.13 + l.z + Math.floor(t * 24)) < smooth((t - 58.35) / 0.5));
+  const lampOn = (l) => isLoop || (seg.id === 'hook' && t < l.off) || (seg.id === 'outro' && t > 61.35 && hash(l.x * 0.13 + l.z + Math.floor(t * 24)) < smooth((t - 61.35) / 0.5));
   const cOn = new THREE.Color(1, 1, 1), cOff = new THREE.Color(0.02, 0.02, 0.02), cFl = new THREE.Color(0.4, 0.4, 0.4);
   lampPos.forEach((l, i) => {
     let c = lampOn(l) ? cOn : cOff;
@@ -878,7 +878,7 @@ function update(t) {
   // ---- camera
   let cam;
   if (seg.id === 'hook') cam = hookCam(lt);
-  else if (isLoop) cam = hookCam(t - 60);
+  else if (isLoop) cam = hookCam(t - DURATION);
   else if (seg.id === 'outro') cam = outroCam(lt);
   else cam = keyCam(CAMS[seg.id], lt);
   camera.position.set(...cam.p); camera.fov = cam.f; camera.updateProjectionMatrix();
@@ -898,7 +898,7 @@ function update(t) {
   const g = fxAmount(t, 'glitch'); u.uGlitch.value = g; u.uRGB.value = 0.0006 + g * 0.012 + w.blur * 0.05;
   u.uPunch.value = fxAmount(t, 'punch');
   let bright = 1, sat = 1, vig = 1.05;
-  if (seg.id === 'outro') { bright = lerp(1, 0.55, smooth((t - 51) / 1.5)); sat = 0.55; if (t > 58.35) { bright = 1; sat = 1; } }
+  if (seg.id === 'outro') { bright = lerp(1, 0.55, smooth((t - 51) / 1.5)); sat = 0.55; if (t > 61.35) { bright = 1; sat = 1; } }
   if (seg.id === 'door') { vig = 1.35; bright = 1.0; }
   if (seg.id === 'gas') sat = 0.78;
   if (['minute', 'truck', 'hosp'].includes(seg.id)) bright = 1.4;
@@ -1093,11 +1093,11 @@ function drawPopups(g, t) {
   }
 }
 function drawCTA(g, t) {
-  if (t < 56.75 || t > 58.85) return;
-  const lt = t - 56.75; const sc = popScale(lt);
+  if (t < 58.3 || t > 61.85) return;
+  const lt = t - 58.3; const sc = popScale(lt);
   g.save(); g.translate(540, 1460); g.scale(sc, sc);
   g.font = '900 54px Montserrat'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  const txt = 'WIE LANGE HÄLTST DU DURCH?'; const tw = g.measureText(txt).width;
+  const txt = 'SCHREIB\'S IN DIE KOMMENTARE'; const tw = g.measureText(txt).width;
   g.fillStyle = '#ffd400'; rr(g, -tw / 2 - 36, -50, tw + 72, 100, 50); g.fill();
   g.fillStyle = '#111'; g.fillText(txt, 0, 4);
   g.font = '64px "Noto Color Emoji"'; g.fillText('👇', 0, 110 + Math.sin(t * 8) * 10);
@@ -1129,6 +1129,6 @@ window.ready = (async () => {
   await document.fonts.load('900 90px Montserrat'); await document.fonts.load('800 50px Montserrat'); await document.fonts.load('400 90px Anton');
   await document.fonts.load('100px "Noto Color Emoji"', '🚦');
   // warm up shader compile for every set
-  for (const tt of [0.5, 5, 12, 22, 30, 37, 41, 44, 47, 53, 59.5]) { update(tt); composer.render(); }
+  for (const tt of [0.5, 5, 12, 22, 30, 37, 41, 44, 47, 53, 62.5]) { update(tt); composer.render(); }
   return true;
 })();

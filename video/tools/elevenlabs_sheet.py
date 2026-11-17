@@ -20,6 +20,7 @@ LINES = [
     ('[quietly]', 'Stunde 72:'), ('', 'Supermärkte leer.'), ('', 'Kühlschränke warm.'), ('[whispers]', 'Jemand klopft an deine Tür.'),
     ('[whispers]', 'Und jetzt die Frage, die keiner hören will:'),
     ('[serious]', 'Der Staat empfiehlt Vorräte für 10 Tage.'), ('[skeptical]', 'Du hast wahrscheinlich nicht mal welche für 3.'),
+    ('[curious]', 'Wie lange würdest du durchhalten?'), ('[excited]', "Schreib's in die Kommentare!"),
     ('[whispers]', 'Denn genau so fängt es an …'),
 ]
 
@@ -28,7 +29,7 @@ groups, cur = [], None
 for t, txt, _ in caps:
     if cur is None: cur = {'t': t, 'txt': []}
     cur['txt'].append(txt)
-    if re.search(r'[.:…]$', txt.strip()): groups.append(cur); cur = None
+    if re.search(r'[.:…?!]$', txt.strip()): groups.append(cur); cur = None
 assert cur is None and len(groups) == len(LINES), (len(groups), len(LINES))
 norm = lambda s: re.sub(r'\s+', ' ', s.upper()).strip()
 for g, (_, text) in zip(groups, LINES):
@@ -94,7 +95,7 @@ button.done {{ background:#1f9d55; color:#fff; }}
 </style></head>
 <body><main>
 <h1>ElevenLabs Voiceover</h1>
-<p class="sub">72 Stunden ohne Strom · 35 Sätze · jedes Wort identisch mit den Untertiteln im Video</p>
+<p class="sub">72 Stunden ohne Strom · {len(rows)} Sätze · jedes Wort identisch mit den Untertiteln im Video</p>
 
 <section class="box">
 <h2>So geht's</h2>
@@ -130,4 +131,10 @@ document.querySelectorAll('button.cp').forEach((b) => b.addEventListener('click'
 </script>
 </body></html>'''
 open('out/ElevenLabs_Voiceover.html', 'w', encoding='utf-8').write(page)
-print('wrote out/ElevenLabs_Voiceover.html + .txt')
+komp = []
+for s_, e_, t_, x_ in rows:
+    komp.append(f'[{fmt(s_)} – {fmt(e_)}] {line(t_, x_)}')
+    if x_.startswith('Und jetzt die Frage'):
+        komp.append(f'[{fmt(e_)} – {fmt(groups[[g["t"] for g in groups].index(s_) + 1]["t"])}] (Pause – nichts sprechen)')
+open('out/ElevenLabs_Komplett.txt', 'w', encoding='utf-8').write('\n'.join(komp) + '\n')
+print('wrote out/ElevenLabs_Voiceover.html + .txt + Komplett.txt')
