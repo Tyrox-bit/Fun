@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ElevenLabs Voiceover</title>
+<style>
+:root { --bg:#f6f6f4; --card:#ffffff; --ink:#16171a; --mute:#6b6e75; --line:#e3e3df; --accent:#d81b22; --tag:#7a4dff; --tagbg:#efe9ff; --hour:#fff4f4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1012; --card:#18191c; --ink:#f1f1f2; --mute:#9a9da4; --line:#2a2c31; --accent:#ff4a4f; --tag:#b9a2ff; --tagbg:#2a2342; --hour:#221517; } }
+:root[data-theme="dark"] { --bg:#0f1012; --card:#18191c; --ink:#f1f1f2; --mute:#9a9da4; --line:#2a2c31; --accent:#ff4a4f; --tag:#b9a2ff; --tagbg:#2a2342; --hour:#221517; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+h1 { font-size:26px; margin:0 0 4px; letter-spacing:-.01em; }
+.sub { color:var(--mute); margin:0 0 20px; }
+.box { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:18px; }
+.box h2 { font-size:15px; text-transform:uppercase; letter-spacing:.06em; color:var(--mute); margin:0 0 10px; }
+.box ol { margin:0; padding-left:20px; } .box li { margin:4px 0; }
+pre { white-space:pre-wrap; word-break:break-word; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px; margin:0 0 10px; font:14px/1.5 ui-monospace,Menlo,Consolas,monospace; max-height:260px; overflow:auto; user-select:all; -webkit-user-select:all; }
+ul.rows { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.row { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:grid; grid-template-columns:1fr auto; gap:6px 12px; align-items:center; }
+.row.hour { background:var(--hour); border-color:color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.meta { grid-column:1 / -1; display:flex; gap:10px; align-items:baseline; font-size:13px; color:var(--mute); font-variant-numeric:tabular-nums; }
+.num { font-weight:700; color:var(--accent); } .time { font-weight:600; color:var(--ink); }
+.txt { font-size:17px; user-select:all; -webkit-user-select:all; }
+.tag { color:var(--tag); background:var(--tagbg); border-radius:6px; padding:1px 6px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:14px; }
+button { font:600 14px system-ui,sans-serif; border:0; border-radius:10px; padding:9px 14px; background:var(--ink); color:var(--bg); cursor:pointer; white-space:nowrap; }
+button.done { background:#1f9d55; color:#fff; }
+.tip { color:var(--mute); font-size:14px; margin-top:18px; }
+</style></head>
+<body><main>
+<h1>ElevenLabs Voiceover</h1>
+<p class="sub">72 Stunden ohne Strom · 35 Sätze · jedes Wort identisch mit den Untertiteln im Video</p>
+
+<section class="box">
+<h2>So geht's</h2>
+<ol>
+<li>In ElevenLabs das Modell <b>Eleven v3</b> wählen. Nur dort funktionieren die <span class="tag">[Tags]</span>.</li>
+<li>Stabilität auf <b>Creative</b> oder <b>Natural</b> stellen, dann setzt die Stimme die Tags stärker um.</li>
+<li>Entweder alles auf einmal generieren (Block unten) oder jeden Satz einzeln und ihn an seine Startzeit legen.</li>
+<li>„max. X s“ ist die Zeit bis zum nächsten Satz. Ist ein Satz länger, die Geschwindigkeit etwas erhöhen.</li>
+</ol>
+</section>
+
+<section class="box">
+<h2>Alles auf einmal</h2>
+<pre id="all">[serious] Ganz Deutschland.
+[dramatic] Kein Strom.
+72 Stunden.
+[chuckles] Die erste Stunde ist noch lustig.
+[excited] Minute 1:
+Ampeln aus.
+Aufzüge stecken fest.
+[amused] Alle zücken die Handylampe.
+[laughs] Fühlt sich noch an wie ein Abenteuer.
+[serious] Stunde 3:
+Viele Funkmasten laufen nur noch auf Akku.
+[dramatic] Dann ist Schluss.
+Kein Netz, kein WhatsApp, kein Notruf.
+[sarcastic] Dein Handy ist jetzt eine Taschenlampe.
+[serious] Stunde 12:
+Tankstellen geben kein Benzin mehr raus, denn die Pumpen brauchen Strom.
+[annoyed] Karte geht nicht, Geldautomat auch nicht.
+Kein Bargeld heißt:
+[serious] Du kaufst nichts mehr.
+[tense] Stunde 24:
+In Hochhäusern kommt oben kein Wasser mehr an.
+[sighs] Keine Dusche.
+[nervous laugh] Und die Toilette spült genau noch ein Mal.
+[serious] Stunde 48:
+Krankenhäuser laufen auf Notstrom.
+[ominous] Mit Diesel.
+Den muss jemand liefern, über Straßen ohne Ampeln und mit LKWs, die nicht tanken können.
+[quietly] Stunde 72:
+Supermärkte leer.
+Kühlschränke warm.
+[whispers] Jemand klopft an deine Tür.
+[whispers] Und jetzt die Frage, die keiner hören will:
+[serious] Der Staat empfiehlt Vorräte für 10 Tage.
+[skeptical] Du hast wahrscheinlich nicht mal welche für 3.
+[whispers] Denn genau so fängt es an …</pre>
+<button class="cp" type="button" data-target="all">Alles kopieren</button>
+</section>
+
+<ul class="rows">
+<li class="row">
+  <div class="meta"><span class="num">01</span><span class="time">0:00,00 – 0:00,95</span><span class="dur">max. 0,9 s</span></div>
+  <div class="txt" data-copy="[serious] Ganz Deutschland."><span class="tag">[serious]</span> Ganz Deutschland.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">02</span><span class="time">0:00,95 – 0:01,80</span><span class="dur">max. 0,9 s</span></div>
+  <div class="txt" data-copy="[dramatic] Kein Strom."><span class="tag">[dramatic]</span> Kein Strom.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">03</span><span class="time">0:01,80 – 0:02,75</span><span class="dur">max. 0,9 s</span></div>
+  <div class="txt" data-copy="72 Stunden.">72 Stunden.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">04</span><span class="time">0:02,75 – 0:04,60</span><span class="dur">max. 1,8 s</span></div>
+  <div class="txt" data-copy="[chuckles] Die erste Stunde ist noch lustig."><span class="tag">[chuckles]</span> Die erste Stunde ist noch lustig.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row hour">
+  <div class="meta"><span class="num">05</span><span class="time">0:04,60 – 0:05,25</span><span class="dur">max. 0,7 s</span></div>
+  <div class="txt" data-copy="[excited] Minute 1:"><span class="tag">[excited]</span> Minute 1:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">06</span><span class="time">0:05,25 – 0:06,05</span><span class="dur">max. 0,8 s</span></div>
+  <div class="txt" data-copy="Ampeln aus.">Ampeln aus.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">07</span><span class="time">0:06,05 – 0:07,30</span><span class="dur">max. 1,2 s</span></div>
+  <div class="txt" data-copy="Aufzüge stecken fest.">Aufzüge stecken fest.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">08</span><span class="time">0:07,30 – 0:08,90</span><span class="dur">max. 1,6 s</span></div>
+  <div class="txt" data-copy="[amused] Alle zücken die Handylampe."><span class="tag">[amused]</span> Alle zücken die Handylampe.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">09</span><span class="time">0:08,90 – 0:11,00</span><span class="dur">max. 2,1 s</span></div>
+  <div class="txt" data-copy="[laughs] Fühlt sich noch an wie ein Abenteuer."><span class="tag">[laughs]</span> Fühlt sich noch an wie ein Abenteuer.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row hour">
+  <div class="meta"><span class="num">10</span><span class="time">0:11,00 – 0:11,60</span><span class="dur">max. 0,6 s</span></div>
+  <div class="txt" data-copy="[serious] Stunde 3:"><span class="tag">[serious]</span> Stunde 3:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">11</span><span class="time">0:11,60 – 0:13,80</span><span class="dur">max. 2,2 s</span></div>
+  <div class="txt" data-copy="Viele Funkmasten laufen nur noch auf Akku.">Viele Funkmasten laufen nur noch auf Akku.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">12</span><span class="time">0:13,80 – 0:14,75</span><span class="dur">max. 0,9 s</span></div>
+  <div class="txt" data-copy="[dramatic] Dann ist Schluss."><span class="tag">[dramatic]</span> Dann ist Schluss.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">13</span><span class="time">0:14,75 – 0:16,85</span><span class="dur">max. 2,1 s</span></div>
+  <div class="txt" data-copy="Kein Netz, kein WhatsApp, kein Notruf.">Kein Netz, kein WhatsApp, kein Notruf.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">14</span><span class="time">0:16,85 – 0:19,50</span><span class="dur">max. 2,6 s</span></div>
+  <div class="txt" data-copy="[sarcastic] Dein Handy ist jetzt eine Taschenlampe."><span class="tag">[sarcastic]</span> Dein Handy ist jetzt eine Taschenlampe.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row hour">
+  <div class="meta"><span class="num">15</span><span class="time">0:19,50 – 0:20,15</span><span class="dur">max. 0,6 s</span></div>
+  <div class="txt" data-copy="[serious] Stunde 12:"><span class="tag">[serious]</span> Stunde 12:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">16</span><span class="time">0:20,15 – 0:23,55</span><span class="dur">max. 3,4 s</span></div>
+  <div class="txt" data-copy="Tankstellen geben kein Benzin mehr raus, denn die Pumpen brauchen Strom.">Tankstellen geben kein Benzin mehr raus, denn die Pumpen brauchen Strom.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">17</span><span class="time">0:23,55 – 0:25,75</span><span class="dur">max. 2,2 s</span></div>
+  <div class="txt" data-copy="[annoyed] Karte geht nicht, Geldautomat auch nicht."><span class="tag">[annoyed]</span> Karte geht nicht, Geldautomat auch nicht.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">18</span><span class="time">0:25,75 – 0:26,85</span><span class="dur">max. 1,1 s</span></div>
+  <div class="txt" data-copy="Kein Bargeld heißt:">Kein Bargeld heißt:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">19</span><span class="time">0:26,85 – 0:28,50</span><span class="dur">max. 1,6 s</span></div>
+  <div class="txt" data-copy="[serious] Du kaufst nichts mehr."><span class="tag">[serious]</span> Du kaufst nichts mehr.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row hour">
+  <div class="meta"><span class="num">20</span><span class="time">0:28,50 – 0:29,15</span><span class="dur">max. 0,6 s</span></div>
+  <div class="txt" data-copy="[tense] Stunde 24:"><span class="tag">[tense]</span> Stunde 24:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">21</span><span class="time">0:29,15 – 0:31,55</span><span class="dur">max. 2,4 s</span></div>
+  <div class="txt" data-copy="In Hochhäusern kommt oben kein Wasser mehr an.">In Hochhäusern kommt oben kein Wasser mehr an.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">22</span><span class="time">0:31,55 – 0:32,45</span><span class="dur">max. 0,9 s</span></div>
+  <div class="txt" data-copy="[sighs] Keine Dusche."><span class="tag">[sighs]</span> Keine Dusche.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">23</span><span class="time">0:32,45 – 0:35,50</span><span class="dur">max. 3,0 s</span></div>
+  <div class="txt" data-copy="[nervous laugh] Und die Toilette spült genau noch ein Mal."><span class="tag">[nervous laugh]</span> Und die Toilette spült genau noch ein Mal.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row hour">
+  <div class="meta"><span class="num">24</span><span class="time">0:35,50 – 0:36,15</span><span class="dur">max. 0,6 s</span></div>
+  <div class="txt" data-copy="[serious] Stunde 48:"><span class="tag">[serious]</span> Stunde 48:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">25</span><span class="time">0:36,15 – 0:37,85</span><span class="dur">max. 1,7 s</span></div>
+  <div class="txt" data-copy="Krankenhäuser laufen auf Notstrom.">Krankenhäuser laufen auf Notstrom.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">26</span><span class="time">0:37,85 – 0:38,60</span><span class="dur">max. 0,8 s</span></div>
+  <div class="txt" data-copy="[ominous] Mit Diesel."><span class="tag">[ominous]</span> Mit Diesel.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">27</span><span class="time">0:38,60 – 0:43,50</span><span class="dur">max. 4,9 s</span></div>
+  <div class="txt" data-copy="Den muss jemand liefern, über Straßen ohne Ampeln und mit LKWs, die nicht tanken können.">Den muss jemand liefern, über Straßen ohne Ampeln und mit LKWs, die nicht tanken können.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row hour">
+  <div class="meta"><span class="num">28</span><span class="time">0:43,50 – 0:44,15</span><span class="dur">max. 0,6 s</span></div>
+  <div class="txt" data-copy="[quietly] Stunde 72:"><span class="tag">[quietly]</span> Stunde 72:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">29</span><span class="time">0:44,15 – 0:45,15</span><span class="dur">max. 1,0 s</span></div>
+  <div class="txt" data-copy="Supermärkte leer.">Supermärkte leer.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">30</span><span class="time">0:45,15 – 0:46,15</span><span class="dur">max. 1,0 s</span></div>
+  <div class="txt" data-copy="Kühlschränke warm.">Kühlschränke warm.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">31</span><span class="time">0:46,15 – 0:47,85</span><span class="dur">max. 1,7 s</span></div>
+  <div class="txt" data-copy="[whispers] Jemand klopft an deine Tür."><span class="tag">[whispers]</span> Jemand klopft an deine Tür.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">32</span><span class="time">0:47,85 – 0:49,40</span><span class="dur">max. 1,5 s</span></div>
+  <div class="txt" data-copy="[whispers] Und jetzt die Frage, die keiner hören will:"><span class="tag">[whispers]</span> Und jetzt die Frage, die keiner hören will:</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">33</span><span class="time">0:51,00 – 0:53,80</span><span class="dur">max. 2,8 s</span></div>
+  <div class="txt" data-copy="[serious] Der Staat empfiehlt Vorräte für 10 Tage."><span class="tag">[serious]</span> Der Staat empfiehlt Vorräte für 10 Tage.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">34</span><span class="time">0:53,80 – 0:56,75</span><span class="dur">max. 3,0 s</span></div>
+  <div class="txt" data-copy="[skeptical] Du hast wahrscheinlich nicht mal welche für 3."><span class="tag">[skeptical]</span> Du hast wahrscheinlich nicht mal welche für 3.</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+<li class="row">
+  <div class="meta"><span class="num">35</span><span class="time">0:56,75 – 0:58,85</span><span class="dur">max. 2,1 s</span></div>
+  <div class="txt" data-copy="[whispers] Denn genau so fängt es an …"><span class="tag">[whispers]</span> Denn genau so fängt es an …</div>
+  <button class="cp" type="button">Kopieren</button>
+</li>
+</ul>
+<p class="tip">Die Tags sind auf Englisch, weil ElevenLabs sie so am zuverlässigsten erkennt. Gesprochen wird trotzdem nur der deutsche Text. Klingt ein Tag komisch, einfach neu generieren oder den Tag löschen.</p>
+</main>
+<script>
+function copyText(t, btn) {
+  const ok = () => { const o = btn.textContent; btn.textContent = 'Kopiert ✓'; btn.classList.add('done'); setTimeout(() => { btn.textContent = o; btn.classList.remove('done'); }, 1400); };
+  const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); };
+  try { navigator.clipboard.writeText(t).then(ok, fallback); } catch (e) { fallback(); }
+}
+document.querySelectorAll('button.cp').forEach((b) => b.addEventListener('click', () => {
+  const t = b.dataset.target ? document.getElementById(b.dataset.target).textContent : b.parentElement.querySelector('.txt').dataset.copy;
+  copyText(t, b);
+}));
+</script>
+</body></html>
