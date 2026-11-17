@@ -1,0 +1,9 @@
+node_modules/
+out/preview_*.png
+out/sheet*.png
+out/*.log
+out/spec.png
+out/wave.png
+out/aud.png
+out/video_noaudio.mp4
+out/timeline.json
