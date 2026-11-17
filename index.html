@@ -1,1 +1,383 @@
-Hallo Welt
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kometensprung</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Unbounded:wght@700;900&display=swap">
+<style>
+/* Layout: ein Bildschirm, Canvas randlos, HUD und Overlays darüber im sicheren Bereich. Bewusst nur ein (dunkles) Thema. */
+:root {
+  color-scheme: dark;
+  --space: #0a0e2a;
+  --space-2: #1b1040;
+  --ink: #eef1ff;
+  --ink-dim: #9aa3d6;
+  --comet: #ffd166;
+  --ring: #5ee7ff;
+  --void: #ff3d9a;
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --text: "Chakra Petch", "Trebuchet MS", system-ui, sans-serif;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--space);
+  color: var(--ink);
+  font-family: var(--text);
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.ui {
+  position: fixed; inset: 0;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 12px) calc(env(safe-area-inset-bottom, 0px) + 20px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column;
+  pointer-events: none;
+}
+.hud { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.score { font-family: var(--display); font-weight: 900; font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 2px 18px rgba(94, 231, 255, .45); }
+.best { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); margin-top: 4px; }
+.mute {
+  pointer-events: auto; cursor: pointer;
+  font: 700 .8rem var(--text); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink); background: rgba(238, 241, 255, .08);
+  border: 1px solid rgba(238, 241, 255, .25); border-radius: 999px;
+  padding: 10px 14px; min-height: 40px;
+}
+.hint { margin-top: auto; text-align: center; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); text-shadow: 0 0 12px var(--space); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
+.overlay {
+  position: fixed; inset: 0; pointer-events: auto;
+  padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(10, 14, 42, .35), rgba(10, 14, 42, .88));
+}
+.overlay h1 { font-family: var(--display); font-weight: 900; font-size: clamp(1.9rem, 9vw, 3.4rem); line-height: 1.02; margin: 0; text-wrap: balance; letter-spacing: -.02em; }
+.overlay h1 span { color: var(--comet); }
+.overlay p { margin: 0; max-width: 30ch; font-size: 1.05rem; line-height: 1.45; color: var(--ink-dim); }
+.overlay p b { color: var(--ink); }
+.result { font-family: var(--display); font-weight: 900; font-size: 4.2rem; line-height: 1; color: var(--comet); font-variant-numeric: tabular-nums; }
+.go {
+  cursor: pointer; font: 700 1.1rem var(--text); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--space); background: var(--comet); border: 0; border-radius: 999px;
+  padding: 16px 34px; margin-top: 6px; box-shadow: 0 0 34px rgba(255, 209, 102, .45);
+}
+.go:focus-visible, .mute:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .hint { animation: none; } }
+</style>
+
+<canvas id="c" aria-label="Spielfeld"></canvas>
+
+<div class="ui">
+  <div class="hud">
+    <div>
+      <div class="score" id="score">0</div>
+      <div class="best" id="best">Rekord 0</div>
+    </div>
+    <button class="mute" id="mute" type="button">Ton an</button>
+  </div>
+  <div class="hint" id="hint" hidden>Tippen = abspringen</div>
+</div>
+
+<div class="overlay" id="startScreen">
+  <h1>Kometen<span>sprung</span></h1>
+  <p>Dein Komet kreist um einen Planeten. <b>Tippe, um abzuspringen</b>, und lass dich vom nächsten einfangen. Die Leere steigt.</p>
+  <p>Schnell weiterspringen gibt <b>Blitz-Bonus</b>. Sterne zählen doppelt.</p>
+  <button class="go" id="startBtn" type="button">Los</button>
+</div>
+
+<div class="overlay" id="overScreen" hidden>
+  <p id="overLine">Verschluckt von der Leere</p>
+  <div class="result" id="overScore">0</div>
+  <p id="overBest">Rekord 0</p>
+  <button class="go" id="againBtn" type="button">Nochmal</button>
+</div>
+
+<script>
+(function () {
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const FW = 400, SPEED = 470, GRAV = 260, TAU = Math.PI * 2;
+  const HUES = [190, 42, 330, 150, 265, 15];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let w = 0, h = 0, dpr = 1, s = 1, offX = 0, H = 640;
+  let state = 'start', t = 0, last = 0, deadAt = 0;
+  let planets, stars, parts, texts, trail, pl, camY, voidY, score, maxIdx, combo, moved, shake, nextIdx;
+  let best = 0, muted = false, ac = null;
+  try { best = +localStorage.getItem('ks-best') || 0; muted = localStorage.getItem('ks-mute') === '1'; } catch (e) {}
+
+  const bg = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), z: .15 + Math.random() * .6, r: .5 + Math.random() * 1.3 }));
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    w = r.width || innerWidth; h = r.height || innerHeight;
+    dpr = Math.min(2, devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    s = Math.min(w / FW, h / 640); offX = (w - FW * s) / 2; H = h / s;
+  }
+
+  function beep(f1, f2, dur, type, vol) {
+    if (muted || !ac) return;
+    try {
+      const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f1, n); o.frequency.exponentialRampToValueAtTime(f2, n + dur);
+      g.gain.setValueAtTime(vol || .12, n); g.gain.exponentialRampToValueAtTime(.001, n + dur);
+      o.connect(g); g.connect(ac.destination); o.start(n); o.stop(n + dur);
+    } catch (e) {}
+  }
+  function wakeAudio() {
+    try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {}
+  }
+
+  function addPlanet() {
+    const i = nextIdx++, prev = planets[planets.length - 1];
+    const d = Math.min(1, i / 40);
+    const p = { idx: i, r: 34 - d * 12 + rnd(0, 6), hue: HUES[i % HUES.length], w: 2.4 + d * 1.8 + rnd(0, .4), amp: 0, sp: 0, ph: rnd(0, TAU), seen: false, pop: 0 };
+    if (!prev) { p.bx = FW / 2; p.y = 0; p.r = 36; }
+    else {
+      p.y = prev.y - (170 + rnd(0, 60) + d * 50);
+      if (i > 8 && Math.random() < .3 + d * .3) { p.amp = rnd(28, 62); p.sp = rnd(.7, 1.5); }
+      p.bx = clamp(prev.bx + rnd(-190, 190), 62 + p.amp, FW - 62 - p.amp);
+      if (Math.random() < .55) stars.push({ x: clamp((prev.bx + p.bx) / 2 + rnd(-50, 50), 30, FW - 30), y: (prev.y + p.y) / 2 + rnd(-25, 25), got: false });
+    }
+    p.x = p.bx;
+    planets.push(p);
+  }
+
+  function reset() {
+    planets = []; stars = []; parts = []; texts = []; trail = [];
+    nextIdx = 0; score = 0; maxIdx = 0; combo = 0; moved = false; shake = 0;
+    for (let i = 0; i < 8; i++) addPlanet();
+    const p0 = planets[0]; p0.seen = true;
+    pl = { mode: 'orbit', p: p0, ang: -Math.PI / 2, dir: 1, orad: p0.r + 24, x: 0, y: 0, vx: 0, vy: 0, tOrb: 0, tFly: 0, lastP: null };
+    camY = p0.y - .62 * H; voidY = p0.y + .38 * H + 120;
+    place(); hud();
+  }
+
+  function place() { pl.x = pl.p.x + Math.cos(pl.ang) * pl.orad; pl.y = pl.p.y + Math.sin(pl.ang) * pl.orad; }
+  function hud() { $('score').textContent = score; $('best').textContent = 'Rekord ' + Math.max(best, score); }
+  function burst(x, y, hue, n, sp) {
+    for (let i = 0; i < n; i++) { const a = rnd(0, TAU), v = rnd(.3, 1) * sp; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(.35, .8), max: .8, hue }); }
+  }
+  function say(x, y, txt, col) { texts.push({ x, y, txt, col, life: 1 }); }
+
+  function release() {
+    if (pl.mode !== 'orbit') return;
+    pl.vx = -Math.sin(pl.ang) * pl.dir * SPEED; pl.vy = Math.cos(pl.ang) * pl.dir * SPEED;
+    pl.quick = pl.tOrb < 1.1 && moved;
+    pl.lastP = pl.p; pl.mode = 'fly'; pl.tFly = 0; moved = true;
+    $('hint').hidden = true;
+    beep(420, 760, .12, 'triangle', .1);
+  }
+
+  function capture(p) {
+    const rx = pl.x - p.x, ry = pl.y - p.y;
+    pl.dir = (rx * pl.vy - ry * pl.vx) >= 0 ? 1 : -1;
+    pl.ang = Math.atan2(ry, rx); pl.orad = Math.hypot(rx, ry);
+    pl.mode = 'orbit'; pl.p = p; pl.tOrb = 0; p.pop = 1;
+    if (p.idx > maxIdx) {
+      const gain = p.idx - maxIdx; maxIdx = p.idx; p.seen = true;
+      combo = pl.quick ? combo + 1 : 0;
+      score += gain + combo;
+      say(p.x, p.y - p.r - 34, '+' + (gain + combo), '#eef1ff');
+      if (combo > 0) say(p.x, p.y - p.r - 58, 'Blitz ×' + combo, '#ffd166');
+      else if (gain > 1) say(p.x, p.y - p.r - 58, 'Überflieger', '#5ee7ff');
+      burst(pl.x, pl.y, p.hue, 14 + combo * 3, 190);
+      beep(440 * Math.pow(2, Math.min(combo, 12) / 12), 660 * Math.pow(2, Math.min(combo, 12) / 12), .16, 'sine', .14);
+      try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
+    } else { combo = 0; beep(300, 260, .1, 'sine', .08); }
+    hud();
+  }
+
+  function die(line) {
+    state = 'dead'; deadAt = performance.now(); shake = reduced ? 0 : .5;
+    burst(pl.x, pl.y, 42, 40, 320);
+    beep(320, 50, .5, 'sawtooth', .12);
+    try { navigator.vibrate && navigator.vibrate([30, 40, 60]); } catch (e) {}
+    const rec = score > best;
+    if (rec) { best = score; try { localStorage.setItem('ks-best', best); } catch (e) {} }
+    $('overLine').textContent = line;
+    $('overScore').textContent = score;
+    $('overBest').textContent = rec && score > 0 ? 'Neuer Rekord!' : 'Rekord ' + best;
+    hud();
+    setTimeout(() => { if (state === 'dead') { $('overScreen').hidden = false; } }, 650);
+  }
+
+  function update(dt) {
+    t += dt;
+    for (const p of planets) { if (p.amp) p.x = p.bx + Math.sin(t * p.sp + p.ph) * p.amp; p.pop = Math.max(0, p.pop - dt * 3); }
+    if (state === 'play') {
+      if (pl.mode === 'orbit') {
+        pl.tOrb += dt; pl.ang += pl.dir * pl.p.w * dt;
+        pl.orad += (pl.p.r + 24 - pl.orad) * Math.min(1, dt * 10);
+        place();
+      } else {
+        pl.tFly += dt; pl.vy += GRAV * dt; pl.x += pl.vx * dt; pl.y += pl.vy * dt;
+        if (pl.x < 8 && pl.vx < 0) { pl.x = 8; pl.vx *= -1; beep(200, 240, .06, 'square', .05); burst(pl.x, pl.y, 190, 5, 90); }
+        if (pl.x > FW - 8 && pl.vx > 0) { pl.x = FW - 8; pl.vx *= -1; beep(200, 240, .06, 'square', .05); burst(pl.x, pl.y, 190, 5, 90); }
+        for (const st of stars) if (!st.got && Math.hypot(st.x - pl.x, st.y - pl.y) < 24) {
+          st.got = true; score += 2; say(st.x, st.y - 16, '+2', '#ffd166'); burst(st.x, st.y, 48, 10, 150); beep(1100, 1700, .12, 'sine', .1); hud();
+        }
+        for (const p of planets) {
+          if (p === pl.lastP && pl.tFly < .35) continue;
+          if (Math.hypot(p.x - pl.x, p.y - pl.y) < p.r + 30) { capture(p); break; }
+        }
+        if (pl.mode === 'fly' && pl.y > camY + H + 40) die('Ins Nichts gefallen');
+      }
+      if (moved && state === 'play') {
+        voidY -= Math.min(80, 22 + maxIdx * 1.6) * dt;
+        if (pl.y > voidY - 6) die('Verschluckt von der Leere');
+      }
+      trail.push({ x: pl.x, y: pl.y }); if (trail.length > 16) trail.shift();
+      while (planets[planets.length - 1].y > pl.y - 1400) addPlanet();
+      while (planets.length && planets[0].y > voidY + 300 && planets[0] !== pl.p) planets.shift();
+      if (stars.length > 40) stars.splice(0, 10);
+    }
+    const focus = planets.find(p => p.idx === maxIdx) || pl.p;
+    voidY = Math.min(voidY, focus.y + .38 * H + 120);
+    let target = (pl.mode === 'orbit' ? pl.p.y : focus.y) - .62 * H;
+    if (pl.mode === 'fly') target = Math.min(target, pl.y - .3 * H);
+    camY += (target - camY) * Math.min(1, dt * 5);
+    for (const q of parts) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= .97; q.vy *= .97; }
+    parts = parts.filter(q => q.life > 0);
+    for (const q of texts) { q.life -= dt * .9; q.y -= 34 * dt; }
+    texts = texts.filter(q => q.life > 0);
+    shake = Math.max(0, shake - dt);
+  }
+
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#1b1040'); g.addColorStop(1, '#0a0e2a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    for (const b of bg) {
+      const y = (((b.y * h - camY * s * b.z * .35) % h) + h) % h;
+      ctx.globalAlpha = .25 + b.z * .7; ctx.fillStyle = '#cfd6ff';
+      ctx.beginPath(); ctx.arc(b.x * w, y, b.r, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const sx = shake ? rnd(-1, 1) * shake * 14 : 0, sy = shake ? rnd(-1, 1) * shake * 14 : 0;
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (offX + sx), dpr * (-camY * s + sy));
+
+    if (offX > 1) {
+      ctx.strokeStyle = 'rgba(94,231,255,.18)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, camY - 20); ctx.lineTo(0, camY + H + 20); ctx.moveTo(FW, camY - 20); ctx.lineTo(FW, camY + H + 20); ctx.stroke();
+    }
+
+    for (const st of stars) if (!st.got) {
+      const k = 1 + Math.sin(t * 5 + st.x) * .15;
+      ctx.save(); ctx.translate(st.x, st.y); ctx.rotate(t * 1.2); ctx.scale(k, k);
+      ctx.fillStyle = '#ffd166'; ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 14;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 ? 4 : 10; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+
+    for (const p of planets) {
+      if (p.y < camY - 80 || p.y > camY + H + 80) continue;
+      const cur = pl.mode === 'orbit' && pl.p === p, rr = p.r * (1 + p.pop * .18);
+      ctx.setLineDash([5, 7]); ctx.lineWidth = 1.5;
+      ctx.strokeStyle = cur ? 'rgba(94,231,255,.75)' : 'rgba(238,241,255,.2)';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 24, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      const pg = ctx.createRadialGradient(p.x - rr * .35, p.y - rr * .4, rr * .1, p.x, p.y, rr);
+      const L = p.seen && !cur ? 38 : 62;
+      pg.addColorStop(0, `hsl(${p.hue},90%,${L + 18}%)`); pg.addColorStop(1, `hsl(${p.hue},70%,${L - 22}%)`);
+      ctx.fillStyle = pg; ctx.shadowColor = `hsl(${p.hue},90%,60%)`; ctx.shadowBlur = p.seen && !cur ? 0 : 22;
+      ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(0,0,0,.16)';
+      ctx.beginPath(); ctx.arc(p.x + rr * .3, p.y + rr * .25, rr * .22, 0, TAU); ctx.arc(p.x - rr * .35, p.y + rr * .4, rr * .12, 0, TAU); ctx.fill();
+    }
+
+    if (state !== 'dead') {
+      if (pl.mode === 'orbit' && state === 'play') {
+        let x = pl.x, y = pl.y, vx = -Math.sin(pl.ang) * pl.dir * SPEED, vy = Math.cos(pl.ang) * pl.dir * SPEED;
+        const n = maxIdx < 6 ? 12 : 6;
+        ctx.fillStyle = '#eef1ff';
+        for (let i = 1; i <= n; i++) {
+          vy += GRAV * .035; x += vx * .035; y += vy * .035;
+          if (x < 8 || x > FW - 8) vx *= -1;
+          ctx.globalAlpha = .55 * (1 - i / (n + 1)); ctx.beginPath(); ctx.arc(x, y, 2.2, 0, TAU); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+      for (let i = 0; i < trail.length; i++) {
+        const k = i / trail.length; ctx.globalAlpha = k * .5; ctx.fillStyle = '#ffd166';
+        ctx.beginPath(); ctx.arc(trail[i].x, trail[i].y, 2 + k * 6, 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 20; ctx.fillStyle = '#fff6dc';
+      ctx.beginPath(); ctx.arc(pl.x, pl.y, 8, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
+    }
+
+    for (const q of parts) {
+      ctx.globalAlpha = clamp(q.life / q.max, 0, 1); ctx.fillStyle = `hsl(${q.hue},95%,70%)`;
+      ctx.beginPath(); ctx.arc(q.x, q.y, 2.6, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const x0 = -offX / s - 20, x1 = FW + offX / s + 20, bot = camY + H + 30;
+    if (voidY < bot) {
+      const vg = ctx.createLinearGradient(0, voidY - 90, 0, voidY);
+      vg.addColorStop(0, 'rgba(255,61,154,0)'); vg.addColorStop(1, 'rgba(255,61,154,.4)');
+      ctx.fillStyle = vg; ctx.fillRect(x0, voidY - 90, x1 - x0, 90);
+      ctx.beginPath(); ctx.moveTo(x0, bot);
+      for (let x = x0; x <= x1 + 12; x += 12) ctx.lineTo(x, voidY + Math.sin(x * .045 + t * 2.4) * 6 + Math.sin(x * .11 - t * 3.1) * 3);
+      ctx.lineTo(x1, bot); ctx.closePath();
+      const fg = ctx.createLinearGradient(0, voidY, 0, voidY + 160);
+      fg.addColorStop(0, '#ff3d9a'); fg.addColorStop(1, '#3a0a4a');
+      ctx.fillStyle = fg; ctx.fill();
+    }
+
+    ctx.textAlign = 'center'; ctx.font = '700 20px "Chakra Petch", "Trebuchet MS", sans-serif';
+    for (const q of texts) { ctx.globalAlpha = clamp(q.life * 1.6, 0, 1); ctx.fillStyle = q.col; ctx.fillText(q.txt, clamp(q.x, 60, FW - 60), q.y); }
+    ctx.globalAlpha = 1;
+  }
+
+  function frame(now) {
+    const dt = Math.min(1 / 30, (now - last) / 1000 || 0); last = now;
+    update(dt); draw();
+    requestAnimationFrame(frame);
+  }
+
+  function startGame() {
+    wakeAudio(); reset(); state = 'play';
+    $('startScreen').hidden = true; $('overScreen').hidden = true; $('hint').hidden = false;
+    beep(330, 660, .2, 'triangle', .1);
+  }
+  function tap() {
+    wakeAudio();
+    if (state === 'play') release();
+    else if (state === 'start') startGame();
+    else if (state === 'dead' && performance.now() - deadAt > 900) startGame();
+  }
+
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
+  $('startScreen').addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
+  $('overScreen').addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
+  $('startBtn').addEventListener('click', () => { if (state === 'start') startGame(); });
+  $('againBtn').addEventListener('click', () => { if (state === 'dead') startGame(); });
+  addEventListener('keydown', e => {
+    if (e.repeat || (e.code !== 'Space' && e.code !== 'ArrowUp')) return;
+    e.preventDefault(); tap();
+  });
+  const muteBtn = $('mute');
+  const showMute = () => { muteBtn.textContent = muted ? 'Ton aus' : 'Ton an'; muteBtn.setAttribute('aria-pressed', muted); };
+  muteBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  muteBtn.addEventListener('click', () => { muted = !muted; try { localStorage.setItem('ks-mute', muted ? '1' : '0'); } catch (e) {} showMute(); muteBtn.blur(); });
+  showMute();
+
+  addEventListener('resize', resize);
+  function boot() { resize(); reset(); requestAnimationFrame(frame); }
+  if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot();
+})();
+</script>
