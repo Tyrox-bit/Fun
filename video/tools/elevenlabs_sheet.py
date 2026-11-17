@@ -20,7 +20,6 @@ LINES = [
     ('[quietly]', 'Stunde 72:'), ('', 'Supermärkte leer.'), ('', 'Kühlschränke warm.'), ('[whispers]', 'Jemand klopft an deine Tür.'),
     ('[whispers]', 'Und jetzt die Frage, die keiner hören will:'),
     ('[serious]', 'Der Staat empfiehlt Vorräte für 10 Tage.'), ('[skeptical]', 'Du hast wahrscheinlich nicht mal welche für 3.'),
-    ('[curious]', 'Wie lange würdest du durchhalten?'), ('[excited]', "Schreib's in die Kommentare!"),
     ('[whispers]', 'Denn genau so fängt es an …'),
 ]
 
@@ -42,6 +41,7 @@ for i, (g, (tag, text)) in enumerate(zip(groups, LINES)):
     start = g['t']
     end = 49.4 if text.startswith('Und jetzt die Frage') else (groups[i + 1]['t'] if i + 1 < len(groups) else cap_end)
     rows.append((start, end, tag, text))
+rows.append((cap_end, 60.0, '[excited]', 'Wie lange hältst du durch?'))  # gelber Kasten am Ende
 fmt = lambda s: f'{int(s // 60)}:{s % 60:05.2f}'.replace('.', ',')
 line = lambda tag, text: f'{tag} {text}'.strip()
 
@@ -95,7 +95,7 @@ button.done {{ background:#1f9d55; color:#fff; }}
 </style></head>
 <body><main>
 <h1>ElevenLabs Voiceover</h1>
-<p class="sub">72 Stunden ohne Strom · {len(rows)} Sätze · jedes Wort identisch mit den Untertiteln im Video</p>
+<p class="sub">72 Stunden ohne Strom · {len(rows)} Sätze · jedes Wort aus den Untertiteln plus der gelbe Kasten am Ende</p>
 
 <section class="box">
 <h2>So geht's</h2>
@@ -135,6 +135,6 @@ komp = []
 for s_, e_, t_, x_ in rows:
     komp.append(f'[{fmt(s_)} – {fmt(e_)}] {line(t_, x_)}')
     if x_.startswith('Und jetzt die Frage'):
-        komp.append(f'[{fmt(e_)} – {fmt(groups[[g["t"] for g in groups].index(s_) + 1]["t"])}] (Pause – nichts sprechen)')
+        komp.append(f'[{fmt(e_)} – {fmt(51.0)}] (Pause – nichts sprechen)')
 open('out/ElevenLabs_Komplett.txt', 'w', encoding='utf-8').write('\n'.join(komp) + '\n')
 print('wrote out/ElevenLabs_Voiceover.html + .txt + Komplett.txt')

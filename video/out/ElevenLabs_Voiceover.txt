@@ -37,9 +37,8 @@ Kühlschränke warm.
 [whispers] Und jetzt die Frage, die keiner hören will:
 [serious] Der Staat empfiehlt Vorräte für 10 Tage.
 [skeptical] Du hast wahrscheinlich nicht mal welche für 3.
-[curious] Wie lange würdest du durchhalten?
-[excited] Schreib's in die Kommentare!
 [whispers] Denn genau so fängt es an …
+[excited] Wie lange hältst du durch?
 
 === EINZELN MIT ZEITEN ===
 
@@ -77,6 +76,5 @@ Kühlschränke warm.
 32 | 0:47,85 bis 0:49,40 (max. 1,5 s) | [whispers] Und jetzt die Frage, die keiner hören will:
 33 | 0:51,00 bis 0:53,80 (max. 2,8 s) | [serious] Der Staat empfiehlt Vorräte für 10 Tage.
 34 | 0:53,80 bis 0:56,75 (max. 3,0 s) | [skeptical] Du hast wahrscheinlich nicht mal welche für 3.
-35 | 0:56,75 bis 0:58,30 (max. 1,5 s) | [curious] Wie lange würdest du durchhalten?
-36 | 0:58,30 bis 0:59,75 (max. 1,5 s) | [excited] Schreib's in die Kommentare!
-37 | 0:59,75 bis 1:01,85 (max. 2,1 s) | [whispers] Denn genau so fängt es an …
+35 | 0:56,75 bis 0:58,85 (max. 2,1 s) | [whispers] Denn genau so fängt es an …
+36 | 0:58,85 bis 1:00,00 (max. 1,1 s) | [excited] Wie lange hältst du durch?

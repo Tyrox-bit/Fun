@@ -40,10 +40,8 @@ Die Szenenwechsel mit Whoosh-Sound liegen immer auf „Minute/Stunde …“. Das
 | 0:49.40 | *(Pause, nur Herzschlag, bis 0:51)* |
 | 0:51.00 | Der Staat empfiehlt Vorräte für 10 Tage. |
 | 0:53.80 | Du hast wahrscheinlich nicht mal welche für 3. |
-| 0:56.75 | Wie lange würdest du durchhalten? |
-| 0:58.30 | Schreib's in die Kommentare! |
-| 0:59.75 | Denn genau so fängt es an … |
-| 1:01.90 | *(Licht geht wieder an, das Video loopt nahtlos zum Anfang)* |
+| 0:56.75 | Denn genau so fängt es an … |
+| 0:58.85 | Wie lange hältst du durch? *(gelber Kasten, Licht geht wieder an, danach Loop zum Anfang)* |
 
 **Tipp:** Nimm alles in einem Rutsch auf, leg die Aufnahme in CapCut auf 0:00 und schneide bei Bedarf an den „Stunde …“-Ankern nach.
 Stimme etwa 6 dB lauter als die Soundspur, dann sitzt sie sauber oben drauf.
