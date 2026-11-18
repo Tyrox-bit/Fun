@@ -11,3 +11,7 @@ out/sfx_mix.wav
 out/mix_mit_stimme.wav
 out/video_sync_noaudio.mp4
 out/render_sync.log
+out/head0.mp4
+out/tail_sync.mp4
+out/tail.mp4
+out/render_tail.log
