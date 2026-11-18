@@ -8,3 +8,6 @@ out/aud.png
 out/video_noaudio.mp4
 out/timeline.json
 out/sfx_mix.wav
+out/mix_mit_stimme.wav
+out/video_sync_noaudio.mp4
+out/render_sync.log

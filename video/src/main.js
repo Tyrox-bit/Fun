@@ -4,7 +4,16 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { W, H, SEGMENTS, CAPTIONS, CAPTION_END, POPUPS, FX } from './timeline.js';
+import { W, H, SEGMENTS, POPUPS, FX } from './timeline.js';
+import { SYNC } from './sync.js';
+const CAPTIONS = SYNC.captions, CAPTION_END = SYNC.captionEnd;
+// new (voice) time -> old scene time
+function warpInv(T) {
+  const w = SYNC.warp;
+  if (T <= w[0][0]) return w[0][1] + (T - w[0][0]);
+  for (let i = 0; i < w.length - 1; i++) if (T <= w[i + 1][0]) return lerp(w[i][1], w[i + 1][1], (T - w[i][0]) / (w[i + 1][0] - w[i][0]));
+  return w[w.length - 1][1];
+}
 
 // ---------------------------------------------------------------- utils
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -724,10 +733,13 @@ function keyCam(keys, lt) {
   if (lt <= keys[0].t) return keys[0];
   if (lt >= keys[n - 1].t) return keys[n - 1];
   let i = 0; while (i < n - 2 && lt >= keys[i + 1].t) i++;
-  const u = (lt - keys[i].t) / (keys[i + 1].t - keys[i].t);
-  const k0 = keys[Math.max(0, i - 1)], k1 = keys[i], k2 = keys[i + 1], k3 = keys[Math.min(n - 1, i + 2)];
-  const c = (a) => [0, 1, 2].map((j) => catmull(k0[a][j], k1[a][j], k2[a][j], k3[a][j], u));
-  return { p: c('p'), l: c('l'), f: catmull(k0.f, k1.f, k2.f, k3.f, u) };
+  const t0 = keys[i].t, t1 = keys[i + 1].t, h = t1 - t0, u = (lt - t0) / h;
+  const u2 = u * u, u3 = u2 * u;
+  const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+  const tan = (k, get) => (k <= 0 || k >= n - 1) ? 0 : (get(keys[k + 1]) - get(keys[k - 1])) / (keys[k + 1].t - keys[k - 1].t);
+  const H = (get) => h00 * get(keys[i]) + h10 * h * tan(i, get) + h01 * get(keys[i + 1]) + h11 * h * tan(i + 1, get);
+  const c = (a) => [0, 1, 2].map((j) => H((k) => k[a][j]));
+  return { p: c('p'), l: c('l'), f: H((k) => k.f) };
 }
 function hookCam(lt) {
   return { p: [-120 + 12 * lt, 140 - 7 * lt, 220 - 16 * lt], l: [6 + 2.5 * lt, 4, -4 - 3 * lt], f: 62 - lt * 1.2 };
@@ -747,8 +759,8 @@ function fxAmount(t, type) {
 function whipAmount(t) {
   let off = 0, blur = 0;
   for (const f of FX) if (f.type === 'whip') {
-    if (t >= f.t - 0.15 && t < f.t) { const p = (t - (f.t - 0.15)) / 0.15; off += -easeIn(p) * 0.55; blur += easeIn(p) * 0.09; }
-    if (t >= f.t && t < f.t + 0.22) { const p = (t - f.t) / 0.22; off += (1 - easeOut(p)) * 0.55; blur += (1 - easeOut(p)) * 0.09; }
+    if (t >= f.t - 0.15 && t < f.t) { const p = (t - (f.t - 0.15)) / 0.15; off += -easeIn(p) * 0.38; blur += easeIn(p) * 0.06; }
+    if (t >= f.t && t < f.t + 0.22) { const p = (t - f.t) / 0.22; off += (1 - easeOut(p)) * 0.38; blur += (1 - easeOut(p)) * 0.06; }
   }
   return { off, blur };
 }
@@ -886,16 +898,16 @@ function update(t) {
   // handheld + shake
   const hand = ['minute', 'truck', 'market', 'door', 'gas'].includes(seg.id) ? 1 : 0.35;
   const sh = fxAmount(t, 'shake');
-  const amp = 0.004 * hand + 0.035 * sh;
-  camera.rotateX(noise1(t * 1.7 + 3) * amp + noise1(t * 31) * 0.02 * sh);
-  camera.rotateY(noise1(t * 1.3 + 7) * amp + noise1(t * 29 + 4) * 0.02 * sh);
-  camera.rotateZ(noise1(t * 0.9 + 11) * amp * 0.6 + noise1(t * 27 + 2) * 0.015 * sh);
+  const amp = 0.0022 * hand + 0.02 * sh;
+  camera.rotateX(noise1(t * 1.2 + 3) * amp + noise1(t * 24) * 0.011 * sh);
+  camera.rotateY(noise1(t * 0.9 + 7) * amp + noise1(t * 22 + 4) * 0.011 * sh);
+  camera.rotateZ(noise1(t * 0.7 + 11) * amp * 0.6 + noise1(t * 20 + 2) * 0.008 * sh);
   const w = whipAmount(t); camera.rotateY(w.off);
 
   // ---- post fx
   const u = fxPass.uniforms;
   u.uTime.value = t; u.uBlur.value = w.blur;
-  const g = fxAmount(t, 'glitch'); u.uGlitch.value = g; u.uRGB.value = 0.0006 + g * 0.012 + w.blur * 0.05;
+  const g = fxAmount(t, 'glitch') * 0.7; u.uGlitch.value = g; u.uRGB.value = 0.0006 + g * 0.012 + w.blur * 0.05;
   u.uPunch.value = fxAmount(t, 'punch');
   let bright = 1, sat = 1, vig = 1.05;
   if (seg.id === 'outro') { bright = lerp(1, 0.55, smooth((t - 51) / 1.5)); sat = 0.55; if (t > 58.35) { bright = 1; sat = 1; } }
@@ -1092,19 +1104,17 @@ function drawPopups(g, t) {
     g.restore();
   }
 }
-function drawCTA(g, t) {
-  if (t < 56.75 || t > 58.85) return;
-  const lt = t - 56.75; const sc = popScale(lt);
-  g.save(); g.translate(540, 1460); g.scale(sc, sc);
-  g.font = '900 54px Montserrat'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  const txt = 'WIE LANGE HÄLTST DU DURCH?'; const tw = g.measureText(txt).width;
-  g.fillStyle = '#ffd400'; rr(g, -tw / 2 - 36, -50, tw + 72, 100, 50); g.fill();
-  g.fillStyle = '#111'; g.fillText(txt, 0, 4);
-  g.font = '64px "Noto Color Emoji"'; g.fillText('👇', 0, 110 + Math.sin(t * 8) * 10);
+function drawCTA(g, T) {
+  // spoken call-to-action: a big bouncing pointer under the captions (comments are below on TikTok/Shorts)
+  if (T < SYNC.ctaStart || T > CAPTION_END) return;
+  const lt = T - SYNC.ctaStart; const sc = popScale(lt);
+  g.save(); g.translate(540, 1520 + Math.abs(Math.sin(T * 6)) * -26); g.scale(sc, sc);
+  g.font = '130px "Noto Color Emoji"'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('👇', 0, 0);
   g.restore();
 }
 
-function drawOverlay(t) {
+function drawOverlay(t, T) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(glCanvas, 0, 0);
   // top & bottom gradients for readability
@@ -1113,16 +1123,17 @@ function drawOverlay(t) {
   drawHeader(ctx, t);
   drawTimer(ctx, t);
   drawPopups(ctx, t);
-  drawCaption(ctx, t);
-  drawCTA(ctx, t);
+  drawCaption(ctx, T);
+  drawCTA(ctx, T);
   const fl = flashAt(t);
   if (fl.a > 0) { ctx.fillStyle = `rgba(${fl.c.map((c) => Math.round(c * 255)).join(',')},${fl.a})`; ctx.fillRect(0, 0, W, H); }
 }
 
-window.renderFrame = (t, fmtOut = 'jpeg') => {
+window.renderFrame = (T, fmtOut = 'jpeg') => {
+  const t = warpInv(T);
   update(t);
   composer.render();
-  drawOverlay(t);
+  drawOverlay(t, T);
   return fmtOut === 'none' ? '' : out.toDataURL(fmtOut === 'png' ? 'image/png' : 'image/jpeg', 0.92);
 };
 window.ready = (async () => {

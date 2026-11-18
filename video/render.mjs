@@ -12,7 +12,7 @@ const { chromium } = createRequire(import.meta.url)('playwright');
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(ROOT, 'out');
 fs.mkdirSync(OUT, { recursive: true });
-const FPS = 30, DURATION = 60;
+const FPS = 30, DURATION = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'out/sync.json'), 'utf8')).duration;
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.woff2': 'font/woff2', '.woff': 'font/woff', '.json': 'application/json' };
 const server = http.createServer((req, res) => {
