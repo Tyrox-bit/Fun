@@ -10,6 +10,8 @@
     "check": "node scripts/check.js",
     "setup": "node scripts/setup.js",
     "medien": "node tools/medien.js",
+    "produkte": "node scripts/build-products.js",
+    "produktbilder": "node tools/produktbilder.js",
     "videos": "node tools/medien.js",
     "check:launch": "node scripts/launch-check.js"
   },

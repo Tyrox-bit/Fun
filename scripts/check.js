@@ -106,5 +106,58 @@ function call(handler, { method = 'GET', body, headers = {}, url = '/' } = {}) {
   assert.strictEqual(r.status, 200);
   console.log('✓ Webhook prüft Signatur und verarbeitet Bestellung');
 
+  // 6) Produktseiten-Warenkorb
+  const products = cfg.catalog.products;
+  r = await call(checkout, { method: 'POST', body: { items: [{ type: 'product', id: 'chefmesser', qty: 1 }] } });
+  assert.strictEqual(r.status, 400, 'ohne Preis nicht kaufbar');
+  assert.match(r.body.error, /kein Preis/);
+  const saved = products.map((p) => [p.price, p.stock]);
+  const TEST = { chefmesser: 14900, nakiri: 13900, allzweckmesser: 11900, officemesser: 8900 };
+  products.forEach((p) => { p.price = TEST[p.id]; });
+
+  r = await call(checkout, { method: 'POST', body: { items: [{ type: 'product', id: 'nakiri', qty: 1, price: 1 }], returnTo: 'nakiri' } });
+  assert.strictEqual(r.status, 200);
+  let q = created.at(-1);
+  assert.strictEqual(q.line_items[0].price_data.unit_amount, 13900, 'Preis vom Server, nicht aus dem Browser');
+  assert.strictEqual(q.shipping_options[0].shipping_rate_data.fixed_amount.amount, cfg.shipping.price, '1 Messer = Versand');
+  assert.strictEqual(q.metadata.kind, 'shop');
+  assert.ok(q.cancel_url.endsWith('/produkte/nakiri?checkout=abgebrochen'));
+
+  r = await call(checkout, { method: 'POST', body: { items: [
+    { type: 'product', id: 'officemesser', qty: 2 }, { type: 'bundle', id: 'komplett-set', qty: 1 }, { type: 'product', id: 'officemesser', qty: 1 },
+  ] } });
+  assert.strictEqual(r.status, 200);
+  q = created.at(-1);
+  assert.strictEqual(q.line_items.length, 2, 'gleiche Positionen werden zusammengefasst');
+  assert.strictEqual(q.line_items[0].quantity, 3);
+  assert.strictEqual(q.line_items[1].price_data.unit_amount, 14900 + 13900 + 11900 + 8900, 'Bundle = Summe der Einzelpreise');
+  assert.strictEqual(q.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, 'ab 2 Messern versandkostenfrei');
+  assert.strictEqual(q.metadata.items, 'p:officemesser:3,b:komplett-set:1');
+
+  cfg.catalog.bundles.find((b) => b.id === 'komplett-set').price = 44900;
+  r = await call(checkout, { method: 'POST', body: { items: [{ type: 'bundle', id: 'komplett-set', qty: 1 }] } });
+  assert.strictEqual(created.at(-1).line_items[0].price_data.unit_amount, 44900, 'eigener Bundle-Preis wird verwendet');
+  cfg.catalog.bundles.find((b) => b.id === 'komplett-set').price = null;
+
+  for (const bad of [[], [{ type: 'product', id: 'gibtsnicht', qty: 1 }], [{ type: 'hack', id: 'nakiri', qty: 1 }], [{ type: 'product', id: 'nakiri', qty: 0 }]]) {
+    r = await call(checkout, { method: 'POST', body: { items: bad } });
+    assert.strictEqual(r.status, 400);
+  }
+
+  // Bestand je Messer (Bundles zählen mit)
+  products.find((p) => p.id === 'chefmesser').stock = 2;
+  sessions.push({ id: 'cs_shop1', status: 'complete', created: t, metadata: { shop: 'kaspar', kind: 'shop', items: 'b:chefmesser-nakiri:1' } });
+  shop.invalidateStock();
+  r = await call(checkout, { method: 'POST', body: { items: [{ type: 'product', id: 'chefmesser', qty: 2 }] } });
+  assert.strictEqual(r.status, 409);
+  r = await call(checkout, { method: 'POST', body: { items: [{ type: 'product', id: 'chefmesser', qty: 1 }] } });
+  assert.strictEqual(r.status, 200);
+
+  // Mail/Danke-Seite beschreiben die Bestellung lesbar
+  const { describeItems } = require(path.join(root, 'lib/catalog'));
+  assert.strictEqual(describeItems('p:nakiri:2,b:komplett-set:1'), '2× KASPAR Damast Nakiri, 1× KASPAR Komplett-Set');
+  products.forEach((p, i) => { [p.price, p.stock] = saved[i]; });
+  console.log('✓ Warenkorb: Preise, Bundles, Versand, Bestand je Messer, Validierung');
+
   console.log('\nAlle Checks bestanden 🔥');
 })().catch((e) => { console.error('✗', e); process.exit(1); });

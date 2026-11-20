@@ -4,10 +4,15 @@
 const { send, readRaw } = require('../lib/http');
 const shop = require('../lib/shop');
 const { sendMail, esc, euro } = require('../lib/mail');
+const { describeItems } = require('../lib/catalog');
 
 function orderMails(s) {
   const { config } = shop;
   const bundle = shop.getBundle(s.metadata.bundle);
+  // Warenkorb-Bestellung (Produktseiten) oder Aktionspaket (Landing Page)
+  const what = s.metadata.kind === 'shop'
+    ? describeItems(s.metadata.items)
+    : `${config.product.fullName} – ${bundle ? bundle.title : s.metadata.bundle}`;
   const site = process.env.SITE_URL || config.brand.siteUrl;
   const name = (s.customer_details && s.customer_details.name) || '';
   const ship = (s.collected_information && s.collected_information.shipping_details) || s.shipping_details || {};
@@ -21,7 +26,7 @@ function orderMails(s) {
       <h2>Danke für deine Bestellung${name ? ', ' + esc(name.split(' ')[0]) : ''}!</h2>
       <p>Wir haben deine Bestellung <b>#${orderId}</b> erhalten und packen sie so schnell wie möglich.</p>
       <table cellpadding="6" style="border-collapse:collapse;width:100%">
-        <tr><td>${esc(config.product.fullName)} – ${esc(bundle ? bundle.title : '')}</td>
+        <tr><td>${esc(what)}</td>
             <td align="right">${euro(s.amount_subtotal)}</td></tr>
         <tr><td>Versand</td><td align="right">${euro((s.total_details && s.total_details.amount_shipping) || 0)}</td></tr>
         ${s.total_details && s.total_details.amount_discount ? `<tr><td>Rabatt</td><td align="right">−${euro(s.total_details.amount_discount)}</td></tr>` : ''}
@@ -40,7 +45,7 @@ function orderMails(s) {
 
   const ownerHtml = `
     <div style="font-family:Arial,sans-serif">
-      <h2>Neue Bestellung #${orderId} – ${esc(bundle ? bundle.title : s.metadata.bundle)}</h2>
+      <h2>Neue Bestellung #${orderId} – ${esc(what)}</h2>
       <p><b>${euro(s.amount_total)}</b> · ${esc(s.customer_details && s.customer_details.email)}</p>
       <p>${esc(ship.name || name)}<br>${esc(addr.line1 || '')} ${esc(addr.line2 || '')}<br>${esc(addr.postal_code || '')} ${esc(addr.city || '')}</p>
       ${giftText ? `<p><b>Geschenknachricht:</b> ${esc(giftText)}</p>` : ''}

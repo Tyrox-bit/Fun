@@ -53,6 +53,21 @@ const todo = (v) => !v || /^\[.*\]$/.test(String(v));
   warn('Streichpreis = niedrigster Preis der letzten 30 Tage? (§ 11 PAngV)', 'Nur bestätigen, wenn das Set wirklich so verkauft wurde – sonst Streichpreis weglassen');
   ok(`Bestand: ${cfg.stock.totalSets} Sets`);
 
+  // ---------------------------------------------------------------- Produktseiten
+  if (cfg.catalog && cfg.catalog.products.length) {
+    head('Produktseiten (/produkte/…)');
+    const noPrice = cfg.catalog.products.filter((p) => !Number.isInteger(p.price));
+    noPrice.length
+      ? block('Ohne Preis (nicht kaufbar): ' + noPrice.map((p) => p.shortName).join(', '), 'shop.config.json → catalog.products → price (Cent) eintragen, dann npm run produkte')
+      : ok('Alle Messer haben einen Preis');
+    const stale = require('child_process').spawnSync(process.execPath, [path.join(__dirname, 'build-products.js'), '--check']).status;
+    stale ? warn('Produktseiten sind nicht aktuell', 'npm run produkte') : ok('Produktseiten aktuell');
+    const small = cfg.catalog.products.filter((p) => !fs.existsSync(path.join(ROOT, 'assets/img/produkte-original', p.id)));
+    if (small.length) warn('Galeriebilder stammen aus den Übersichtsgrafiken (kleine Auflösung, Zoom wird unscharf)', 'Originalfotos nach assets/img/produkte-original/<messer>/1–5.jpg → npm run produktbilder -- <messer>');
+    const no3d = cfg.catalog.products.filter((p) => !(p.view3d && (p.view3d.model || (p.view3d.spin || []).length >= 24)));
+    if (no3d.length) warn(`360°-Ansicht noch ohne Daten (${no3d.length} von ${cfg.catalog.products.length}) – Bereich bleibt ausgeblendet`, 'GLB-Modell oder ≥ 24 Fotos rundum in catalog.products[].view3d eintragen');
+  }
+
   // ---------------------------------------------------------------- Medien
   head('Fotos & Videos');
   const gal = (cfg.media && cfg.media.gallery) || [];

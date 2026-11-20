@@ -75,6 +75,37 @@ Die Texte sind **Entwürfe von Claude, keine Rechtsberatung.**
 
 ---
 
+## 🔪 Produktseiten – die vier KASPAR-Messer
+
+| Seite | Messer |
+|---|---|
+| `/produkte/chefmesser` | KASPAR Damast Chefmesser |
+| `/produkte/nakiri` | KASPAR Damast Nakiri |
+| `/produkte/allzweckmesser` | KASPAR Damast Allzweckmesser |
+| `/produkte/officemesser` | KASPAR Damast Officemesser |
+
+Jede Seite hat: Galerie mit 5 Bildern (Haupt-, Schräg-, Griffansicht, Box offen, Box zu mit Schutz-Noppen) · Vollbild mit Wischen/Pfeiltasten · Beschreibung & Besonderheiten · Lieferumfang · Menge + **Warenkorb** + Direktkauf · Verpackungs-Bereich · **Bundles** · weitere Messer · eigenes Vorschaubild beim Teilen · Google-Produktdaten (JSON-LD).
+
+**Alle Inhalte stehen in `shop.config.json → catalog`.** Danach immer: `npm run produkte`
+
+- **Preise:** `price` in Cent (`14900` = 149 €). Solange `null`, steht „Preis folgt“ und das Messer ist nicht kaufbar.
+- **Bundles:** `price: null` = Summe der Einzelpreise (kein erfundener Rabatt). Eigener Bundle-Preis → Cent-Wert eintragen.
+- **Bestand:** `stock` = Stückzahl je Messer (Bundles zählen mit). `null` = unbegrenzt.
+- **Versand:** ab `freeShippingFromItems` Messern kostenlos (sonst `shipping.price`).
+- **Texte:** Nur belegte Angaben – keine Stahlsorte, Härte, Lagenzahl oder Länge, solange sie nicht bestätigt sind.
+
+**Bilder:** Aktuell aus deinen Übersichtsgrafiken ausgeschnitten (ohne Schrift/Icons). Für scharfen Zoom Originalfotos verwenden:
+```bash
+# Originale als 1.jpg … 5.jpg nach assets/img/produkte-original/chefmesser/ legen
+npm run produktbilder -- chefmesser
+# oder aus einer neuen Übersicht im gleichen Layout ausschneiden:
+npm run produktbilder -- chefmesser pfad/zur/uebersicht.png
+```
+
+**360°/3D-Ansicht:** vorbereitet, erscheint automatisch, sobald echte Daten da sind – sonst bleibt der Bereich unsichtbar (nichts wird vorgetäuscht):
+- **3D-Modell:** `.glb`-Datei nach `assets/3d/` → `"view3d": { "model": "/assets/3d/chefmesser.glb" }` (Darstellung mit Googles model-viewer, drehen/zoomen, auf dem Handy auch AR)
+- **360°-Fotoserie:** mind. 24 Fotos rundum (Drehteller, gleicher Abstand) → `"view3d": { "spin": ["/assets/3d/chef/01.webp", …] }`
+
 ## Wichtige rechtliche Hinweise zur Aktion
 
 - **Streichpreis 199 €:** Laut § 11 PAngV muss der durchgestrichene Preis der **niedrigste Preis der letzten 30 Tage vor der Aktion** sein. Wurde das Set nie zu 199 € angeboten (neue Marke), ist „−50 %“ angreifbar. Dann lieber ohne Streichpreis werben (`compareAtPrice` = `salePrice` setzen) oder mit Anwalt klären.

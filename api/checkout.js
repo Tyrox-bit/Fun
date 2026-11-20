@@ -1,8 +1,12 @@
-// POST /api/checkout  { bundleId, attribution }  ->  { url }
+// POST /api/checkout
+//   Aktionsseite:  { bundleId, attribution }
+//   Produktseiten: { items: [{ type: 'product'|'bundle', id, qty }], returnTo, attribution }
+//   → { url }
 // Erstellt eine Stripe-Checkout-Session. Zahlarten (Karte, PayPal, Apple Pay,
 // Google Pay, Klarna …) werden im Stripe-Dashboard aktiviert – kein Code nötig.
 const { send, readJson, clean } = require('../lib/http');
 const shop = require('../lib/shop');
+const catalog = require('../lib/catalog');
 
 const ATTR_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ttclid', 'landing', 'referrer'];
 
@@ -16,8 +20,16 @@ module.exports = async function handler(req, res) {
     return send(res, 400, { error: 'Ungültige Anfrage.' });
   }
 
-  const bundle = shop.getBundle(body.bundleId);
-  if (!bundle) return send(res, 400, { error: 'Unbekanntes Angebot.' });
+  // Zwei Wege: Aktionsseite (bundleId) oder Warenkorb der Produktseiten (items)
+  const isCart = Array.isArray(body.items);
+  const bundle = isCart ? null : shop.getBundle(body.bundleId);
+  let cart = null;
+  if (isCart) {
+    cart = catalog.validateCart(body.items);
+    if (cart.error) return send(res, 400, { error: cart.error });
+  } else if (!bundle) {
+    return send(res, 400, { error: 'Unbekanntes Angebot.' });
+  }
 
   const stripe = shop.getStripe();
   if (!stripe) {
@@ -28,43 +40,73 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const stock = await shop.getStock({ fresh: true });
-    if (stock.remainingSets < bundle.sets) {
-      return send(res, 409, {
-        error: stock.remainingSets === 0
-          ? 'Leider ausverkauft.'
-          : `Nur noch ${stock.remainingSets} Set(s) verfügbar – bitte kleineres Paket wählen.`,
-        remainingSets: stock.remainingSets,
-      });
-    }
-
     const { config } = shop;
     const origin = shop.siteOrigin(req);
-    const unitAmount = shop.priceFor(bundle);
-    const shipping = shop.shippingFor(bundle);
 
     const attribution = {};
     const a = body.attribution && typeof body.attribution === 'object' ? body.attribution : {};
     for (const k of ATTR_KEYS) if (a[k]) attribution[k] = clean(a[k], 200);
 
-    const metadata = {
-      shop: 'kaspar',
-      campaign: shop.isCampaignActive() ? config.campaign.id : 'regulaer',
-      bundle: bundle.id,
-      sets: String(bundle.sets),
-      ...attribution,
-    };
+    let lineItems, shipping, metadata, cancelUrl;
 
-    const params = {
-      mode: 'payment',
-      locale: 'de',
-      submit_type: 'pay',
-      line_items: [
+    if (isCart) {
+      // Bestand je Messer prüfen (nur wenn in der Config ein stock-Wert gesetzt ist)
+      const limited = Object.keys(cart.units).filter((id) => Number.isInteger(catalog.getProduct(id).stock));
+      if (limited.length) {
+        const sold = await shop.getProductUnits({ fresh: true });
+        for (const id of limited) {
+          const p = catalog.getProduct(id);
+          const left = Math.max(0, p.stock - (sold[id] || 0));
+          if (cart.units[id] > left) {
+            return send(res, 409, { error: left ? `${p.shortName}: nur noch ${left} Stück verfügbar.` : `${p.shortName} ist leider ausverkauft.` });
+          }
+        }
+      }
+      lineItems = cart.items.map((it) => {
+        const ref = it.ref;
+        const firstId = it.type === 'bundle' ? ref.items[0] : ref.id;
+        return {
+          quantity: it.qty,
+          price_data: {
+            currency: config.pricing.currency,
+            unit_amount: it.unitAmount,
+            product_data: {
+              name: it.type === 'bundle' ? `KASPAR Bundle: ${ref.name}` : ref.name,
+              description: it.type === 'bundle'
+                ? ref.items.map((id) => catalog.getProduct(id).name).join(' + ') + ' – je mit Geschenkbox und Schutz-Noppen'
+                : 'Mit KASPAR Geschenkbox und Schutz-Noppen',
+              images: [`${origin}/assets/img/produkte/${firstId}/og.jpg`],
+            },
+          },
+        };
+      });
+      shipping = catalog.shippingForKnives(cart.knives);
+      metadata = { shop: 'kaspar', kind: 'shop', items: catalog.encodeItems(cart.items), knives: String(cart.knives), ...attribution };
+      cancelUrl = `${origin}/produkte/${body.returnTo && catalog.getProduct(body.returnTo) ? body.returnTo : cart.items[0].type === 'product' ? cart.items[0].id : catalog.catalog.products[0].id}?checkout=abgebrochen`;
+    } else {
+      const stock = await shop.getStock({ fresh: true });
+      if (stock.remainingSets < bundle.sets) {
+        return send(res, 409, {
+          error: stock.remainingSets === 0
+            ? 'Leider ausverkauft.'
+            : `Nur noch ${stock.remainingSets} Set(s) verfügbar – bitte kleineres Paket wählen.`,
+          remainingSets: stock.remainingSets,
+        });
+      }
+      shipping = shop.shippingFor(bundle);
+      metadata = {
+        shop: 'kaspar',
+        campaign: shop.isCampaignActive() ? config.campaign.id : 'regulaer',
+        bundle: bundle.id,
+        sets: String(bundle.sets),
+        ...attribution,
+      };
+      lineItems = [
         {
           quantity: 1,
           price_data: {
             currency: config.pricing.currency,
-            unit_amount: unitAmount,
+            unit_amount: shop.priceFor(bundle),
             product_data: {
               name: `${config.product.fullName} · ${bundle.title}`,
               description: `${bundle.sets}× ${config.product.short}`,
@@ -72,7 +114,15 @@ module.exports = async function handler(req, res) {
             },
           },
         },
-      ],
+      ];
+      cancelUrl = `${origin}/?checkout=abgebrochen#angebot`;
+    }
+
+    const params = {
+      mode: 'payment',
+      locale: 'de',
+      submit_type: 'pay',
+      line_items: lineItems,
       shipping_address_collection: { allowed_countries: config.shipping.countries },
       shipping_options: [
         {
@@ -108,7 +158,7 @@ module.exports = async function handler(req, res) {
       // Reservierung verfällt nach 30 Minuten (Stripe-Minimum) – dann ist das Set wieder frei.
       expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       success_url: `${origin}/danke?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?checkout=abgebrochen#angebot`,
+      cancel_url: cancelUrl,
     };
 
     // Optional: AGB-Häkchen direkt im Checkout (vorher AGB-URL in Stripe hinterlegen:

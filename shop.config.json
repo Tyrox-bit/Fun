@@ -130,6 +130,100 @@
     ]
   },
 
+  "catalog": {
+    "_hinweis": "Produktseiten unter /produkte/<id>. Nach Änderungen hier: npm run produkte. Preise in CENT (z. B. 14900 = 149 €). price: null = 'Preis folgt' (nicht kaufbar). stock: null = kein Bestandslimit. KEINE unbelegten Angaben eintragen (Stahlsorte, Härte, Lagenzahl …).",
+    "freeShippingFromItems": 2,
+    "highlights": [
+      { "icon": "waves", "text": "Damastklinge" },
+      { "icon": "gem", "text": "Ergonomischer Resin-Holz-Griff" },
+      { "icon": "gift", "text": "Edle Geschenkbox" },
+      { "icon": "shield", "text": "Schutz-Noppen inklusive" }
+    ],
+    "inBox": ["1× Messer", "1× KASPAR Geschenkbox", "Schutz-Noppen"],
+    "imageLabels": ["Hauptansicht", "Schrägansicht", "Griff & Rückansicht", "In der Geschenkbox", "Box & Schutz-Noppen"],
+    "products": [
+      {
+        "id": "chefmesser",
+        "name": "KASPAR Damast Chefmesser",
+        "shortName": "Chefmesser",
+        "tagline": "Für Fleisch, Fisch und Gemüse",
+        "price": null,
+        "stock": null,
+        "description": [
+          "Das KASPAR Damast Chefmesser ist das vielseitigste Messer der Serie – gemacht für Fleisch, Fisch und Gemüse. Die elegante Klinge mit ihrer markanten Spitze zeigt die typische Damastmusterung, die jedem Messer seinen eigenen Charakter gibt.",
+          "Der facettierte Resin-Holz-Griff verbindet grüne und braune Maserungen mit feinen goldfarbenen Zierringen. Da Holz und Harz bei jedem Griff anders verlaufen, gleicht kein Messer exakt dem anderen."
+        ],
+        "details": [
+          { "label": "Klinge", "value": "Damastklinge mit sichtbarer Musterung und markanter Spitze" },
+          { "label": "Griff", "value": "Facettierter Resin-Holz-Griff in Grün- und Brauntönen mit goldfarbenen Zierringen" },
+          { "label": "Ideal für", "value": "Fleisch, Fisch und Gemüse" }
+        ],
+        "view3d": { "model": null, "spin": [] }
+      },
+      {
+        "id": "nakiri",
+        "name": "KASPAR Damast Nakiri",
+        "shortName": "Nakiri",
+        "tagline": "Für Gemüse, Kräuter und präzise Schnitte",
+        "price": null,
+        "stock": null,
+        "description": [
+          "Das KASPAR Damast Nakiri ist auf Gemüse und Kräuter spezialisiert. Die breite, gerade Klinge ist für saubere, präzise Schnitte gemacht und gibt dem Messer seine unverwechselbare Form.",
+          "Die dunkle Hammerschlag-Oberfläche mit Damaststruktur trifft auf einen Resin-Holz-Griff in warmen Braun- und Blautönen – ein außergewöhnliches Messer für alle, die gern frisch kochen."
+        ],
+        "details": [
+          { "label": "Klinge", "value": "Breite, gerade Damastklinge mit dunkler Hammerschlag-Oberfläche" },
+          { "label": "Griff", "value": "Facettierter Resin-Holz-Griff in warmen Braun- und Blautönen" },
+          { "label": "Ideal für", "value": "Gemüse, Kräuter und präzise Schnitte" }
+        ],
+        "view3d": { "model": null, "spin": [] }
+      },
+      {
+        "id": "allzweckmesser",
+        "name": "KASPAR Damast Allzweckmesser",
+        "shortName": "Allzweckmesser",
+        "tagline": "Der kompakte Allrounder für jeden Tag",
+        "price": null,
+        "stock": null,
+        "description": [
+          "Das KASPAR Damast Allzweckmesser ist der kompakte Allrounder für den Alltag – für Fleisch, Gemüse und feine Vorbereitungsarbeiten, wenn das große Messer zu viel ist.",
+          "Die dunkle Damastoptik mit Hammerschlag-Struktur und der Resin-Holz-Griff in Grün, Blau und Violett mit roten Akzenten machen es zu einem Messer, das man gern in die Hand nimmt."
+        ],
+        "details": [
+          { "label": "Klinge", "value": "Kompakte Damastklinge in dunkler Hammerschlag-Optik" },
+          { "label": "Griff", "value": "Facettierter Resin-Holz-Griff in Grün, Blau und Violett mit roten Akzenten" },
+          { "label": "Ideal für", "value": "Fleisch, Gemüse und feine Vorbereitungsarbeiten" }
+        ],
+        "view3d": { "model": null, "spin": [] }
+      },
+      {
+        "id": "officemesser",
+        "name": "KASPAR Damast Officemesser",
+        "shortName": "Officemesser",
+        "tagline": "Für Obst, Gemüse und feine Schälarbeiten",
+        "price": null,
+        "stock": null,
+        "description": [
+          "Das KASPAR Damast Officemesser ist ideal für Obst, Gemüse, Schälarbeiten und feine Küchenarbeiten. Die kompakte, spitz zulaufende Klinge erlaubt kontrolliertes Arbeiten auch bei kleinen Schnitten.",
+          "Der Resin-Holz-Griff in intensivem Violett, Rot und Braun mit metallischem Abschluss macht es zu einem echten Blickfang in jeder Küche."
+        ],
+        "details": [
+          { "label": "Klinge", "value": "Kompakte, spitz zulaufende Damastklinge" },
+          { "label": "Griff", "value": "Resin-Holz-Griff in Violett, Rot und Braun mit metallischem Abschluss" },
+          { "label": "Ideal für", "value": "Obst, Gemüse, Schälarbeiten und feine Küchenarbeiten" }
+        ],
+        "view3d": { "model": null, "spin": [] }
+      }
+    ],
+    "bundles": [
+      { "id": "chefmesser-nakiri", "name": "Chefmesser + Nakiri", "tagline": "Das Duo für Fleisch, Fisch und Gemüse", "items": ["chefmesser", "nakiri"], "price": null },
+      { "id": "chefmesser-allzweckmesser", "name": "Chefmesser + Allzweckmesser", "tagline": "Groß und kompakt – für jede Aufgabe", "items": ["chefmesser", "allzweckmesser"], "price": null },
+      { "id": "nakiri-officemesser", "name": "Nakiri + Officemesser", "tagline": "Für Gemüse, Kräuter und Obst", "items": ["nakiri", "officemesser"], "price": null },
+      { "id": "komplett-set", "name": "KASPAR Komplett-Set", "tagline": "Alle vier Messer der Serie", "items": ["chefmesser", "nakiri", "allzweckmesser", "officemesser"], "price": null }
+    ],
+    "_bundles_hinweis": "price: null = Summe der Einzelpreise (kein erfundener Rabatt). Eigener Bundle-Preis in Cent eintragen, dann wird er angezeigt und berechnet."
+  },
+
   "reviews": [],
   "_reviews_hinweis": "Nur ECHTE Bewertungen eintragen, z. B. { \"name\": \"Lena K.\", \"stars\": 5, \"text\": \"...\", \"verified\": true }. Leer = Sektion bleibt unsichtbar.",
 

@@ -32,7 +32,7 @@
       <div class="thanks__next">
         <h2 class="h2">Wie geht's weiter?</h2>
         <ol>
-          <li><strong>Heute:</strong> Wir packen dein Damast-Duo in die Geschenkbox.</li>
+          <li><strong>Heute:</strong> Wir packen deine Bestellung sorgfältig ein.</li>
           <li><strong>In 1–2 Werktagen:</strong> Versand mit DHL – du bekommst die Sendungsnummer per E-Mail.</li>
           <li><strong>Danach:</strong> Auspacken, Tomate schneiden, grinsen. 🔥</li>
         </ol>
@@ -84,7 +84,8 @@
           $('[data-text]').textContent = 'Deine Bestellung ist eingegangen. Sobald die Zahlung bestätigt ist, bekommst du eine E-Mail.';
         }
         $('[data-order]').textContent = '#' + o.orderId;
-        $('[data-bundle]').textContent = o.bundleTitle + ' · Damast-Duo';
+        $('[data-bundle]').textContent = o.title || o.bundleTitle;
+        if (o.bundleId === 'warenkorb') { try { localStorage.removeItem('kaspar_cart_v1'); } catch (e) {} }
         $('[data-total]').textContent = euro(o.amountTotal);
         $('[data-card]').hidden = false;
 
