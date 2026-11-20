@@ -1,0 +1,5603 @@
+<roblox version="4">
+  <Item class="ReplicatedFirst" referent="0">
+    <Properties>
+      <string name="Name">ReplicatedFirst</string>
+    </Properties>
+    <Item class="LocalScript" referent="1">
+      <Properties>
+        <string name="Name">Boot</string>
+        <string name="Source"><![CDATA[-- Boot screen: shown instantly, before anything else loads. Deliberately language-neutral
+-- (only the game logo) so the player never sees text in a wrong language while the saved
+-- language is still loading. The main client script fades it out when ready.
+
+local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local TweenService = game:GetService("TweenService")
+
+ReplicatedFirst:RemoveDefaultLoadingScreen()
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "FZ_Boot"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 1000
+gui.AutoLocalize = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local background = Instance.new("Frame")
+background.Name = "Background"
+background.Size = UDim2.fromScale(1, 1)
+background.BackgroundColor3 = Color3.fromRGB(6, 8, 9)
+background.BorderSizePixel = 0
+background.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Name = "Logo"
+title.AnchorPoint = Vector2.new(0.5, 0.5)
+title.Position = UDim2.fromScale(0.5, 0.48)
+title.Size = UDim2.new(0.8, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.Michroma
+title.Text = "FREQUENCY ZERO"
+title.TextColor3 = Color3.fromRGB(216, 212, 202)
+title.TextSize = 30
+title.AutoLocalize = false
+title.Parent = background
+
+-- A thin signal line that slowly "searches" - the only motion on screen.
+local line = Instance.new("Frame")
+line.Name = "Signal"
+line.AnchorPoint = Vector2.new(0.5, 0.5)
+line.Position = UDim2.new(0.5, 0, 0.48, 34)
+line.Size = UDim2.fromOffset(0, 2)
+line.BackgroundColor3 = Color3.fromRGB(201, 64, 48)
+line.BorderSizePixel = 0
+line.Parent = background
+
+gui.Parent = playerGui
+
+TweenService:Create(
+	line,
+	TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+	{ Size = UDim2.fromOffset(180, 2) }
+):Play()
+]]></string>
+      </Properties>
+    </Item>
+  </Item>
+  <Item class="ReplicatedStorage" referent="2">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="Folder" referent="3">
+      <Properties>
+        <string name="Name">Shared</string>
+      </Properties>
+      <Item class="ModuleScript" referent="4">
+        <Properties>
+          <string name="Name">Config</string>
+          <string name="Source"><![CDATA[-- Config: single source of truth for values shared by client and server.
+-- Anything security-relevant (codes, admin gesture) lives in ServerStorage, never here.
+
+local Config = {}
+
+Config.Version = "0.1.0"
+Config.MaxPartySize = 4
+
+---------------------------------------------------------------------------
+-- Languages (order = order in the language picker)
+---------------------------------------------------------------------------
+Config.Languages = { "de", "en", "es", "fr", "pt-br" }
+Config.FallbackLanguage = "en"
+Config.LanguageNames = {
+	de = "Deutsch",
+	en = "English",
+	es = "Español",
+	fr = "Français",
+	["pt-br"] = "Português (Brasil)",
+}
+Config.LanguageTags = { de = "DE", en = "EN", es = "ES", fr = "FR", ["pt-br"] = "PT" }
+
+---------------------------------------------------------------------------
+-- Player settings schema (validated identically on client and server)
+---------------------------------------------------------------------------
+Config.Settings = {
+	-- default = nil means "not chosen yet" -> first-start language picker.
+	language = { kind = "enum", values = Config.Languages, default = nil },
+	subtitles = { kind = "bool", default = true },
+	subtitleSize = {
+		kind = "enum",
+		values = { "small", "medium", "large" },
+		labels = { small = "VALUE_SMALL", medium = "VALUE_MEDIUM", large = "VALUE_LARGE" },
+		default = "medium",
+	},
+	scareIntensity = {
+		kind = "enum",
+		values = { "reduced", "standard", "intense" },
+		labels = { reduced = "VALUE_REDUCED", standard = "VALUE_STANDARD", intense = "VALUE_INTENSE" },
+		default = "standard",
+	},
+	cameraEffects = {
+		kind = "enum",
+		values = { "off", "reduced", "full" },
+		labels = { off = "VALUE_CAM_OFF", reduced = "VALUE_CAM_REDUCED", full = "VALUE_CAM_FULL" },
+		default = "full",
+	},
+	graphics = {
+		kind = "enum",
+		values = { "auto", "low", "medium", "high", "ultra" },
+		labels = { auto = "VALUE_AUTO", low = "VALUE_LOW", medium = "VALUE_MEDIUM", high = "VALUE_HIGH", ultra = "VALUE_ULTRA" },
+		default = "auto",
+	},
+	brightness = { kind = "int", min = 0, max = 10, default = 5 },
+}
+
+-- Display order + localization keys for the settings screen.
+Config.SettingsOrder = {
+	{ key = "language", label = "SETTINGS_LANGUAGE" },
+	{ key = "subtitles", label = "SETTINGS_SUBTITLES" },
+	{ key = "subtitleSize", label = "SETTINGS_SUBTITLE_SIZE" },
+	{ key = "scareIntensity", label = "SETTINGS_SCARE", description = "SETTINGS_SCARE_DESC" },
+	{ key = "cameraEffects", label = "SETTINGS_CAMERA", description = "SETTINGS_CAMERA_DESC" },
+	{ key = "graphics", label = "SETTINGS_GRAPHICS", description = "SETTINGS_GRAPHICS_DESC" },
+	{ key = "brightness", label = "SETTINGS_BRIGHTNESS", description = "SETTINGS_BRIGHTNESS_DESC" },
+}
+
+function Config.ValidateSetting(key: any, value: any): (boolean, any)
+	if type(key) ~= "string" then
+		return false, nil
+	end
+	local definition = Config.Settings[key]
+	if not definition then
+		return false, nil
+	end
+	if definition.kind == "enum" then
+		if type(value) == "string" and table.find(definition.values, value) then
+			return true, value
+		end
+	elseif definition.kind == "bool" then
+		if type(value) == "boolean" then
+			return true, value
+		end
+	elseif definition.kind == "int" then
+		if
+			type(value) == "number"
+			and value == value -- NaN guard
+			and value % 1 == 0
+			and value >= definition.min
+			and value <= definition.max
+		then
+			return true, value
+		end
+	end
+	return false, nil
+end
+
+function Config.DefaultSettings(): { [string]: any }
+	local settings = {}
+	for key, definition in Config.Settings do
+		settings[key] = definition.default
+	end
+	return settings
+end
+
+---------------------------------------------------------------------------
+-- Movement (horror pacing: slow walk, short limited sprint)
+---------------------------------------------------------------------------
+Config.Movement = {
+	WalkSpeed = 10,
+	SprintSpeed = 16,
+	StaminaSeconds = 6, -- full bar lasts this long while sprinting
+	RegenSeconds = 8, -- empty -> full while not sprinting
+	RegenDelay = 1, -- seconds after sprinting before regeneration starts
+	ExhaustedThreshold = 0.3, -- after running dry, sprint unlocks again at 30 %
+	SprintFovBoost = 4,
+	BaseFov = 70,
+}
+
+---------------------------------------------------------------------------
+-- Persistence
+---------------------------------------------------------------------------
+Config.Data = {
+	StoreName = "FZ_PlayerData_v1",
+	SchemaVersion = 1,
+	AutosaveInterval = 120,
+	LockTimeout = 1800, -- a session lock older than this is considered stale
+}
+
+Config.Codes = {
+	MaxLength = 24,
+}
+
+return Config
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="5">
+        <Properties>
+          <string name="Name">Localization</string>
+          <string name="Source"><![CDATA[-- LocalizationManager
+-- Our own, fully controlled translation layer. Roblox auto-translation is disabled on every
+-- text object that is bound through this module (AutoLocalize = false), so a player never
+-- sees machine-translated or mixed-language game text.
+--
+-- Usage:
+--   Localization.T("MENU_PLAY")                         -> "Spielen"
+--   Localization.T("CODE_OK", { amount = 25 })          -> "... +25 ..."
+--   Localization.Bind(label, "MENU_PLAY")               -> label.Text stays in sync on language change
+--   Localization.Bind(box, "EXTRAS_CODE_PLACEHOLDER", nil, "PlaceholderText")
+
+local Config = require(script.Parent.Config)
+local Signal = require(script.Parent.Signal)
+
+local Localization = {}
+Localization.Changed = Signal.new()
+
+local tables: { [string]: { [string]: string } } = {}
+local languageFolder = script:WaitForChild("Languages")
+for _, code in Config.Languages do
+	local moduleName = (string.gsub(code, "-", "_"))
+	local module = languageFolder:FindFirstChild(moduleName)
+	if module then
+		tables[code] = require(module)
+	else
+		warn("[FZ-Loc] Missing language module: " .. moduleName)
+	end
+end
+assert(tables[Config.FallbackLanguage], "[FZ-Loc] Fallback language table is required")
+
+local current = Config.FallbackLanguage
+local reported: { [string]: boolean } = {}
+
+-- object -> { [property]: { key, params } }
+-- Strong references on purpose: Instance wrappers in weak tables can be collected while the
+-- Instance still exists. Entries are removed when the object is destroyed.
+local bindings: { [Instance]: { [string]: { key: string, params: { [string]: any }? } } } = {}
+
+local function report(language: string, key: string)
+	local id = language .. ":" .. key
+	if reported[id] then
+		return
+	end
+	reported[id] = true
+	warn(string.format("[FZ-Loc] Missing translation '%s' for language '%s'", key, language))
+end
+
+local function format(text: string, params: { [string]: any }?): string
+	if not params then
+		return text
+	end
+	return (string.gsub(text, "{([%w_]+)}", function(name)
+		local value = params[name]
+		if value == nil then
+			return "{" .. name .. "}"
+		end
+		return tostring(value)
+	end))
+end
+
+function Localization.T(key: string, params: { [string]: any }?, language: string?): string
+	local lang = language or current
+	local languageTable = tables[lang]
+	local text = languageTable and languageTable[key]
+	if text == nil then
+		if lang ~= Config.FallbackLanguage then
+			report(lang, key)
+		end
+		text = tables[Config.FallbackLanguage][key]
+		if text == nil then
+			report(Config.FallbackLanguage, key)
+			return key
+		end
+	end
+	return format(text, params)
+end
+
+function Localization.Has(key: string): boolean
+	return tables[Config.FallbackLanguage][key] ~= nil
+end
+
+function Localization.GetLanguage(): string
+	return current
+end
+
+function Localization.IsSupported(language: any): boolean
+	return type(language) == "string" and tables[language] ~= nil
+end
+
+-- Maps a Roblox locale id ("de-de", "pt-br", "es-mx") to one of our languages, or nil.
+function Localization.Detect(localeId: string?): string?
+	local id = string.lower(localeId or "")
+	if tables[id] then
+		return id
+	end
+	local base = string.match(id, "^(%a+)")
+	if base == "pt" then
+		return "pt-br"
+	end
+	if base and tables[base] then
+		return base
+	end
+	return nil
+end
+
+local function applyBinding(object: Instance, property: string, entry)
+	(object :: any)[property] = Localization.T(entry.key, entry.params)
+end
+
+function Localization.Bind(object: Instance, key: string, params: { [string]: any }?, property: string?)
+	local prop = property or "Text"
+	if object:IsA("GuiBase2d") then
+		(object :: any).AutoLocalize = false
+	end
+	local objectBindings = bindings[object]
+	if not objectBindings then
+		objectBindings = {}
+		bindings[object] = objectBindings
+		object.Destroying:Connect(function()
+			bindings[object] = nil
+		end)
+	end
+	local entry = { key = key, params = params }
+	objectBindings[prop] = entry
+	applyBinding(object, prop, entry)
+end
+
+function Localization.Unbind(object: Instance)
+	bindings[object] = nil
+end
+
+function Localization.SetLanguage(language: string): boolean
+	if not tables[language] then
+		return false
+	end
+	if language == current then
+		return true
+	end
+	current = language
+	-- Update everything synchronously in the same frame: no flicker, no mixed languages.
+	for object, objectBindings in bindings do
+		for prop, entry in objectBindings do
+			applyBinding(object, prop, entry)
+		end
+	end
+	Localization.Changed:Fire(language)
+	return true
+end
+
+-- Development check: returns a list of human readable problems (missing keys, extra keys,
+-- mismatching {placeholders}). Run automatically in Studio by the client bootstrap.
+function Localization.Validate(): { string }
+	local problems = {}
+	local reference = tables[Config.FallbackLanguage]
+	local function placeholders(text: string): string
+		local found = {}
+		for name in string.gmatch(text, "{([%w_]+)}") do
+			table.insert(found, name)
+		end
+		table.sort(found)
+		return table.concat(found, ",")
+	end
+	for language, languageTable in tables do
+		if language == Config.FallbackLanguage then
+			continue
+		end
+		for key, text in reference do
+			local translated = languageTable[key]
+			if translated == nil then
+				table.insert(problems, string.format("%s: missing %s", language, key))
+			elseif placeholders(translated) ~= placeholders(text) then
+				table.insert(problems, string.format("%s: placeholder mismatch in %s", language, key))
+			end
+		end
+		for key in languageTable do
+			if reference[key] == nil then
+				table.insert(problems, string.format("%s: extra key %s (not in %s)", language, key, Config.FallbackLanguage))
+			end
+		end
+	end
+	return problems
+end
+
+return Localization
+]]></string>
+        </Properties>
+        <Item class="Folder" referent="6">
+          <Properties>
+            <string name="Name">Languages</string>
+          </Properties>
+          <Item class="ModuleScript" referent="7">
+            <Properties>
+              <string name="Name">de</string>
+              <string name="Source"><![CDATA[-- Deutsch
+return {
+	-- Sprachauswahl
+	LANG_PROMPT = "Wähle deine Sprache",
+	LANG_SUGGESTED = "Vorschlag",
+	LANG_HINT = "Du kannst das jederzeit in den Einstellungen ändern.",
+
+	-- Hauptmenü
+	MENU_PLAY = "Spielen",
+	MENU_CONTINUE = "Fortsetzen",
+	MENU_RESUME = "Weiter",
+	MENU_LOBBY = "Team",
+	MENU_CHAPTERS = "Kapitel",
+	MENU_SETTINGS = "Einstellungen",
+	MENU_EXTRAS = "Extras",
+	MENU_BACK = "Zurück",
+	MENU_TAGLINE = "Jemand sendet noch.",
+	PAUSE_TITLE = "Menü",
+	PAUSE_NOTE = "Die Station wartet nicht, solange dieses Menü offen ist.",
+
+	-- Lobby / Team
+	LOBBY_TITLE = "Team",
+	LOBBY_COUNT = "{count} / {max} in dieser Sitzung",
+	LOBBY_INVITE = "Freunde einladen",
+	LOBBY_INVITE_UNAVAILABLE = "Einladungen sind gerade nicht verfügbar.",
+	LOBBY_SOLO_HINT = "Alles ist auch allein spielbar. Freunde können jederzeit dazukommen.",
+	LOBBY_YOU = "(du)",
+
+	-- Kapitel
+	CHAPTER_LABEL = "Kapitel {number}",
+	CHAPTER_01_TITLE = "Der Empfang",
+	CHAPTER_02_TITLE = "Die falsche Stimme",
+	CHAPTER_03_TITLE = "Das Protokoll",
+	CHAPTER_04_TITLE = "Frequenz Null",
+	CHAPTER_LOCKED = "Noch kein Signal",
+
+	-- Einstellungen
+	SETTINGS_TITLE = "Einstellungen",
+	SETTINGS_LANGUAGE = "Sprache",
+	SETTINGS_SUBTITLES = "Untertitel",
+	SETTINGS_SUBTITLE_SIZE = "Untertitelgröße",
+	SETTINGS_SCARE = "Schreckintensität",
+	SETTINGS_SCARE_DESC = "„Reduziert“ mildert plötzliche Schreckmomente. Die Geschichte bleibt gleich.",
+	SETTINGS_CAMERA = "Kameraeffekte",
+	SETTINGS_CAMERA_DESC = "Kamerawackeln, Sichtfeldänderungen und Bildverzerrung.",
+	SETTINGS_GRAPHICS = "Grafik",
+	SETTINGS_GRAPHICS_DESC = "Wichtige Hinweise und Kreaturen bleiben auf jeder Stufe sichtbar.",
+	SETTINGS_BRIGHTNESS = "Helligkeit",
+	SETTINGS_BRIGHTNESS_DESC = "Erhöhe sie, wenn dunkle Räume auf deinem Bildschirm schwer erkennbar sind.",
+	VALUE_ON = "An",
+	VALUE_OFF = "Aus",
+	VALUE_SMALL = "Klein",
+	VALUE_MEDIUM = "Mittel",
+	VALUE_LARGE = "Groß",
+	VALUE_REDUCED = "Reduziert",
+	VALUE_STANDARD = "Standard",
+	VALUE_INTENSE = "Intensiv",
+	VALUE_CAM_OFF = "Aus",
+	VALUE_CAM_REDUCED = "Reduziert",
+	VALUE_CAM_FULL = "Voll",
+	VALUE_AUTO = "Automatisch",
+	VALUE_LOW = "Niedrig",
+	VALUE_HIGH = "Hoch",
+	VALUE_ULTRA = "Ultra",
+
+	-- Extras / Funkcodes
+	EXTRAS_TITLE = "Extras",
+	EXTRAS_CODE_TITLE = "Funkcodes",
+	EXTRAS_CODE_HINT = "Die Codes sind in der Station versteckt. Sieh genau hin.",
+	EXTRAS_CODE_PLACEHOLDER = "Code eingeben",
+	EXTRAS_REDEEM = "Senden",
+	EXTRAS_BALANCE = "Signalmarken: {amount}",
+	CODE_OK = "Signal empfangen. +{amount} Signalmarken.",
+	CODE_INVALID = "Auf dieser Frequenz ist nichts.",
+	CODE_USED = "Dieses Signal hast du bereits empfangen.",
+	CODE_RATE_LIMITED = "Zu viele Versuche. Warte einen Moment.",
+	CODE_ERROR = "Übertragung fehlgeschlagen. Versuche es später erneut.",
+
+	-- Wartung (Admin)
+	ADMIN_GRANTED = "Wartungszugang gewährt.",
+	ADMIN_TITLE = "Wartung",
+	ADMIN_DEBUG = "Leistungsanzeige",
+	ADMIN_GRANT_TEST = "100 Testmarken hinzufügen",
+	ADMIN_DONE = "Erledigt.",
+	ADMIN_DENIED = "Zugriff verweigert.",
+
+	-- Touch-Buttons
+	TOUCH_SPRINT = "Rennen",
+	TOUCH_LIGHT = "Licht",
+
+	-- Interaktionen
+	INTERACT_READ = "Lesen",
+	INTERACT_OPEN = "Öffnen",
+	OBJECT_FAX = "Faxgerät",
+	OBJECT_DOOR = "Tür",
+
+	-- Ziele
+	OBJECTIVE_NEW = "Neues Ziel",
+	OBJECTIVE_CHECK_GATEHOUSE = "Sieh in der Pförtnerloge nach.",
+	OBJECTIVE_FIND_SENDER = "Finde heraus, wer da sendet.",
+
+	-- Sprecher und Geräuschuntertitel
+	SPEAKER_UNKNOWN = "Unbekannte Stimme",
+	SPEAKER_RELAY = "Relais",
+	SFX_STATIC = "[Funkrauschen]",
+	SFX_FAX = "[Ein Faxgerät beginnt zu drucken]",
+
+	-- Kapitel 1: Funk
+	RADIO_C1_001 = "…VESPER-4 an alle, die das empfangen. Bitte. Jemand ist im Gebäude.",
+	RADIO_C1_002 = "Sie sind gerade angekommen. Sie stehen am Tor.",
+	RADIO_C1_003 = "Nicht antworten. Noch nicht.",
+
+	-- Kapitel 1: Dokumente und Texte in der Welt
+	DATE_FORMAT = "{d}.{m}.{y}",
+	FAX_TITLE = "ARBEITSAUFTRAG 0214",
+	FAX_BODY = "Inspektion der stillgelegten Relaisstation VESPER-4.\nGrund: unerlaubte Sendungen im Notrufband.\nAnweisung: Eingehende Rufe nicht beantworten.\n\nAbsender: VESPER-4 BETRIEB\nGesendet: {date}, 02:14 Uhr",
+	DOC_CLOSE = "Schließen",
+	SIGN_STATION = "RELAISSTATION VESPER-4\nZutritt nur für Befugte",
+	NOTE_MAINTENANCE = "WARTUNG\nKanal {code} bleibt unbelegt.\nFalls er trotzdem sendet: nicht antworten.",
+
+	-- Fehler
+	ERROR_DATA = "Dein Spielstand konnte nicht geladen werden. Der Fortschritt dieser Sitzung wird nicht gespeichert.",
+}
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="8">
+            <Properties>
+              <string name="Name">en</string>
+              <string name="Source"><![CDATA[-- English (reference language and fallback). Every key must exist here.
+return {
+	-- Language selection
+	LANG_PROMPT = "Choose your language",
+	LANG_SUGGESTED = "Suggested",
+	LANG_HINT = "You can change this anytime in Settings.",
+
+	-- Main menu
+	MENU_PLAY = "Play",
+	MENU_CONTINUE = "Continue",
+	MENU_RESUME = "Resume",
+	MENU_LOBBY = "Team",
+	MENU_CHAPTERS = "Chapters",
+	MENU_SETTINGS = "Settings",
+	MENU_EXTRAS = "Extras",
+	MENU_BACK = "Back",
+	MENU_TAGLINE = "Someone is still transmitting.",
+	PAUSE_TITLE = "Menu",
+	PAUSE_NOTE = "The station does not wait while this menu is open.",
+
+	-- Lobby / team
+	LOBBY_TITLE = "Team",
+	LOBBY_COUNT = "{count} / {max} in this session",
+	LOBBY_INVITE = "Invite friends",
+	LOBBY_INVITE_UNAVAILABLE = "Invites are not available right now.",
+	LOBBY_SOLO_HINT = "Everything can be played alone. Friends can join at any time.",
+	LOBBY_YOU = "(you)",
+
+	-- Chapters
+	CHAPTER_LABEL = "Chapter {number}",
+	CHAPTER_01_TITLE = "The Reception",
+	CHAPTER_02_TITLE = "The Wrong Voice",
+	CHAPTER_03_TITLE = "The Protocol",
+	CHAPTER_04_TITLE = "Frequency Zero",
+	CHAPTER_LOCKED = "No signal yet",
+
+	-- Settings
+	SETTINGS_TITLE = "Settings",
+	SETTINGS_LANGUAGE = "Language",
+	SETTINGS_SUBTITLES = "Subtitles",
+	SETTINGS_SUBTITLE_SIZE = "Subtitle size",
+	SETTINGS_SCARE = "Scare intensity",
+	SETTINGS_SCARE_DESC = "Reduced softens sudden scares. The story stays the same.",
+	SETTINGS_CAMERA = "Camera effects",
+	SETTINGS_CAMERA_DESC = "Camera shake, field-of-view changes and screen distortion.",
+	SETTINGS_GRAPHICS = "Graphics",
+	SETTINGS_GRAPHICS_DESC = "Important hints and creatures stay visible on every level.",
+	SETTINGS_BRIGHTNESS = "Brightness",
+	SETTINGS_BRIGHTNESS_DESC = "Raise it if dark rooms are hard to read on your screen.",
+	VALUE_ON = "On",
+	VALUE_OFF = "Off",
+	VALUE_SMALL = "Small",
+	VALUE_MEDIUM = "Medium",
+	VALUE_LARGE = "Large",
+	VALUE_REDUCED = "Reduced",
+	VALUE_STANDARD = "Standard",
+	VALUE_INTENSE = "Intense",
+	VALUE_CAM_OFF = "Off",
+	VALUE_CAM_REDUCED = "Reduced",
+	VALUE_CAM_FULL = "Full",
+	VALUE_AUTO = "Automatic",
+	VALUE_LOW = "Low",
+	VALUE_HIGH = "High",
+	VALUE_ULTRA = "Ultra",
+
+	-- Extras / transmission codes
+	EXTRAS_TITLE = "Extras",
+	EXTRAS_CODE_TITLE = "Transmission codes",
+	EXTRAS_CODE_HINT = "Codes are hidden inside the station. Look closely.",
+	EXTRAS_CODE_PLACEHOLDER = "Enter code",
+	EXTRAS_REDEEM = "Transmit",
+	EXTRAS_BALANCE = "Signal marks: {amount}",
+	CODE_OK = "Signal received. +{amount} signal marks.",
+	CODE_INVALID = "Nothing on this frequency.",
+	CODE_USED = "You have already received this signal.",
+	CODE_RATE_LIMITED = "Too many attempts. Wait a moment.",
+	CODE_ERROR = "Transmission failed. Please try again later.",
+
+	-- Maintenance (admin)
+	ADMIN_GRANTED = "Maintenance access granted.",
+	ADMIN_TITLE = "Maintenance",
+	ADMIN_DEBUG = "Performance overlay",
+	ADMIN_GRANT_TEST = "Add 100 test marks",
+	ADMIN_DONE = "Done.",
+	ADMIN_DENIED = "Access denied.",
+
+	-- Touch buttons
+	TOUCH_SPRINT = "Run",
+	TOUCH_LIGHT = "Light",
+
+	-- Interaction prompts
+	INTERACT_READ = "Read",
+	INTERACT_OPEN = "Open",
+	OBJECT_FAX = "Fax machine",
+	OBJECT_DOOR = "Door",
+
+	-- Objectives
+	OBJECTIVE_NEW = "New objective",
+	OBJECTIVE_CHECK_GATEHOUSE = "Check the gatehouse.",
+	OBJECTIVE_FIND_SENDER = "Find out who is transmitting.",
+
+	-- Speakers and sound captions
+	SPEAKER_UNKNOWN = "Unknown voice",
+	SPEAKER_RELAY = "Relay",
+	SFX_STATIC = "[Radio static]",
+	SFX_FAX = "[A fax machine starts printing]",
+
+	-- Chapter 1: radio
+	RADIO_C1_001 = "...VESPER-4 to anyone receiving. Please. Someone is inside the building.",
+	RADIO_C1_002 = "They just arrived. They're standing at the gate.",
+	RADIO_C1_003 = "Don't answer. Not yet.",
+
+	-- Chapter 1: documents and world text
+	DATE_FORMAT = "{m}/{d}/{y}",
+	FAX_TITLE = "WORK ORDER 0214",
+	FAX_BODY = "Inspection of decommissioned relay station VESPER-4.\nReason: unauthorized transmissions on the emergency band.\nInstruction: Do not respond to incoming calls.\n\nSender: VESPER-4 OPERATIONS\nSent: {date}, 02:14",
+	DOC_CLOSE = "Close",
+	SIGN_STATION = "VESPER-4 RELAY STATION\nNo unauthorized entry",
+	NOTE_MAINTENANCE = "MAINTENANCE\nChannel {code} must stay unassigned.\nIf it transmits anyway: do not reply.",
+
+	-- Errors
+	ERROR_DATA = "Your save could not be loaded. Progress in this session will not be saved.",
+}
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="9">
+            <Properties>
+              <string name="Name">es</string>
+              <string name="Source"><![CDATA[-- Español (neutro latinoamericano: "tú" para el jugador, "ustedes" para el equipo)
+return {
+	-- Selección de idioma
+	LANG_PROMPT = "Elige tu idioma",
+	LANG_SUGGESTED = "Sugerido",
+	LANG_HINT = "Puedes cambiarlo cuando quieras en Ajustes.",
+
+	-- Menú principal
+	MENU_PLAY = "Jugar",
+	MENU_CONTINUE = "Continuar",
+	MENU_RESUME = "Volver",
+	MENU_LOBBY = "Equipo",
+	MENU_CHAPTERS = "Capítulos",
+	MENU_SETTINGS = "Ajustes",
+	MENU_EXTRAS = "Extras",
+	MENU_BACK = "Atrás",
+	MENU_TAGLINE = "Alguien sigue transmitiendo.",
+	PAUSE_TITLE = "Menú",
+	PAUSE_NOTE = "La estación no espera mientras este menú está abierto.",
+
+	-- Equipo
+	LOBBY_TITLE = "Equipo",
+	LOBBY_COUNT = "{count} / {max} en esta sesión",
+	LOBBY_INVITE = "Invitar amigos",
+	LOBBY_INVITE_UNAVAILABLE = "Las invitaciones no están disponibles ahora.",
+	LOBBY_SOLO_HINT = "Todo se puede jugar en solitario. Tus amigos pueden unirse en cualquier momento.",
+	LOBBY_YOU = "(tú)",
+
+	-- Capítulos
+	CHAPTER_LABEL = "Capítulo {number}",
+	CHAPTER_01_TITLE = "La recepción",
+	CHAPTER_02_TITLE = "La voz equivocada",
+	CHAPTER_03_TITLE = "El protocolo",
+	CHAPTER_04_TITLE = "Frecuencia cero",
+	CHAPTER_LOCKED = "Todavía sin señal",
+
+	-- Ajustes
+	SETTINGS_TITLE = "Ajustes",
+	SETTINGS_LANGUAGE = "Idioma",
+	SETTINGS_SUBTITLES = "Subtítulos",
+	SETTINGS_SUBTITLE_SIZE = "Tamaño de subtítulos",
+	SETTINGS_SCARE = "Intensidad de sustos",
+	SETTINGS_SCARE_DESC = "«Reducida» suaviza los sustos repentinos. La historia no cambia.",
+	SETTINGS_CAMERA = "Efectos de cámara",
+	SETTINGS_CAMERA_DESC = "Temblor de cámara, cambios del campo de visión y distorsión de imagen.",
+	SETTINGS_GRAPHICS = "Gráficos",
+	SETTINGS_GRAPHICS_DESC = "Las pistas importantes y las criaturas siguen visibles en todos los niveles.",
+	SETTINGS_BRIGHTNESS = "Brillo",
+	SETTINGS_BRIGHTNESS_DESC = "Súbelo si te cuesta distinguir las salas oscuras en tu pantalla.",
+	VALUE_ON = "Sí",
+	VALUE_OFF = "No",
+	VALUE_SMALL = "Pequeño",
+	VALUE_MEDIUM = "Medio",
+	VALUE_LARGE = "Grande",
+	VALUE_REDUCED = "Reducida",
+	VALUE_STANDARD = "Estándar",
+	VALUE_INTENSE = "Intensa",
+	VALUE_CAM_OFF = "Desactivados",
+	VALUE_CAM_REDUCED = "Reducidos",
+	VALUE_CAM_FULL = "Completos",
+	VALUE_AUTO = "Automático",
+	VALUE_LOW = "Bajo",
+	VALUE_HIGH = "Alto",
+	VALUE_ULTRA = "Ultra",
+
+	-- Extras / códigos de transmisión
+	EXTRAS_TITLE = "Extras",
+	EXTRAS_CODE_TITLE = "Códigos de transmisión",
+	EXTRAS_CODE_HINT = "Los códigos están escondidos en la estación. Mira con atención.",
+	EXTRAS_CODE_PLACEHOLDER = "Introduce un código",
+	EXTRAS_REDEEM = "Transmitir",
+	EXTRAS_BALANCE = "Marcas de señal: {amount}",
+	CODE_OK = "Señal recibida. +{amount} marcas de señal.",
+	CODE_INVALID = "No hay nada en esta frecuencia.",
+	CODE_USED = "Ya recibiste esta señal.",
+	CODE_RATE_LIMITED = "Demasiados intentos. Espera un momento.",
+	CODE_ERROR = "La transmisión falló. Inténtalo más tarde.",
+
+	-- Mantenimiento (admin)
+	ADMIN_GRANTED = "Acceso de mantenimiento concedido.",
+	ADMIN_TITLE = "Mantenimiento",
+	ADMIN_DEBUG = "Indicador de rendimiento",
+	ADMIN_GRANT_TEST = "Añadir 100 marcas de prueba",
+	ADMIN_DONE = "Hecho.",
+	ADMIN_DENIED = "Acceso denegado.",
+
+	-- Botones táctiles
+	TOUCH_SPRINT = "Correr",
+	TOUCH_LIGHT = "Luz",
+
+	-- Interacciones
+	INTERACT_READ = "Leer",
+	INTERACT_OPEN = "Abrir",
+	OBJECT_FAX = "Fax",
+	OBJECT_DOOR = "Puerta",
+
+	-- Objetivos
+	OBJECTIVE_NEW = "Nuevo objetivo",
+	OBJECTIVE_CHECK_GATEHOUSE = "Revisa la caseta de vigilancia.",
+	OBJECTIVE_FIND_SENDER = "Descubre quién está transmitiendo.",
+
+	-- Hablantes y subtítulos de sonido
+	SPEAKER_UNKNOWN = "Voz desconocida",
+	SPEAKER_RELAY = "Relé",
+	SFX_STATIC = "[Estática de radio]",
+	SFX_FAX = "[Un fax empieza a imprimir]",
+
+	-- Capítulo 1: radio
+	RADIO_C1_001 = "...VESPER-4 a quien esté escuchando. Por favor. Hay alguien dentro del edificio.",
+	RADIO_C1_002 = "Acaban de llegar. Están en el portón.",
+	RADIO_C1_003 = "No respondan. Todavía no.",
+
+	-- Capítulo 1: documentos y textos del mundo
+	DATE_FORMAT = "{d}/{m}/{y}",
+	FAX_TITLE = "ORDEN DE TRABAJO 0214",
+	FAX_BODY = "Inspección de la estación repetidora clausurada VESPER-4.\nMotivo: transmisiones no autorizadas en la banda de emergencia.\nInstrucción: no responder a las llamadas entrantes.\n\nRemitente: OPERACIONES VESPER-4\nEnviado: {date}, 02:14",
+	DOC_CLOSE = "Cerrar",
+	SIGN_STATION = "ESTACIÓN REPETIDORA VESPER-4\nProhibido el paso a personal no autorizado",
+	NOTE_MAINTENANCE = "MANTENIMIENTO\nEl canal {code} debe quedar libre.\nSi transmite de todos modos: no respondan.",
+
+	-- Errores
+	ERROR_DATA = "No se pudo cargar tu partida. El progreso de esta sesión no se guardará.",
+}
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="10">
+            <Properties>
+              <string name="Name">fr</string>
+              <string name="Source"><![CDATA[-- Français
+return {
+	-- Choix de la langue
+	LANG_PROMPT = "Choisis ta langue",
+	LANG_SUGGESTED = "Suggestion",
+	LANG_HINT = "Tu peux la changer à tout moment dans les Paramètres.",
+
+	-- Menu principal
+	MENU_PLAY = "Jouer",
+	MENU_CONTINUE = "Continuer",
+	MENU_RESUME = "Reprendre",
+	MENU_LOBBY = "Équipe",
+	MENU_CHAPTERS = "Chapitres",
+	MENU_SETTINGS = "Paramètres",
+	MENU_EXTRAS = "Extras",
+	MENU_BACK = "Retour",
+	MENU_TAGLINE = "Quelqu'un émet encore.",
+	PAUSE_TITLE = "Menu",
+	PAUSE_NOTE = "La station n'attend pas pendant que ce menu est ouvert.",
+
+	-- Équipe
+	LOBBY_TITLE = "Équipe",
+	LOBBY_COUNT = "{count} / {max} dans cette session",
+	LOBBY_INVITE = "Inviter des amis",
+	LOBBY_INVITE_UNAVAILABLE = "Les invitations ne sont pas disponibles pour le moment.",
+	LOBBY_SOLO_HINT = "Tout peut se jouer en solo. Tes amis peuvent te rejoindre à tout moment.",
+	LOBBY_YOU = "(toi)",
+
+	-- Chapitres
+	CHAPTER_LABEL = "Chapitre {number}",
+	CHAPTER_01_TITLE = "La Réception",
+	CHAPTER_02_TITLE = "La Mauvaise Voix",
+	CHAPTER_03_TITLE = "Le Protocole",
+	CHAPTER_04_TITLE = "Fréquence Zéro",
+	CHAPTER_LOCKED = "Pas encore de signal",
+
+	-- Paramètres
+	SETTINGS_TITLE = "Paramètres",
+	SETTINGS_LANGUAGE = "Langue",
+	SETTINGS_SUBTITLES = "Sous-titres",
+	SETTINGS_SUBTITLE_SIZE = "Taille des sous-titres",
+	SETTINGS_SCARE = "Intensité de la peur",
+	SETTINGS_SCARE_DESC = "« Réduite » atténue les frayeurs soudaines. L'histoire reste la même.",
+	SETTINGS_CAMERA = "Effets de caméra",
+	SETTINGS_CAMERA_DESC = "Tremblements, variations du champ de vision et distorsions de l'image.",
+	SETTINGS_GRAPHICS = "Qualité graphique",
+	SETTINGS_GRAPHICS_DESC = "Les indices importants et les créatures restent visibles à tous les niveaux.",
+	SETTINGS_BRIGHTNESS = "Luminosité",
+	SETTINGS_BRIGHTNESS_DESC = "Augmente-la si les pièces sombres sont difficiles à distinguer sur ton écran.",
+	VALUE_ON = "Activés",
+	VALUE_OFF = "Désactivés",
+	VALUE_SMALL = "Petite",
+	VALUE_MEDIUM = "Moyenne",
+	VALUE_LARGE = "Grande",
+	VALUE_REDUCED = "Réduite",
+	VALUE_STANDARD = "Standard",
+	VALUE_INTENSE = "Intense",
+	VALUE_CAM_OFF = "Désactivés",
+	VALUE_CAM_REDUCED = "Réduits",
+	VALUE_CAM_FULL = "Complets",
+	VALUE_AUTO = "Automatique",
+	VALUE_LOW = "Faible",
+	VALUE_HIGH = "Élevée",
+	VALUE_ULTRA = "Ultra",
+
+	-- Extras / codes de transmission
+	EXTRAS_TITLE = "Extras",
+	EXTRAS_CODE_TITLE = "Codes de transmission",
+	EXTRAS_CODE_HINT = "Les codes sont cachés dans la station. Regarde bien.",
+	EXTRAS_CODE_PLACEHOLDER = "Saisir un code",
+	EXTRAS_REDEEM = "Transmettre",
+	EXTRAS_BALANCE = "Marques de signal : {amount}",
+	CODE_OK = "Signal reçu. +{amount} marques de signal.",
+	CODE_INVALID = "Rien sur cette fréquence.",
+	CODE_USED = "Tu as déjà reçu ce signal.",
+	CODE_RATE_LIMITED = "Trop de tentatives. Patiente un instant.",
+	CODE_ERROR = "Échec de la transmission. Réessaie plus tard.",
+
+	-- Maintenance (admin)
+	ADMIN_GRANTED = "Accès maintenance accordé.",
+	ADMIN_TITLE = "Maintenance",
+	ADMIN_DEBUG = "Indicateur de performances",
+	ADMIN_GRANT_TEST = "Ajouter 100 marques de test",
+	ADMIN_DONE = "Terminé.",
+	ADMIN_DENIED = "Accès refusé.",
+
+	-- Boutons tactiles
+	TOUCH_SPRINT = "Courir",
+	TOUCH_LIGHT = "Lampe",
+
+	-- Interactions
+	INTERACT_READ = "Lire",
+	INTERACT_OPEN = "Ouvrir",
+	OBJECT_FAX = "Télécopieur",
+	OBJECT_DOOR = "Porte",
+
+	-- Objectifs
+	OBJECTIVE_NEW = "Nouvel objectif",
+	OBJECTIVE_CHECK_GATEHOUSE = "Inspecte la loge du gardien.",
+	OBJECTIVE_FIND_SENDER = "Découvre qui émet.",
+
+	-- Interlocuteurs et sous-titres sonores
+	SPEAKER_UNKNOWN = "Voix inconnue",
+	SPEAKER_RELAY = "Relais",
+	SFX_STATIC = "[Grésillements radio]",
+	SFX_FAX = "[Un télécopieur se met à imprimer]",
+
+	-- Chapitre 1 : radio
+	RADIO_C1_001 = "...Ici VESPER-4, à quiconque reçoit ce message. Je vous en prie. Quelqu'un est dans le bâtiment.",
+	RADIO_C1_002 = "Ils viennent d'arriver. Ils sont devant le portail.",
+	RADIO_C1_003 = "Ne répondez pas. Pas encore.",
+
+	-- Chapitre 1 : documents et textes du décor
+	DATE_FORMAT = "{d}/{m}/{y}",
+	FAX_TITLE = "ORDRE DE MISSION 0214",
+	FAX_BODY = "Inspection de la station relais désaffectée VESPER-4.\nMotif : émissions non autorisées sur la bande d'urgence.\nConsigne : ne pas répondre aux appels entrants.\n\nExpéditeur : EXPLOITATION VESPER-4\nEnvoyé le : {date}, 02 h 14",
+	DOC_CLOSE = "Fermer",
+	SIGN_STATION = "STATION RELAIS VESPER-4\nAccès interdit à toute personne non autorisée",
+	NOTE_MAINTENANCE = "MAINTENANCE\nLe canal {code} doit rester libre.\nS'il émet quand même : ne pas répondre.",
+
+	-- Erreurs
+	ERROR_DATA = "Ta sauvegarde n'a pas pu être chargée. La progression de cette session ne sera pas enregistrée.",
+}
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="11">
+            <Properties>
+              <string name="Name">pt_br</string>
+              <string name="Source"><![CDATA[-- Português (Brasil)
+return {
+	-- Escolha de idioma
+	LANG_PROMPT = "Escolha seu idioma",
+	LANG_SUGGESTED = "Sugerido",
+	LANG_HINT = "Você pode mudar isso a qualquer momento nas Configurações.",
+
+	-- Menu principal
+	MENU_PLAY = "Jogar",
+	MENU_CONTINUE = "Continuar",
+	MENU_RESUME = "Voltar ao jogo",
+	MENU_LOBBY = "Equipe",
+	MENU_CHAPTERS = "Capítulos",
+	MENU_SETTINGS = "Configurações",
+	MENU_EXTRAS = "Extras",
+	MENU_BACK = "Voltar",
+	MENU_TAGLINE = "Alguém ainda está transmitindo.",
+	PAUSE_TITLE = "Menu",
+	PAUSE_NOTE = "A estação não espera enquanto este menu está aberto.",
+
+	-- Equipe
+	LOBBY_TITLE = "Equipe",
+	LOBBY_COUNT = "{count} / {max} nesta sessão",
+	LOBBY_INVITE = "Convidar amigos",
+	LOBBY_INVITE_UNAVAILABLE = "Os convites não estão disponíveis no momento.",
+	LOBBY_SOLO_HINT = "Tudo pode ser jogado sozinho. Seus amigos podem entrar a qualquer momento.",
+	LOBBY_YOU = "(você)",
+
+	-- Capítulos
+	CHAPTER_LABEL = "Capítulo {number}",
+	CHAPTER_01_TITLE = "A Recepção",
+	CHAPTER_02_TITLE = "A Voz Errada",
+	CHAPTER_03_TITLE = "O Protocolo",
+	CHAPTER_04_TITLE = "Frequência Zero",
+	CHAPTER_LOCKED = "Ainda sem sinal",
+
+	-- Configurações
+	SETTINGS_TITLE = "Configurações",
+	SETTINGS_LANGUAGE = "Idioma",
+	SETTINGS_SUBTITLES = "Legendas",
+	SETTINGS_SUBTITLE_SIZE = "Tamanho das legendas",
+	SETTINGS_SCARE = "Intensidade dos sustos",
+	SETTINGS_SCARE_DESC = "“Reduzida” suaviza os sustos repentinos. A história continua a mesma.",
+	SETTINGS_CAMERA = "Efeitos de câmera",
+	SETTINGS_CAMERA_DESC = "Tremor de câmera, mudanças no campo de visão e distorção da imagem.",
+	SETTINGS_GRAPHICS = "Gráficos",
+	SETTINGS_GRAPHICS_DESC = "Pistas importantes e criaturas continuam visíveis em todos os níveis.",
+	SETTINGS_BRIGHTNESS = "Brilho",
+	SETTINGS_BRIGHTNESS_DESC = "Aumente se as salas escuras estiverem difíceis de enxergar na sua tela.",
+	VALUE_ON = "Ligadas",
+	VALUE_OFF = "Desligadas",
+	VALUE_SMALL = "Pequeno",
+	VALUE_MEDIUM = "Médio",
+	VALUE_LARGE = "Grande",
+	VALUE_REDUCED = "Reduzida",
+	VALUE_STANDARD = "Padrão",
+	VALUE_INTENSE = "Intensa",
+	VALUE_CAM_OFF = "Desligados",
+	VALUE_CAM_REDUCED = "Reduzidos",
+	VALUE_CAM_FULL = "Completos",
+	VALUE_AUTO = "Automático",
+	VALUE_LOW = "Baixo",
+	VALUE_HIGH = "Alto",
+	VALUE_ULTRA = "Ultra",
+
+	-- Extras / códigos de transmissão
+	EXTRAS_TITLE = "Extras",
+	EXTRAS_CODE_TITLE = "Códigos de transmissão",
+	EXTRAS_CODE_HINT = "Os códigos estão escondidos na estação. Olhe com atenção.",
+	EXTRAS_CODE_PLACEHOLDER = "Digite um código",
+	EXTRAS_REDEEM = "Transmitir",
+	EXTRAS_BALANCE = "Marcas de sinal: {amount}",
+	CODE_OK = "Sinal recebido. +{amount} marcas de sinal.",
+	CODE_INVALID = "Não há nada nesta frequência.",
+	CODE_USED = "Você já recebeu este sinal.",
+	CODE_RATE_LIMITED = "Tentativas demais. Espere um momento.",
+	CODE_ERROR = "A transmissão falhou. Tente novamente mais tarde.",
+
+	-- Manutenção (admin)
+	ADMIN_GRANTED = "Acesso de manutenção liberado.",
+	ADMIN_TITLE = "Manutenção",
+	ADMIN_DEBUG = "Indicador de desempenho",
+	ADMIN_GRANT_TEST = "Adicionar 100 marcas de teste",
+	ADMIN_DONE = "Pronto.",
+	ADMIN_DENIED = "Acesso negado.",
+
+	-- Botões de toque
+	TOUCH_SPRINT = "Correr",
+	TOUCH_LIGHT = "Luz",
+
+	-- Interações
+	INTERACT_READ = "Ler",
+	INTERACT_OPEN = "Abrir",
+	OBJECT_FAX = "Fax",
+	OBJECT_DOOR = "Porta",
+
+	-- Objetivos
+	OBJECTIVE_NEW = "Novo objetivo",
+	OBJECTIVE_CHECK_GATEHOUSE = "Verifique a guarita.",
+	OBJECTIVE_FIND_SENDER = "Descubra quem está transmitindo.",
+
+	-- Falantes e legendas de som
+	SPEAKER_UNKNOWN = "Voz desconhecida",
+	SPEAKER_RELAY = "Relé",
+	SFX_STATIC = "[Chiado de rádio]",
+	SFX_FAX = "[Um fax começa a imprimir]",
+
+	-- Capítulo 1: rádio
+	RADIO_C1_001 = "...VESPER-4 para quem estiver na escuta. Por favor. Tem alguém dentro do prédio.",
+	RADIO_C1_002 = "Eles acabaram de chegar. Estão no portão.",
+	RADIO_C1_003 = "Não respondam. Ainda não.",
+
+	-- Capítulo 1: documentos e textos do cenário
+	DATE_FORMAT = "{d}/{m}/{y}",
+	FAX_TITLE = "ORDEM DE SERVIÇO 0214",
+	FAX_BODY = "Inspeção da estação repetidora desativada VESPER-4.\nMotivo: transmissões não autorizadas na faixa de emergência.\nInstrução: não responder a chamadas recebidas.\n\nRemetente: OPERAÇÕES VESPER-4\nEnviado em: {date}, 02:14",
+	DOC_CLOSE = "Fechar",
+	SIGN_STATION = "ESTAÇÃO REPETIDORA VESPER-4\nEntrada proibida a pessoas não autorizadas",
+	NOTE_MAINTENANCE = "MANUTENÇÃO\nO canal {code} deve ficar livre.\nSe transmitir mesmo assim: não respondam.",
+
+	-- Erros
+	ERROR_DATA = "Não foi possível carregar seu progresso salvo. O progresso desta sessão não será salvo.",
+}
+]]></string>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+      <Item class="ModuleScript" referent="12">
+        <Properties>
+          <string name="Name">Net</string>
+          <string name="Source"><![CDATA[-- Net: declares every remote in one place. The server creates them, clients wait for them.
+-- Direction is documented per remote; every client->server remote is validated and
+-- rate limited on the server.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local FOLDER_NAME = "FZ_Remotes"
+
+local EVENTS = {
+	"UpdateSetting", -- C->S (key, value)
+	"ClientReady", -- C->S () player pressed Play / Continue
+	"SetFlashlight", -- C->S (enabled)
+	"Subtitle", -- S->C (line)
+	"Document", -- S->C (document)
+	"Notify", -- S->C (key, params)
+}
+
+local FUNCTIONS = {
+	"FetchProfile", -- C->S () -> snapshot of settings/progress
+	"RedeemCode", -- C->S (code) -> result
+	"AdminAction", -- C->S (action, payload) -> result
+}
+
+local Net = {}
+
+local folder: Folder? = nil
+
+local function getFolder(): Folder
+	if folder then
+		return folder
+	end
+	if RunService:IsServer() then
+		local existing = ReplicatedStorage:FindFirstChild(FOLDER_NAME)
+		if existing then
+			folder = existing
+		else
+			local created = Instance.new("Folder")
+			created.Name = FOLDER_NAME
+			for _, name in EVENTS do
+				local remote = Instance.new("RemoteEvent")
+				remote.Name = name
+				remote.Parent = created
+			end
+			for _, name in FUNCTIONS do
+				local remote = Instance.new("RemoteFunction")
+				remote.Name = name
+				remote.Parent = created
+			end
+			created.Parent = ReplicatedStorage
+			folder = created
+		end
+	else
+		folder = ReplicatedStorage:WaitForChild(FOLDER_NAME) :: Folder
+	end
+	return folder :: Folder
+end
+
+function Net.Event(name: string): RemoteEvent
+	assert(table.find(EVENTS, name), "[FZ-Net] Unknown RemoteEvent: " .. name)
+	return getFolder():WaitForChild(name) :: RemoteEvent
+end
+
+function Net.Function(name: string): RemoteFunction
+	assert(table.find(FUNCTIONS, name), "[FZ-Net] Unknown RemoteFunction: " .. name)
+	return getFolder():WaitForChild(name) :: RemoteFunction
+end
+
+-- Call on the server before any client can need the remotes.
+function Net.Init()
+	getFolder()
+end
+
+return Net
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="13">
+        <Properties>
+          <string name="Name">SessionState</string>
+          <string name="Source"><![CDATA[-- SessionState: session-wide story state (shared by the whole team in this server).
+-- Stored as attributes on ReplicatedStorage.FZ_State, so late joiners automatically
+-- receive the current state without any extra remote calls or race conditions.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local FOLDER_NAME = "FZ_State"
+
+local SessionState = {}
+
+local cached: Folder? = nil
+
+local function getFolder(): Folder
+	if cached then
+		return cached
+	end
+	if RunService:IsServer() then
+		local existing = ReplicatedStorage:FindFirstChild(FOLDER_NAME)
+		if not existing then
+			existing = Instance.new("Folder")
+			existing.Name = FOLDER_NAME
+			existing.Parent = ReplicatedStorage
+		end
+		cached = existing :: Folder
+	else
+		cached = ReplicatedStorage:WaitForChild(FOLDER_NAME) :: Folder
+	end
+	return cached :: Folder
+end
+
+function SessionState.Get(key: string): any
+	return getFolder():GetAttribute(key)
+end
+
+function SessionState.Set(key: string, value: any)
+	assert(RunService:IsServer(), "SessionState.Set is server-only")
+	getFolder():SetAttribute(key, value)
+end
+
+-- Calls callback immediately with the current value and again on every change.
+function SessionState.Observe(key: string, callback: (any) -> ()): RBXScriptConnection
+	local folder = getFolder()
+	task.spawn(callback, folder:GetAttribute(key))
+	return folder:GetAttributeChangedSignal(key):Connect(function()
+		callback(folder:GetAttribute(key))
+	end)
+end
+
+function SessionState.Init()
+	getFolder()
+end
+
+return SessionState
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="14">
+        <Properties>
+          <string name="Name">Signal</string>
+          <string name="Source"><![CDATA[-- Signal: tiny, leak-safe event implementation used by client and server modules.
+-- Handlers run in their own thread so a failing handler never breaks the emitter.
+
+local Connection = {}
+Connection.__index = Connection
+
+function Connection:Disconnect()
+	if not self.Connected then
+		return
+	end
+	self.Connected = false
+	local list = self._signal._connections
+	local index = table.find(list, self)
+	if index then
+		table.remove(list, index)
+	end
+end
+
+local Signal = {}
+Signal.__index = Signal
+
+function Signal.new()
+	return setmetatable({ _connections = {} }, Signal)
+end
+
+function Signal:Connect(handler: (...any) -> ())
+	local connection = setmetatable({ Connected = true, _handler = handler, _signal = self }, Connection)
+	table.insert(self._connections, connection)
+	return connection
+end
+
+function Signal:Once(handler: (...any) -> ())
+	local connection
+	connection = self:Connect(function(...)
+		connection:Disconnect()
+		handler(...)
+	end)
+	return connection
+end
+
+function Signal:Fire(...)
+	for _, connection in table.clone(self._connections) do
+		if connection.Connected then
+			task.spawn(connection._handler, ...)
+		end
+	end
+end
+
+function Signal:Wait()
+	local thread = coroutine.running()
+	self:Once(function(...)
+		task.spawn(thread, ...)
+	end)
+	return coroutine.yield()
+end
+
+function Signal:DisconnectAll()
+	for _, connection in table.clone(self._connections) do
+		connection:Disconnect()
+	end
+end
+
+return Signal
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerScriptService" referent="15">
+    <Properties>
+      <string name="Name">ServerScriptService</string>
+    </Properties>
+    <Item class="Folder" referent="16">
+      <Properties>
+        <string name="Name">Server</string>
+      </Properties>
+      <Item class="ModuleScript" referent="17">
+        <Properties>
+          <string name="Name">AdminConfig</string>
+          <string name="Source"><![CDATA[-- Who may use the owner/maintenance tools.
+-- Authorization is ALWAYS decided here on the server. The in-game "gesture code" only
+-- reveals the menu for people who are already authorized; it never grants rights.
+
+return {
+	-- Additional developer UserIds (numbers). The experience owner is detected automatically:
+	-- * user-owned experience: game.CreatorId
+	-- * group-owned experience: members with rank >= MinGroupRank in the owning group
+	UserIds = {
+		-- 123456789,
+	},
+	MinGroupRank = 254,
+
+	-- Everyone who can open the place in Studio is a developer of it, so Studio test
+	-- sessions are authorized by default. Set to false to test the "denied" path.
+	AllowAllInStudio = true,
+}
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="Folder" referent="18">
+        <Properties>
+          <string name="Name">Chapters</string>
+        </Properties>
+        <Item class="ModuleScript" referent="19">
+          <Properties>
+            <string name="Name">Chapter1</string>
+            <string name="Source"><![CDATA[-- Chapter 1 "The Reception" - opening section (gatehouse).
+-- Content only: all systems used here are generic and reusable.
+
+local StoryService = require(script.Parent.Parent.Services.StoryService)
+local InteractionService = require(script.Parent.Parent.Services.InteractionService)
+
+local Chapter1 = {}
+
+-- Arrival transmission. Sent per player when they first enter, so a friend who joins
+-- later still gets their own "they just arrived" moment.
+local ARRIVAL = {
+	{ delay = 1.5, text = "SFX_STATIC", channel = "sfx", duration = 2 },
+	{ delay = 1.0, speaker = "SPEAKER_UNKNOWN", text = "RADIO_C1_001", channel = "radio", duration = 5.5 },
+	{ delay = 5.8, speaker = "SPEAKER_UNKNOWN", text = "RADIO_C1_002", channel = "radio", duration = 4 },
+	{ delay = 5.0, text = "SFX_FAX", channel = "world", duration = 3, critical = false },
+}
+
+function Chapter1.Start()
+	InteractionService.Register("c1_fax", function(player, _instance, _prompt)
+		-- The fax was "sent" tomorrow at 02:14: first clue that the station receives the future.
+		StoryService.ShowDocument(player, {
+			title = "FAX_TITLE",
+			body = "FAX_BODY",
+			date = os.time() + 24 * 60 * 60,
+		})
+		if StoryService.GetFlag("C1_FaxRead") then
+			return
+		end
+		StoryService.SetFlag("C1_FaxRead", true)
+		StoryService.Sequence("all", {
+			{ delay = 3, speaker = "SPEAKER_RELAY", text = "RADIO_C1_003", channel = "radio", duration = 3.5 },
+		})
+		task.delay(7, function()
+			StoryService.SetObjective("OBJECTIVE_FIND_SENDER")
+		end)
+	end)
+end
+
+function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
+	if not firstTime then
+		return
+	end
+	StoryService.Sequence(player, ARRIVAL)
+	if StoryService.GetObjective() == nil then
+		task.delay(14, function()
+			if StoryService.GetObjective() == nil then
+				StoryService.SetObjective("OBJECTIVE_CHECK_GATEHOUSE")
+			end
+		end)
+	end
+end
+
+return Chapter1
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="Folder" referent="20">
+        <Properties>
+          <string name="Name">Dev</string>
+        </Properties>
+        <Item class="ModuleScript" referent="21">
+          <Properties>
+            <string name="Name">Greybox</string>
+            <string name="Source"><![CDATA[-- Greybox: a small, script-built test area (gate + gatehouse) so every system can be
+-- tested on any device right after syncing - before the real map exists.
+-- It is only built when Workspace has no "FZ_Map" model. Replace it by building the real
+-- map in Studio, naming its root model "FZ_Map" and placing the same tags/attributes.
+
+local CollectionService = game:GetService("CollectionService")
+local Lighting = game:GetService("Lighting")
+
+local Greybox = {}
+
+local COLORS = {
+	Asphalt = Color3.fromRGB(38, 40, 42),
+	Concrete = Color3.fromRGB(112, 110, 104),
+	ConcreteDark = Color3.fromRGB(72, 72, 70),
+	PaintedSteel = Color3.fromRGB(70, 92, 88),
+	Linoleum = Color3.fromRGB(96, 84, 64),
+	Wood = Color3.fromRGB(86, 64, 46),
+	Plastic = Color3.fromRGB(196, 190, 176),
+	Paper = Color3.fromRGB(226, 220, 204),
+	Sodium = Color3.fromRGB(255, 170, 96),
+}
+
+local function part(parent: Instance, name: string, size: Vector3, cframe: CFrame, color: Color3, material: Enum.Material): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Anchored = true
+	p.Size = size
+	p.CFrame = cframe
+	p.Color = color
+	p.Material = material
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Parent = parent
+	return p
+end
+
+-- World text that every client renders in its own language (see WorldTextController).
+local function worldText(target: BasePart, face: Enum.NormalId, key: string?, staticText: string?, params: { [string]: string }?, textColor: Color3?)
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = face
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 60
+	gui.LightInfluence = 1
+	gui.AutoLocalize = false
+	gui.Parent = target
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Font = Enum.Font.RobotoMono
+	label.TextScaled = true
+	label.TextWrapped = true
+	label.TextColor3 = textColor or Color3.fromRGB(30, 28, 26)
+	label.Text = staticText or ""
+	label.AutoLocalize = false
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0.06, 0)
+	padding.PaddingRight = UDim.new(0.06, 0)
+	padding.PaddingTop = UDim.new(0.08, 0)
+	padding.PaddingBottom = UDim.new(0.08, 0)
+	padding.Parent = label
+	if key then
+		label:SetAttribute("LocKey", key)
+		for name, value in params or {} do
+			label:SetAttribute("LocParam_" .. name, value)
+		end
+		CollectionService:AddTag(label, "FZ_WorldText")
+	end
+	label.Parent = gui
+end
+
+local function buildLighting()
+	Lighting.ClockTime = 0.6
+	Lighting.Brightness = 0.6
+	Lighting.Ambient = Color3.fromRGB(18, 21, 24)
+	Lighting.OutdoorAmbient = Color3.fromRGB(34, 40, 46)
+	Lighting.EnvironmentDiffuseScale = 0.35
+	Lighting.EnvironmentSpecularScale = 0.6
+	Lighting.GlobalShadows = true
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
+	atmosphere.Density = 0.38
+	atmosphere.Offset = 0.12
+	atmosphere.Color = Color3.fromRGB(112, 124, 130)
+	atmosphere.Decay = Color3.fromRGB(52, 62, 68)
+	atmosphere.Glare = 0
+	atmosphere.Haze = 1.4
+	atmosphere.Parent = Lighting
+end
+
+function Greybox.Build()
+	local root = Instance.new("Model")
+	root.Name = "FZ_Greybox"
+
+	-- Ground and access road
+	part(root, "Ground", Vector3.new(220, 1, 220), CFrame.new(0, -0.5, 0), COLORS.Asphalt, Enum.Material.Asphalt)
+
+	-- Gate: two concrete pillars, a steel beam, the station sign and a sodium lamp
+	local gateZ = 10
+	part(root, "GatePillarL", Vector3.new(2, 9, 2), CFrame.new(-9, 4.5, gateZ), COLORS.Concrete, Enum.Material.Concrete)
+	part(root, "GatePillarR", Vector3.new(2, 9, 2), CFrame.new(9, 4.5, gateZ), COLORS.Concrete, Enum.Material.Concrete)
+	part(root, "GateBeam", Vector3.new(20, 0.8, 0.8), CFrame.new(0, 8.6, gateZ), COLORS.PaintedSteel, Enum.Material.Metal)
+	local sign = part(root, "StationSign", Vector3.new(10, 2.6, 0.3), CFrame.new(0, 6.6, gateZ + 0.6), COLORS.Plastic, Enum.Material.SmoothPlastic)
+	worldText(sign, Enum.NormalId.Back, "SIGN_STATION")
+
+	local lampPost = part(root, "LampPost", Vector3.new(0.5, 12, 0.5), CFrame.new(-13, 6, gateZ + 2), COLORS.PaintedSteel, Enum.Material.Metal)
+	local lampHead = part(root, "LampHead", Vector3.new(1.8, 0.5, 1), lampPost.CFrame * CFrame.new(0.8, 6, 0), COLORS.Plastic, Enum.Material.Neon)
+	lampHead.Color = COLORS.Sodium
+	local lamp = Instance.new("SpotLight")
+	lamp.Face = Enum.NormalId.Bottom
+	lamp.Angle = 100
+	lamp.Range = 34
+	lamp.Brightness = 3
+	lamp.Color = COLORS.Sodium
+	lamp.Shadows = true
+	lamp.Parent = lampHead
+	CollectionService:AddTag(lampHead, "FZ_KeyLight")
+
+	-- Gatehouse (behind the gate, door facing the players)
+	local gx, gz = 0, -14
+	local w, d, h = 16, 12, 9
+	part(root, "GH_Floor", Vector3.new(w, 0.4, d), CFrame.new(gx, 0.2, gz), COLORS.Linoleum, Enum.Material.Plastic)
+	part(root, "GH_Roof", Vector3.new(w + 1, 0.6, d + 1), CFrame.new(gx, h + 0.3, gz), COLORS.ConcreteDark, Enum.Material.Concrete)
+	part(root, "GH_WallBack", Vector3.new(w, h, 0.6), CFrame.new(gx, h / 2, gz - d / 2), COLORS.Concrete, Enum.Material.Concrete)
+	part(root, "GH_WallL", Vector3.new(0.6, h, d), CFrame.new(gx - w / 2, h / 2, gz), COLORS.Concrete, Enum.Material.Concrete)
+	part(root, "GH_WallR", Vector3.new(0.6, h, d), CFrame.new(gx + w / 2, h / 2, gz), COLORS.Concrete, Enum.Material.Concrete)
+	-- Front wall with a door opening (4 studs wide, 7 high) in the middle
+	local side = (w - 4) / 2
+	part(root, "GH_FrontL", Vector3.new(side, h, 0.6), CFrame.new(gx - 2 - side / 2, h / 2, gz + d / 2), COLORS.Concrete, Enum.Material.Concrete)
+	part(root, "GH_FrontR", Vector3.new(side, h, 0.6), CFrame.new(gx + 2 + side / 2, h / 2, gz + d / 2), COLORS.Concrete, Enum.Material.Concrete)
+	part(root, "GH_FrontTop", Vector3.new(4, h - 7, 0.6), CFrame.new(gx, 7 + (h - 7) / 2, gz + d / 2), COLORS.Concrete, Enum.Material.Concrete)
+
+	-- Ceiling light (warm, slightly weak)
+	local ceilingLamp = part(root, "GH_CeilingLamp", Vector3.new(3, 0.2, 0.8), CFrame.new(gx, h - 0.1, gz), COLORS.Plastic, Enum.Material.Neon)
+	ceilingLamp.Color = Color3.fromRGB(255, 214, 160)
+	local ceilingLight = Instance.new("PointLight")
+	ceilingLight.Range = 16
+	ceilingLight.Brightness = 0.9
+	ceilingLight.Color = Color3.fromRGB(255, 206, 150)
+	ceilingLight.Shadows = true
+	ceilingLight.Parent = ceilingLamp
+	CollectionService:AddTag(ceilingLamp, "FZ_KeyLight")
+
+	-- Desk, fax machine (interactable) and logbook (code VESPER-0214)
+	local desk = part(root, "GH_Desk", Vector3.new(7, 3, 2.6), CFrame.new(gx + 3, 1.9, gz - d / 2 + 1.8), COLORS.Wood, Enum.Material.Wood)
+	local fax = part(root, "GH_Fax", Vector3.new(1.6, 0.6, 1.2), desk.CFrame * CFrame.new(1.6, 1.8, 0), COLORS.Plastic, Enum.Material.SmoothPlastic)
+	fax:SetAttribute("InteractId", "c1_fax")
+	fax:SetAttribute("ActionKey", "INTERACT_READ")
+	fax:SetAttribute("ObjectKey", "OBJECT_FAX")
+	fax:SetAttribute("MaxDistance", 7)
+	CollectionService:AddTag(fax, "FZ_Interactable")
+	local faxLed = Instance.new("PointLight")
+	faxLed.Range = 3
+	faxLed.Brightness = 1.5
+	faxLed.Color = Color3.fromRGB(255, 90, 60)
+	faxLed.Parent = fax
+
+	local logbook = part(root, "GH_Logbook", Vector3.new(1.4, 0.1, 1), desk.CFrame * CFrame.new(-1.8, 1.55, 0.2), COLORS.Paper, Enum.Material.Fabric)
+	worldText(logbook, Enum.NormalId.Top, nil, "02:14  VESPER-0214")
+
+	-- Notice board with the maintenance note (code SIGNAL-017)
+	local board = part(root, "GH_NoticeBoard", Vector3.new(4.5, 3.2, 0.2), CFrame.new(gx - w / 2 + 0.45, 4.6, gz - 1) * CFrame.Angles(0, math.rad(-90), 0), Color3.fromRGB(120, 96, 70), Enum.Material.Cardboard)
+	local note = part(root, "GH_Note", Vector3.new(2.4, 1.9, 0.05), board.CFrame * CFrame.new(0.4, 0.2, -0.13), COLORS.Paper, Enum.Material.SmoothPlastic)
+	worldText(note, Enum.NormalId.Front, "NOTE_MAINTENANCE", nil, { code = "SIGNAL-017" })
+
+	-- Spawn, team checkpoint and menu camera
+	local spawn = Instance.new("SpawnLocation")
+	spawn.Name = "FZ_Spawn"
+	spawn.Anchored = true
+	spawn.Size = Vector3.new(6, 1, 6)
+	spawn.CFrame = CFrame.new(0, 0.5, 46) -- behind the menu camera, out of shot
+	spawn.Transparency = 1
+	spawn.CanCollide = false
+	spawn.Neutral = true
+	spawn.Duration = 0
+	spawn.Parent = root
+	local decal = spawn:FindFirstChildOfClass("Decal")
+	if decal then
+		decal:Destroy()
+	end
+
+	local checkpoint = part(root, "CP_C1_START", Vector3.new(4, 1, 4), CFrame.new(0, 0.5, 22) * CFrame.Angles(0, 0, 0), COLORS.Asphalt, Enum.Material.Asphalt)
+	checkpoint.Transparency = 1
+	checkpoint.CanCollide = false
+	checkpoint.CanQuery = false
+	checkpoint:SetAttribute("CheckpointId", "C1_START")
+	CollectionService:AddTag(checkpoint, "FZ_Checkpoint")
+
+	local menuCamera = part(root, "MenuCamera", Vector3.new(1, 1, 1), CFrame.lookAt(Vector3.new(-7, 3.2, 36), Vector3.new(0, 4.5, gz)), COLORS.Asphalt, Enum.Material.Plastic)
+	menuCamera.Transparency = 1
+	menuCamera.CanCollide = false
+	menuCamera.CanQuery = false
+	CollectionService:AddTag(menuCamera, "FZ_MenuCamera")
+
+	buildLighting()
+	root.Parent = workspace
+	return root
+end
+
+return Greybox
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="Script" referent="22">
+        <Properties>
+          <string name="Name">Main</string>
+          <token name="RunContext">0</token>
+          <string name="Source"><![CDATA[-- FREQUENCY ZERO - server bootstrap.
+-- Order matters: remotes and shared state first, then data, then gameplay services.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+require(Shared.Net).Init()
+require(Shared.SessionState).Init()
+
+if not workspace:FindFirstChild("FZ_Map") then
+	require(script.Parent.Dev.Greybox).Build()
+end
+
+local SERVICES = {
+	"DataService",
+	"SettingsService",
+	"AdminService",
+	"CodeService",
+	"InteractionService",
+	"FlashlightService",
+	"GameFlowService",
+}
+
+for _, name in SERVICES do
+	local module = script.Parent.Services:FindFirstChild(name)
+	local ok, err = pcall(function()
+		require(module).Start()
+	end)
+	if not ok then
+		warn(string.format("[FZ] %s failed to start: %s", name, tostring(err)))
+	end
+end
+
+print("[FZ] Server ready")
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="Folder" referent="23">
+        <Properties>
+          <string name="Name">Services</string>
+        </Properties>
+        <Item class="ModuleScript" referent="24">
+          <Properties>
+            <string name="Name">AdminService</string>
+            <string name="Source"><![CDATA[-- AdminService: server-side authorization and audit log for maintenance tools.
+--
+-- Security model:
+--   1. IsAuthorized() checks UserId / ownership on the server (cached per session).
+--   2. The gesture code is read from ServerStorage at runtime (attribute
+--      "FZ_AdminGesture", set by the owner in Studio, NOT committed to git). It only
+--      unlocks the hidden menu entry for authorized players.
+--   3. Every admin remote call re-checks authorization; the client-visible attribute
+--      FZ_Admin is only a UI hint and is never trusted.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+
+local AdminConfig = require(script.Parent.Parent.AdminConfig)
+local DataService = require(script.Parent.DataService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local AdminService = {}
+
+local authorizedCache: { [Player]: boolean } = {}
+local unlocked: { [Player]: boolean } = {}
+local auditLog: { { time: number, userId: number, name: string, action: string, detail: string } } = {}
+local MAX_LOG = 200
+
+function AdminService.Log(player: Player, action: string, detail: string?)
+	local entry = {
+		time = os.time(),
+		userId = player.UserId,
+		name = player.Name,
+		action = action,
+		detail = detail or "",
+	}
+	table.insert(auditLog, entry)
+	if #auditLog > MAX_LOG then
+		table.remove(auditLog, 1)
+	end
+	print(string.format("[FZ-ADMIN] %s (%d) %s %s", entry.name, entry.userId, action, entry.detail))
+end
+
+function AdminService.IsAuthorized(player: Player): boolean
+	local cached = authorizedCache[player]
+	if cached ~= nil then
+		return cached
+	end
+	local authorized = false
+	local certain = true
+	if RunService:IsStudio() and AdminConfig.AllowAllInStudio then
+		authorized = true
+	elseif table.find(AdminConfig.UserIds, player.UserId) then
+		authorized = true
+	elseif game.CreatorType == Enum.CreatorType.User then
+		authorized = player.UserId == game.CreatorId
+	elseif game.CreatorType == Enum.CreatorType.Group then
+		local ok, rank = pcall(player.GetRankInGroup, player, game.CreatorId)
+		if ok then
+			authorized = rank >= AdminConfig.MinGroupRank
+		else
+			certain = false -- web call failed: do not cache a false negative
+		end
+	end
+	if certain then
+		authorizedCache[player] = authorized
+	end
+	return authorized
+end
+
+function AdminService.MatchesGesture(normalizedCode: string): boolean
+	local gesture = ServerStorage:GetAttribute("FZ_AdminGesture")
+	if type(gesture) ~= "string" or #gesture < 6 then
+		return false
+	end
+	return string.upper(gesture) == normalizedCode
+end
+
+function AdminService.Unlock(player: Player)
+	unlocked[player] = true
+	player:SetAttribute("FZ_Admin", true)
+	AdminService.Log(player, "unlock")
+end
+
+local function isAllowed(player: Player): boolean
+	return unlocked[player] == true and AdminService.IsAuthorized(player)
+end
+
+local ACTIONS = {}
+
+ACTIONS.grant_test_marks = function(player: Player)
+	local ok = DataService.Mutate(player, function(data)
+		data.signalMarks += 100
+	end)
+	return { ok = ok }
+end
+
+ACTIONS.get_log = function()
+	local recent = {}
+	for i = math.max(1, #auditLog - 19), #auditLog do
+		table.insert(recent, auditLog[i])
+	end
+	return { ok = true, log = recent }
+end
+
+function AdminService.Start()
+	if type(ServerStorage:GetAttribute("FZ_AdminGesture")) ~= "string" then
+		warn("[FZ-ADMIN] No gesture configured. Set the string attribute 'FZ_AdminGesture' on ServerStorage (min. 6 characters) to enable the hidden maintenance entry.")
+	end
+
+	local limiter = RateLimiter.new(10, 1)
+	Net.Function("AdminAction").OnServerInvoke = function(player: Player, action: any, _payload: any)
+		if not limiter:Allow(player) then
+			return { ok = false, reason = "rate_limited" }
+		end
+		if type(action) ~= "string" or not isAllowed(player) then
+			AdminService.Log(player, "denied", tostring(action))
+			return { ok = false, reason = "denied" }
+		end
+		local handler = ACTIONS[action]
+		if not handler then
+			return { ok = false, reason = "unknown" }
+		end
+		AdminService.Log(player, action)
+		return handler(player)
+	end
+
+	Players.PlayerRemoving:Connect(function(player)
+		authorizedCache[player] = nil
+		unlocked[player] = nil
+	end)
+end
+
+return AdminService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="25">
+          <Properties>
+            <string name="Name">CodeService</string>
+            <string name="Source"><![CDATA[-- CodeService: redeemable codes hidden inside the game world.
+-- Codes are defined in ServerStorage.Secrets.Codes (never replicated to clients), checked
+-- server-side, redeemable once per account (session lock in DataService prevents
+-- cross-server duplication) and saved immediately.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Net = require(Shared.Net)
+
+local AdminService = require(script.Parent.AdminService)
+local DataService = require(script.Parent.DataService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local Codes = require(ServerStorage:WaitForChild("Secrets"):WaitForChild("Codes"))
+
+local CodeService = {}
+
+local function normalize(raw: string): string
+	local trimmed = string.gsub(raw, "%s+", "")
+	return string.upper(trimmed)
+end
+
+function CodeService.Redeem(player: Player, raw: any): { [string]: any }
+	if type(raw) ~= "string" or #raw == 0 or #raw > Config.Codes.MaxLength * 2 then
+		return { status = "invalid" }
+	end
+	local code = normalize(raw)
+	if #code == 0 or #code > Config.Codes.MaxLength then
+		return { status = "invalid" }
+	end
+
+	if AdminService.MatchesGesture(code) then
+		if AdminService.IsAuthorized(player) then
+			AdminService.Unlock(player)
+			return { status = "admin" }
+		end
+		AdminService.Log(player, "gesture_denied")
+		return { status = "invalid" } -- indistinguishable from a wrong code
+	end
+
+	local definition = Codes[code]
+	if not definition or definition.active == false then
+		return { status = "invalid" }
+	end
+
+	local profile = DataService.Get(player)
+	if not profile or not profile.Persistent then
+		-- Never hand out a reward that cannot be saved (and could then be redeemed again).
+		return { status = "error" }
+	end
+	if profile.Data.redeemedCodes[definition.id] then
+		return { status = "used" }
+	end
+
+	-- No yield between the check above and this write, so double invocations are safe.
+	local amount = definition.reward.signalMarks or 0
+	DataService.Mutate(player, function(data)
+		data.redeemedCodes[definition.id] = os.time()
+		data.signalMarks += amount
+	end)
+	DataService.SaveNow(player) -- if this fails, autosave retries; the profile stays locked
+	return { status = "ok", amount = amount, balance = profile.Data.signalMarks }
+end
+
+function CodeService.Start()
+	local limiter = RateLimiter.new(5, 1 / 6) -- burst 5, then one attempt every 6 s
+	Net.Function("RedeemCode").OnServerInvoke = function(player: Player, raw: any)
+		if not limiter:Allow(player) then
+			return { status = "rate_limited" }
+		end
+		return CodeService.Redeem(player, raw)
+	end
+end
+
+return CodeService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="26">
+          <Properties>
+            <string name="Name">DataService</string>
+            <string name="Source"><![CDATA[-- DataService: persistent player data with session locking.
+--
+-- * One profile per player, loaded with UpdateAsync and locked to this server (JobId),
+--   so two servers can never write the same save at the same time (protects codes,
+--   currency and progress against duplication when a player hops servers quickly).
+-- * Autosave refreshes the lock; leaving releases it.
+-- * If DataStores are unavailable (Studio without API access, outage) the player gets a
+--   session-only profile and is told that progress will not be saved. Anything that must
+--   persist (code rewards, purchases) refuses to run on such a profile.
+
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Signal = require(Shared.Signal)
+local Net = require(Shared.Net)
+
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local DataService = {}
+DataService.ProfileLoaded = Signal.new() -- (player, profile)
+
+export type Profile = {
+	Player: Player,
+	Key: string,
+	Data: { [string]: any },
+	Persistent: boolean,
+	Dirty: boolean,
+	Saving: boolean,
+	Released: boolean,
+}
+
+local profiles: { [Player]: Profile } = {}
+local store: DataStore? = nil
+
+do
+	local ok, result = pcall(function()
+		return DataStoreService:GetDataStore(Config.Data.StoreName)
+	end)
+	if ok then
+		store = result
+	else
+		warn("[FZ-Data] DataStore unavailable, running session-only: " .. tostring(result))
+	end
+end
+
+local function deepCopy(value: any): any
+	if type(value) ~= "table" then
+		return value
+	end
+	local copy = {}
+	for k, v in value do
+		copy[k] = deepCopy(v)
+	end
+	return copy
+end
+
+local function defaultData(): { [string]: any }
+	return {
+		version = Config.Data.SchemaVersion,
+		settings = Config.DefaultSettings(),
+		signalMarks = 0,
+		redeemedCodes = {}, -- [codeId] = unix time
+		progress = {
+			chapter = 1,
+			checkpoint = "C1_START",
+			completed = {}, -- array of chapter numbers
+		},
+		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
+	}
+end
+
+local function reconcile(data: { [string]: any }, template: { [string]: any })
+	for key, value in template do
+		if data[key] == nil then
+			data[key] = deepCopy(value)
+		elseif type(value) == "table" and type(data[key]) == "table" and next(value) ~= nil then
+			reconcile(data[key], value)
+		end
+	end
+end
+
+local function sanitizeSettings(settings: { [string]: any })
+	for key, definition in Config.Settings do
+		local value = settings[key]
+		if value ~= nil then
+			local ok = Config.ValidateSetting(key, value)
+			if not ok then
+				settings[key] = definition.default
+			end
+		end
+	end
+	for key in settings do
+		if Config.Settings[key] == nil then
+			settings[key] = nil
+		end
+	end
+end
+
+-- Schema migrations. Add a branch for every SchemaVersion bump.
+local function migrate(data: { [string]: any })
+	local version = tonumber(data.version) or 0
+	-- if version < 2 then ... end
+	if version < Config.Data.SchemaVersion then
+		data.version = Config.Data.SchemaVersion
+	end
+end
+
+local function prepare(data: { [string]: any })
+	migrate(data)
+	reconcile(data, defaultData())
+	if type(data.settings) ~= "table" then
+		data.settings = Config.DefaultSettings()
+	end
+	sanitizeSettings(data.settings)
+	if type(data.signalMarks) ~= "number" or data.signalMarks ~= data.signalMarks or data.signalMarks < 0 then
+		data.signalMarks = 0
+	end
+	data.signalMarks = math.floor(data.signalMarks)
+end
+
+local function withRetries(label: string, attempts: number, callback: () -> any): (boolean, any)
+	local delayTime = 1
+	for attempt = 1, attempts do
+		local ok, result = pcall(callback)
+		if ok then
+			return true, result
+		end
+		warn(string.format("[FZ-Data] %s failed (attempt %d/%d): %s", label, attempt, attempts, tostring(result)))
+		if attempt < attempts then
+			task.wait(delayTime)
+			delayTime = math.min(delayTime * 2, 8)
+		end
+	end
+	return false, nil
+end
+
+local function publishAttributes(profile: Profile)
+	local player = profile.Player
+	player:SetAttribute("FZ_SignalMarks", profile.Data.signalMarks)
+	player:SetAttribute("FZ_DataPersistent", profile.Persistent)
+end
+
+local function loadProfile(player: Player): Profile?
+	local key = "u_" .. player.UserId
+	local profile: Profile = {
+		Player = player,
+		Key = key,
+		Data = {},
+		Persistent = false,
+		Dirty = false,
+		Saving = false,
+		Released = false,
+	}
+
+	local loaded = nil
+	if store then
+		local maxLockAttempts = 6
+		for lockAttempt = 1, maxLockAttempts do
+			local lockedByOther = false
+			local ok, result = withRetries("Load " .. key, 4, function()
+				return (store :: DataStore):UpdateAsync(key, function(old)
+					lockedByOther = false
+					local data = if type(old) == "table" then old else defaultData()
+					local lock = data.lock
+					if
+						type(lock) == "table"
+						and lock.job ~= game.JobId
+						and os.time() - (tonumber(lock.time) or 0) < Config.Data.LockTimeout
+						and lockAttempt < maxLockAttempts
+					then
+						-- Another server still owns this save (usually: it is finishing the
+						-- save after the player left). Abort this write and retry shortly.
+						lockedByOther = true
+						return nil
+					end
+					prepare(data)
+					data.lock = { job = game.JobId, time = os.time() }
+					data.stats.sessions += 1
+					data.stats.lastJoin = os.time()
+					return data
+				end)
+			end)
+			if not ok then
+				break
+			end
+			if not lockedByOther and type(result) == "table" then
+				loaded = result
+				break
+			end
+			if player.Parent == nil then
+				return nil
+			end
+			task.wait(5)
+		end
+	end
+
+	if loaded then
+		profile.Data = loaded
+		profile.Persistent = true
+	else
+		profile.Data = defaultData()
+		profile.Persistent = false
+		if store then
+			warn("[FZ-Data] Using session-only profile for " .. key)
+		end
+	end
+	return profile
+end
+
+local function saveProfile(profile: Profile, release: boolean): boolean
+	if not profile.Persistent or not store then
+		return true
+	end
+	while profile.Saving do
+		task.wait()
+	end
+	if profile.Released then
+		return true
+	end
+	profile.Saving = true
+	local lostLock = false
+	local wasDirty = profile.Dirty
+	local ok = withRetries("Save " .. profile.Key, if release then 5 else 3, function()
+		return (store :: DataStore):UpdateAsync(profile.Key, function(old)
+			lostLock = false
+			if type(old) == "table" and type(old.lock) == "table" and old.lock.job ~= game.JobId then
+				lostLock = true
+				return nil
+			end
+			local out = table.clone(profile.Data)
+			out.lock = if release then nil else { job = game.JobId, time = os.time() }
+			return out
+		end)
+	end)
+	profile.Saving = false
+	if lostLock then
+		-- Another server took this save over. Never overwrite it from here.
+		warn("[FZ-Data] Lost session lock for " .. profile.Key .. "; profile is now read-only")
+		profile.Persistent = false
+		publishAttributes(profile)
+		return false
+	end
+	if ok then
+		if wasDirty then
+			profile.Dirty = false
+		end
+		if release then
+			profile.Released = true
+		end
+	end
+	return ok
+end
+
+---------------------------------------------------------------------------
+-- Public API
+---------------------------------------------------------------------------
+
+function DataService.Get(player: Player): Profile?
+	return profiles[player]
+end
+
+function DataService.WaitFor(player: Player, timeout: number?): Profile?
+	local deadline = os.clock() + (timeout or 20)
+	while not profiles[player] and player.Parent and os.clock() < deadline do
+		task.wait(0.1)
+	end
+	return profiles[player]
+end
+
+-- Mutate data through this function so the profile is marked dirty.
+function DataService.Mutate(player: Player, mutator: ({ [string]: any }) -> ()): boolean
+	local profile = profiles[player]
+	if not profile then
+		return false
+	end
+	mutator(profile.Data)
+	profile.Dirty = true
+	publishAttributes(profile)
+	return true
+end
+
+-- Immediate save for important changes (code rewards, chapter completion).
+function DataService.SaveNow(player: Player): boolean
+	local profile = profiles[player]
+	if not profile then
+		return false
+	end
+	return saveProfile(profile, false)
+end
+
+function DataService.Start()
+	local fetchLimiter = RateLimiter.new(3, 0.2)
+
+	local function onPlayerAdded(player: Player)
+		local profile = loadProfile(player)
+		if not profile then
+			return
+		end
+		if player.Parent == nil then
+			-- Left while loading: release the lock right away.
+			saveProfile(profile, true)
+			return
+		end
+		profiles[player] = profile
+		publishAttributes(profile)
+		player:SetAttribute("FZ_DataReady", true)
+		DataService.ProfileLoaded:Fire(player, profile)
+	end
+
+	Players.PlayerAdded:Connect(onPlayerAdded)
+	for _, player in Players:GetPlayers() do
+		task.spawn(onPlayerAdded, player)
+	end
+
+	Players.PlayerRemoving:Connect(function(player)
+		local profile = profiles[player]
+		if profile then
+			saveProfile(profile, true)
+			profiles[player] = nil
+		end
+	end)
+
+	game:BindToClose(function()
+		if RunService:IsStudio() and not store then
+			return
+		end
+		local pending = 0
+		for _, profile in profiles do
+			pending += 1
+			task.spawn(function()
+				saveProfile(profile, true)
+				pending -= 1
+			end)
+		end
+		local deadline = os.clock() + 25
+		while pending > 0 and os.clock() < deadline do
+			task.wait(0.1)
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			task.wait(Config.Data.AutosaveInterval)
+			for _, profile in profiles do
+				-- Always save: this also refreshes the session lock.
+				task.spawn(saveProfile, profile, false)
+			end
+		end
+	end)
+
+	Net.Function("FetchProfile").OnServerInvoke = function(player: Player)
+		if not fetchLimiter:Allow(player) then
+			return nil
+		end
+		local profile = DataService.WaitFor(player, 20)
+		if not profile then
+			return nil
+		end
+		local data = profile.Data
+		return {
+			settings = deepCopy(data.settings),
+			signalMarks = data.signalMarks,
+			progress = { chapter = data.progress.chapter, completed = deepCopy(data.progress.completed) },
+			persistent = profile.Persistent,
+			isNew = data.stats.sessions <= 1,
+		}
+	end
+end
+
+return DataService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="27">
+          <Properties>
+            <string name="Name">FlashlightService</string>
+            <string name="Source"><![CDATA[-- FlashlightService: replicated flashlight so teammates see each other's light.
+-- The owning client additionally renders a camera-aligned local light for precision
+-- and mutes its own replicated copy (see FlashlightController).
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local FlashlightService = {}
+
+local function attach(character: Model)
+	local head = character:WaitForChild("Head", 10)
+	if not head or not head:IsA("BasePart") or head:FindFirstChild("FZ_Flashlight") then
+		return
+	end
+	local light = Instance.new("SpotLight")
+	light.Name = "FZ_Flashlight"
+	light.Face = Enum.NormalId.Front
+	light.Angle = 55
+	light.Range = 38
+	light.Brightness = 2.2
+	light.Color = Color3.fromRGB(255, 236, 206)
+	light.Shadows = true
+	light.Enabled = false
+	light.Parent = head
+end
+
+function FlashlightService.Start()
+	local limiter = RateLimiter.new(6, 3)
+	Net.Event("SetFlashlight").OnServerEvent:Connect(function(player: Player, enabled: any)
+		if type(enabled) ~= "boolean" or not limiter:Allow(player) then
+			return
+		end
+		local head = player.Character and player.Character:FindFirstChild("Head")
+		local light = head and head:FindFirstChild("FZ_Flashlight")
+		if light and light:IsA("SpotLight") then
+			light.Enabled = enabled
+		end
+	end)
+
+	local function onPlayer(player: Player)
+		player.CharacterAdded:Connect(attach)
+		if player.Character then
+			task.spawn(attach, player.Character)
+		end
+	end
+	Players.PlayerAdded:Connect(onPlayer)
+	for _, player in Players:GetPlayers() do
+		onPlayer(player)
+	end
+end
+
+return FlashlightService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="28">
+          <Properties>
+            <string name="Name">GameFlowService</string>
+            <string name="Source"><![CDATA[-- GameFlowService: session flow (menu -> in game), checkpoints and chapter hooks.
+--
+-- Party model: one Roblox server = one team (max 4, set "Max Players" to 4 in Game
+-- Settings). Story progress is shared per server through SessionState. Nobody waits for
+-- anyone: a player who presses Play enters immediately; friends who join later are
+-- placed at the team's current checkpoint.
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local CHECKPOINT_TAG = "FZ_Checkpoint"
+
+local GameFlowService = {}
+
+local chapters = {
+	[1] = require(script.Parent.Parent.Chapters.Chapter1),
+}
+
+local inGame: { [Player]: boolean } = {}
+local entered: { [Player]: boolean } = {} -- entered at least once this session
+
+local function findCheckpoint(id: string): BasePart?
+	for _, part in CollectionService:GetTagged(CHECKPOINT_TAG) do
+		if part:IsA("BasePart") and part:GetAttribute("CheckpointId") == id then
+			return part
+		end
+	end
+	return nil
+end
+
+local function placeAtCheckpoint(player: Player)
+	local character = player.Character
+	if not character then
+		return
+	end
+	local checkpoint = findCheckpoint(SessionState.Get("Checkpoint") or "C1_START")
+	if not checkpoint then
+		return -- fall back to the default SpawnLocation
+	end
+	-- Spread the team a little so nobody spawns inside a teammate.
+	local index = table.find(Players:GetPlayers(), player) or 1
+	local offset = Vector3.new(((index - 1) % 2) * 3 - 1.5, 3, math.floor((index - 1) / 2) * 3)
+	local target = checkpoint.CFrame * CFrame.new(offset)
+	pcall(function()
+		player:RequestStreamAroundAsync(target.Position, 5)
+	end)
+	if player.Character == character then
+		character:PivotTo(target)
+	end
+end
+
+function GameFlowService.SetCheckpoint(id: string)
+	SessionState.Set("Checkpoint", id)
+end
+
+function GameFlowService.Start()
+	SessionState.Set("Chapter", 1)
+	SessionState.Set("Checkpoint", "C1_START")
+
+	for _, chapter in chapters do
+		chapter.Start()
+	end
+
+	local limiter = RateLimiter.new(2, 0.5)
+	Net.Event("ClientReady").OnServerEvent:Connect(function(player: Player)
+		if not limiter:Allow(player) or inGame[player] then
+			return
+		end
+		inGame[player] = true
+		player:SetAttribute("FZ_InGame", true)
+		placeAtCheckpoint(player)
+		local firstTime = not entered[player]
+		entered[player] = true
+		local chapter = chapters[SessionState.Get("Chapter") or 1]
+		if chapter and chapter.OnPlayerEntered then
+			chapter.OnPlayerEntered(player, firstTime)
+		end
+	end)
+
+	local function onPlayer(player: Player)
+		player.CharacterAdded:Connect(function()
+			if inGame[player] then
+				task.defer(placeAtCheckpoint, player)
+			end
+		end)
+	end
+	Players.PlayerAdded:Connect(onPlayer)
+	for _, player in Players:GetPlayers() do
+		onPlayer(player)
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		inGame[player] = nil
+		entered[player] = nil
+	end)
+end
+
+return GameFlowService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="29">
+          <Properties>
+            <string name="Name">InteractionService</string>
+            <string name="Source"><![CDATA[-- InteractionService: one interaction system for every platform.
+--
+-- Level designers tag an object (BasePart, Model or Attachment) with "FZ_Interactable"
+-- and set attributes:
+--   InteractId   (string, required) handler id registered by a chapter module
+--   ActionKey    (string) localization key for the verb, e.g. "INTERACT_READ"
+--   ObjectKey    (string) localization key for the object, e.g. "OBJECT_FAX"
+--   HoldDuration (number, optional) seconds to hold
+--   MaxDistance  (number, optional) default 8 studs
+--
+-- A ProximityPrompt is generated automatically. ProximityPrompts give us keyboard (E),
+-- gamepad (X / Square) and touch (tap) with the same logical action for free.
+-- Text is localized per player on the client (prompts are tagged "FZ_Prompt").
+-- The server validates distance and rate-limits every trigger.
+
+local CollectionService = game:GetService("CollectionService")
+
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local TAG = "FZ_Interactable"
+local PROMPT_TAG = "FZ_Prompt"
+local DISTANCE_TOLERANCE = 6
+
+local InteractionService = {}
+
+type Handler = (player: Player, instance: Instance, prompt: ProximityPrompt) -> ()
+local handlers: { [string]: Handler } = {}
+local limiter = RateLimiter.new(6, 3)
+
+function InteractionService.Register(id: string, handler: Handler)
+	assert(handlers[id] == nil, "[FZ-Interact] Duplicate handler id: " .. id)
+	handlers[id] = handler
+end
+
+local function worldPosition(instance: Instance): Vector3?
+	if instance:IsA("BasePart") then
+		return instance.Position
+	elseif instance:IsA("Model") then
+		return instance:GetPivot().Position
+	elseif instance:IsA("Attachment") then
+		return instance.WorldPosition
+	end
+	return nil
+end
+
+local function onTriggered(player: Player, instance: Instance, prompt: ProximityPrompt)
+	if not limiter:Allow(player) or not prompt.Enabled then
+		return
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not root or not humanoid or humanoid.Health <= 0 then
+		return
+	end
+	local position = worldPosition(instance)
+	if not position or ((root :: BasePart).Position - position).Magnitude > prompt.MaxActivationDistance + DISTANCE_TOLERANCE then
+		return
+	end
+	local id = instance:GetAttribute("InteractId")
+	local handler = if type(id) == "string" then handlers[id] else nil
+	if not handler then
+		warn("[FZ-Interact] No handler for InteractId " .. tostring(id) .. " on " .. instance:GetFullName())
+		return
+	end
+	local ok, err = pcall(handler, player, instance, prompt)
+	if not ok then
+		warn("[FZ-Interact] Handler " .. id .. " failed: " .. tostring(err))
+	end
+end
+
+local function setup(instance: Instance)
+	if not worldPosition(instance) then
+		warn("[FZ-Interact] Unsupported interactable: " .. instance:GetFullName())
+		return
+	end
+	local prompt = instance:FindFirstChild("FZ_Prompt")
+	if not prompt then
+		prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "FZ_Prompt"
+		prompt.Parent = instance
+	end
+	local p = prompt :: ProximityPrompt
+	p.ActionText = "" -- localized on each client
+	p.ObjectText = ""
+	p.KeyboardKeyCode = Enum.KeyCode.E
+	p.GamepadKeyCode = Enum.KeyCode.ButtonX
+	p.HoldDuration = tonumber(instance:GetAttribute("HoldDuration")) or 0
+	p.MaxActivationDistance = tonumber(instance:GetAttribute("MaxDistance")) or 8
+	p.RequiresLineOfSight = true
+	p:SetAttribute("FZ_Action", instance:GetAttribute("ActionKey"))
+	p:SetAttribute("FZ_Object", instance:GetAttribute("ObjectKey"))
+	CollectionService:AddTag(p, PROMPT_TAG)
+	p.Triggered:Connect(function(player)
+		onTriggered(player, instance, p)
+	end)
+end
+
+function InteractionService.Start()
+	CollectionService:GetInstanceAddedSignal(TAG):Connect(setup)
+	for _, instance in CollectionService:GetTagged(TAG) do
+		setup(instance)
+	end
+end
+
+return InteractionService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="30">
+          <Properties>
+            <string name="Name">SettingsService</string>
+            <string name="Source"><![CDATA[-- SettingsService: persists player settings (language, subtitles, accessibility, graphics).
+-- Settings are not security relevant, but are still validated against the shared schema
+-- so a manipulated client can never write garbage into the save.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Net = require(Shared.Net)
+
+local DataService = require(script.Parent.DataService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local SettingsService = {}
+
+function SettingsService.Start()
+	local limiter = RateLimiter.new(20, 5)
+	Net.Event("UpdateSetting").OnServerEvent:Connect(function(player: Player, key: any, value: any)
+		if not limiter:Allow(player) then
+			return
+		end
+		local ok, sanitized = Config.ValidateSetting(key, value)
+		if not ok then
+			return
+		end
+		DataService.Mutate(player, function(data)
+			data.settings[key] = sanitized
+		end)
+	end)
+end
+
+return SettingsService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="31">
+          <Properties>
+            <string name="Name">StoryService</string>
+            <string name="Source"><![CDATA[-- StoryService: sends story content (subtitles, documents, objectives) to clients.
+-- Only localization KEYS travel over the network; every client renders them in its own
+-- language. Targets can be a single player (individual perception) or "all".
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local StoryService = {}
+
+export type Line = {
+	text: string, -- localization key
+	speaker: string?, -- localization key
+	params: { [string]: any }?,
+	duration: number?,
+	channel: string?, -- "radio" | "world" | "sfx"
+	critical: boolean?, -- shown even with subtitles off (safety-relevant sounds)
+	delay: number?, -- seconds to wait before this line (Sequence only)
+}
+
+type Target = Player | "all"
+
+local subtitleRemote = Net.Event("Subtitle")
+local documentRemote = Net.Event("Document")
+local flags: { [string]: any } = {}
+
+function StoryService.Say(target: Target, line: Line)
+	if target == "all" then
+		subtitleRemote:FireAllClients(line)
+	else
+		subtitleRemote:FireClient(target :: Player, line)
+	end
+end
+
+function StoryService.Sequence(target: Target, lines: { Line })
+	task.spawn(function()
+		for _, line in lines do
+			if line.delay then
+				task.wait(line.delay)
+			end
+			if target ~= "all" and (target :: Player).Parent == nil then
+				return
+			end
+			StoryService.Say(target, line)
+		end
+	end)
+end
+
+function StoryService.ShowDocument(player: Player, document: { [string]: any })
+	documentRemote:FireClient(player, document)
+end
+
+function StoryService.SetObjective(key: string?)
+	SessionState.Set("Objective", key)
+end
+
+function StoryService.GetObjective(): string?
+	return SessionState.Get("Objective")
+end
+
+-- Session flags are shared by the whole team and replicated as "Flag_<name>".
+function StoryService.SetFlag(name: string, value: any)
+	flags[name] = value
+	SessionState.Set("Flag_" .. name, value)
+end
+
+function StoryService.GetFlag(name: string): any
+	return flags[name]
+end
+
+return StoryService
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="Folder" referent="32">
+        <Properties>
+          <string name="Name">Util</string>
+        </Properties>
+        <Item class="ModuleScript" referent="33">
+          <Properties>
+            <string name="Name">RateLimiter</string>
+            <string name="Source"><![CDATA[-- Token-bucket rate limiter per player. Every client->server remote uses one.
+
+local Players = game:GetService("Players")
+
+local RateLimiter = {}
+RateLimiter.__index = RateLimiter
+
+local limiters = {}
+
+Players.PlayerRemoving:Connect(function(player)
+	for _, limiter in limiters do
+		limiter._buckets[player] = nil
+	end
+end)
+
+-- capacity: burst size, refillPerSecond: sustained rate
+function RateLimiter.new(capacity: number, refillPerSecond: number)
+	local self = setmetatable({
+		_capacity = capacity,
+		_refill = refillPerSecond,
+		_buckets = {},
+	}, RateLimiter)
+	table.insert(limiters, self)
+	return self
+end
+
+function RateLimiter:Allow(player: Player, cost: number?): boolean
+	local price = cost or 1
+	local now = os.clock()
+	local bucket = self._buckets[player]
+	if not bucket then
+		bucket = { tokens = self._capacity, time = now }
+		self._buckets[player] = bucket
+	end
+	bucket.tokens = math.min(self._capacity, bucket.tokens + (now - bucket.time) * self._refill)
+	bucket.time = now
+	if bucket.tokens < price then
+		return false
+	end
+	bucket.tokens -= price
+	return true
+end
+
+return RateLimiter
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerStorage" referent="34">
+    <Properties>
+      <string name="Name">ServerStorage</string>
+    </Properties>
+    <Item class="Folder" referent="35">
+      <Properties>
+        <string name="Name">Secrets</string>
+      </Properties>
+      <Item class="ModuleScript" referent="36">
+        <Properties>
+          <string name="Name">Codes</string>
+          <string name="Source"><![CDATA[-- Redeemable codes. Lives in ServerStorage: never replicated to clients.
+-- Key = exactly what the player types (normalized: uppercase, no whitespace).
+-- id   = stable save id. Never reuse or rename an id, or players could redeem twice.
+-- Each code must be physically findable in the world (see docs/GAME_DESIGN.md, "Codes").
+
+return {
+	-- Lobby notice board, maintenance note (Chapter 1).
+	["SIGNAL-017"] = { id = "signal_017", reward = { signalMarks = 25 }, active = true },
+	-- Gatehouse logbook, last line (Chapter 1).
+	["VESPER-0214"] = { id = "vesper_0214", reward = { signalMarks = 40 }, active = true },
+}
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="StarterPlayer" referent="37">
+    <Properties>
+      <string name="Name">StarterPlayer</string>
+      <token name="CameraMode">1</token>
+      <float name="CharacterWalkSpeed">10</float>
+      <bool name="EnableMouseLockOption">false</bool>
+    </Properties>
+    <Item class="StarterPlayerScripts" referent="38">
+      <Properties>
+        <string name="Name">StarterPlayerScripts</string>
+      </Properties>
+      <Item class="Folder" referent="39">
+        <Properties>
+          <string name="Name">Client</string>
+        </Properties>
+        <Item class="Folder" referent="40">
+          <Properties>
+            <string name="Name">Controllers</string>
+          </Properties>
+          <Item class="ModuleScript" referent="41">
+            <Properties>
+              <string name="Name">FlashlightController</string>
+              <string name="Source"><![CDATA[-- FlashlightController: precise camera-aligned light for the local player, plus the
+-- replicated head light (FlashlightService) so teammates see it too. The local player's
+-- own replicated copy is muted locally to avoid a double light.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net"))
+
+local InputController = require(script.Parent.InputController)
+
+local FlashlightController = {}
+
+local player = Players.LocalPlayer
+local enabled = false
+local lightPart: Part? = nil
+local follow: RBXScriptConnection? = nil
+local setRemote = Net.Event("SetFlashlight")
+
+local OFFSET = CFrame.new(0.6, -0.5, -0.4)
+
+local function ensurePart(): Part
+	if lightPart and lightPart.Parent then
+		return lightPart
+	end
+	local part = Instance.new("Part")
+	part.Name = "FZ_LocalFlashlight"
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Transparency = 1
+	part.Size = Vector3.new(0.2, 0.2, 0.2)
+	local light = Instance.new("SpotLight")
+	light.Name = "Light"
+	light.Face = Enum.NormalId.Front
+	light.Angle = 50
+	light.Range = 40
+	light.Brightness = 2.4
+	light.Color = Color3.fromRGB(255, 236, 206)
+	light.Shadows = true
+	light.Parent = part
+	part.Parent = workspace.CurrentCamera
+	lightPart = part
+	return part
+end
+
+local function muteOwnReplicatedLight(character: Model)
+	local head = character:WaitForChild("Head", 10)
+	if not head then
+		return
+	end
+	local function mute(child: Instance)
+		if child.Name == "FZ_Flashlight" and child:IsA("SpotLight") then
+			child.Brightness = 0 -- local only; the server never changes Brightness
+		end
+	end
+	for _, child in head:GetChildren() do
+		mute(child)
+	end
+	head.ChildAdded:Connect(mute)
+end
+
+function FlashlightController.Set(value: boolean)
+	enabled = value
+	local part = ensurePart()
+	local light = part:FindFirstChild("Light") :: SpotLight
+	light.Enabled = value
+	if value and not follow then
+		follow = RunService.RenderStepped:Connect(function()
+			local camera = workspace.CurrentCamera
+			if camera then
+				part.CFrame = camera.CFrame * OFFSET
+			end
+		end)
+	elseif not value and follow then
+		follow:Disconnect()
+		follow = nil
+	end
+	InputController.SetTouchActive("Flashlight", value)
+	setRemote:FireServer(value)
+end
+
+function FlashlightController.IsOn(): boolean
+	return enabled
+end
+
+function FlashlightController.Init()
+	InputController.Action:Connect(function(name, pressed)
+		if name == "Flashlight" and pressed then
+			FlashlightController.Set(not enabled)
+		end
+	end)
+	player.CharacterAdded:Connect(function(character)
+		muteOwnReplicatedLight(character)
+		if enabled then
+			setRemote:FireServer(true) -- new character, re-sync state
+		end
+	end)
+	if player.Character then
+		task.spawn(muteOwnReplicatedLight, player.Character)
+	end
+end
+
+return FlashlightController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="42">
+            <Properties>
+              <string name="Name">GraphicsController</string>
+              <string name="Source"><![CDATA[-- GraphicsController: quality profiles for the parts an experience may control itself.
+-- Roblox's own graphics quality slider is respected and never overridden.
+--
+-- Invariants on EVERY profile (fairness + atmosphere):
+--   * Atmosphere/fog is identical, so creatures are never easier/harder to see.
+--   * Lights tagged "FZ_KeyLight" (gameplay-relevant lighting) are always on.
+--   * Only decoration scales: post effects, lights tagged "FZ_DecorLight",
+--     and the particle multiplier other systems read via GetParticleScale().
+
+local CollectionService = game:GetService("CollectionService")
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+
+local GraphicsController = {}
+
+local PROFILES = {
+	low = { bloom = false, decorLights = false, particles = 0.35, grade = 0.8 },
+	medium = { bloom = true, decorLights = false, particles = 0.65, grade = 1 },
+	high = { bloom = true, decorLights = true, particles = 1, grade = 1 },
+	ultra = { bloom = true, decorLights = true, particles = 1.4, grade = 1 },
+}
+
+local current = "high"
+local resolvedProfile = PROFILES.high
+local brightness = 5
+local grade: ColorCorrectionEffect? = nil
+local bloom: BloomEffect? = nil
+local decorConnection: RBXScriptConnection? = nil
+
+local function ensureEffects()
+	-- Created on the client: these effects exist only for this player.
+	if not grade then
+		local effect = Instance.new("ColorCorrectionEffect")
+		effect.Name = "FZ_Grade"
+		effect.Parent = Lighting
+		grade = effect
+	end
+	if not bloom then
+		local effect = Instance.new("BloomEffect")
+		effect.Name = "FZ_Bloom"
+		effect.Intensity = 0.35
+		effect.Size = 22
+		effect.Threshold = 1.6
+		effect.Parent = Lighting
+		bloom = effect
+	end
+end
+
+local function resolve(name: string): string
+	if name ~= "auto" then
+		return name
+	end
+	-- Conservative default: phones/tablets start at medium, everything else at high.
+	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+		return "medium"
+	end
+	return "high"
+end
+
+local function applyDecor(light: Instance)
+	for _, descendant in light:GetDescendants() do
+		if descendant:IsA("Light") then
+			descendant.Enabled = resolvedProfile.decorLights
+		end
+	end
+	if light:IsA("Light") then
+		light.Enabled = resolvedProfile.decorLights
+	end
+end
+
+local function apply()
+	ensureEffects()
+	resolvedProfile = PROFILES[resolve(current)] or PROFILES.high
+	local g = grade :: ColorCorrectionEffect
+	-- Base grade: slightly desaturated, cool shadows. Brightness setting 0..10 (5 = neutral).
+	g.Saturation = -0.18 * resolvedProfile.grade
+	g.Contrast = 0.08 * resolvedProfile.grade
+	g.TintColor = Color3.fromRGB(236, 242, 244)
+	g.Brightness = (brightness - 5) * 0.025
+	;(bloom :: BloomEffect).Enabled = resolvedProfile.bloom
+	for _, light in CollectionService:GetTagged("FZ_DecorLight") do
+		applyDecor(light)
+	end
+	if not decorConnection then
+		decorConnection = CollectionService:GetInstanceAddedSignal("FZ_DecorLight"):Connect(applyDecor)
+	end
+end
+
+function GraphicsController.Init(settings)
+	current = settings.Get("graphics") or "auto"
+	brightness = settings.Get("brightness") or 5
+	apply()
+	settings.Changed:Connect(function(key, value)
+		if key == "graphics" then
+			current = value
+			apply()
+		elseif key == "brightness" then
+			brightness = value
+			apply()
+		end
+	end)
+end
+
+function GraphicsController.GetParticleScale(): number
+	return resolvedProfile.particles
+end
+
+function GraphicsController.GetProfileName(): string
+	return resolve(current)
+end
+
+function GraphicsController.GetRobloxQualityLevel(): number
+	local ok, level = pcall(function()
+		return UserSettings().GameSettings.SavedQualityLevel.Value
+	end)
+	return if ok then level else -1
+end
+
+return GraphicsController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="43">
+            <Properties>
+              <string name="Name">InputController</string>
+              <string name="Source"><![CDATA[-- InputController: one logical action layer for keyboard/mouse, gamepad and touch.
+--
+-- Primary path: Roblox Input Action System (InputContext / InputAction / InputBinding).
+-- Fallback path: UserInputService, used automatically if the Input Action System cannot be
+-- created on this client (or when Config FORCE_LEGACY is set for debugging).
+--
+-- Gameplay code only ever sees logical actions:
+--   InputController.Action:Connect(function(name, pressed, device) ... end)
+-- Interactions themselves use ProximityPrompts (E / X / tap) via InteractionService.
+--
+-- Default bindings
+--   Sprint      LeftShift | L3 (left stick click) | touch "Run" (toggle)
+--   Flashlight  F         | R1 / RB               | touch "Light"
+--   Pause       P         | View / Share (Select) | touch "II"
+-- GuiService.AutoSelectGuiEnabled is turned off so the Select button is free for our
+-- menu; the Router sets gamepad focus explicitly whenever a menu opens.
+
+local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Signal = require(Shared.Signal)
+local Localization = require(Shared.Localization)
+
+local Theme = require(script.Parent.Parent.UI.Theme)
+
+local FORCE_LEGACY = false
+
+export type Device = "keyboard" | "gamepad" | "touch"
+
+local InputController = {}
+InputController.Action = Signal.new() -- (name: string, pressed: boolean, device: Device)
+InputController.DeviceChanged = Signal.new() -- (device: Device)
+
+local ACTIONS = {
+	{ name = "Sprint", keys = { Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonL3 }, touchKey = "TOUCH_SPRINT" },
+	{ name = "Flashlight", keys = { Enum.KeyCode.F, Enum.KeyCode.ButtonR1 }, touchKey = "TOUCH_LIGHT" },
+	{ name = "Pause", keys = { Enum.KeyCode.P, Enum.KeyCode.ButtonSelect }, touchText = "II", small = true },
+}
+
+local device: Device = "keyboard"
+local gameplayEnabled = false
+local usingActionSystem = false
+local held: { [string]: boolean } = {}
+local touchButtons: { [string]: TextButton } = {}
+local touchContainer: Frame? = nil
+local context: Instance? = nil
+
+local function fire(name: string, pressed: boolean)
+	if pressed then
+		if not gameplayEnabled or UserInputService:GetFocusedTextBox() then
+			return
+		end
+		if held[name] then
+			return
+		end
+		held[name] = true
+	else
+		if not held[name] then
+			return
+		end
+		held[name] = nil
+	end
+	InputController.Action:Fire(name, pressed, device)
+end
+
+---------------------------------------------------------------------------
+-- Device detection
+---------------------------------------------------------------------------
+
+local function deviceFromLastInput(inputType: Enum.UserInputType): Device?
+	if inputType == Enum.UserInputType.Touch then
+		return "touch"
+	end
+	local name = inputType.Name
+	if string.sub(name, 1, 7) == "Gamepad" then
+		return "gamepad"
+	end
+	if inputType == Enum.UserInputType.Keyboard or string.sub(name, 1, 5) == "Mouse" then
+		return "keyboard"
+	end
+	return nil
+end
+
+local function setDevice(newDevice: Device?)
+	if not newDevice or newDevice == device then
+		return
+	end
+	device = newDevice
+	if touchContainer then
+		touchContainer.Visible = gameplayEnabled and device == "touch"
+	end
+	InputController.DeviceChanged:Fire(device)
+end
+
+local function readPreferredInput(): Device?
+	local ok, preferred = pcall(function()
+		return (UserInputService :: any).PreferredInput
+	end)
+	if not ok or preferred == nil then
+		return nil
+	end
+	if preferred == Enum.PreferredInput.Touch then
+		return "touch"
+	elseif preferred == Enum.PreferredInput.Gamepad then
+		return "gamepad"
+	end
+	return "keyboard"
+end
+
+local function initDeviceDetection()
+	local preferred = readPreferredInput()
+	if preferred then
+		device = preferred
+		UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function()
+			setDevice(readPreferredInput())
+		end)
+	else
+		device = deviceFromLastInput(UserInputService:GetLastInputType())
+			or (if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then "touch" else "keyboard")
+		UserInputService.LastInputTypeChanged:Connect(function(inputType)
+			setDevice(deviceFromLastInput(inputType))
+		end)
+	end
+end
+
+---------------------------------------------------------------------------
+-- Touch buttons (large, few, right thumb area; Pause sits top-right)
+---------------------------------------------------------------------------
+
+local function createTouchButtons(parent: ScreenGui)
+	local container = Instance.new("Frame")
+	container.Name = "TouchControls"
+	container.BackgroundTransparency = 1
+	container.Size = UDim2.fromScale(1, 1)
+	container.Visible = false
+	container.Parent = parent
+	touchContainer = container
+
+	local index = 0
+	for _, definition in ACTIONS do
+		local button = Instance.new("TextButton")
+		button.Name = definition.name
+		button.AutoButtonColor = false
+		button.AutoLocalize = false
+		button.BackgroundColor3 = Theme.Colors.Panel
+		button.BackgroundTransparency = 0.35
+		button.TextColor3 = Theme.Colors.TextBright
+		button.Font = Theme.Fonts.Medium
+		button.TextSize = 15
+		button.Selectable = false
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0.5, 0)
+		corner.Parent = button
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Theme.Colors.TextFaint
+		stroke.Transparency = 0.3
+		stroke.Thickness = 1
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Parent = button
+		if definition.small then
+			button.Size = UDim2.fromOffset(48, 48)
+			button.AnchorPoint = Vector2.new(1, 0)
+			button.Position = UDim2.new(1, -16, 0, 8)
+		else
+			button.Size = UDim2.fromOffset(72, 72)
+			button.AnchorPoint = Vector2.new(1, 1)
+			button.Position = UDim2.new(1, -150 - index * 84, 1, -28 - index * 60)
+			index += 1
+		end
+		if definition.touchKey then
+			Localization.Bind(button, definition.touchKey)
+		else
+			button.Text = definition.touchText or ""
+		end
+		button.Parent = container
+		touchButtons[definition.name] = button
+	end
+end
+
+---------------------------------------------------------------------------
+-- Binding paths
+---------------------------------------------------------------------------
+
+local function bindWithActionSystem(): boolean
+	local ok, err = pcall(function()
+		local newContext = Instance.new("InputContext")
+		newContext.Name = "FZ_Gameplay"
+		for _, definition in ACTIONS do
+			local action = Instance.new("InputAction")
+			action.Name = definition.name
+			action.Type = Enum.InputActionType.Bool
+			for _, key in definition.keys do
+				local binding = Instance.new("InputBinding")
+				binding.KeyCode = key
+				binding.Parent = action
+			end
+			local touchButton = touchButtons[definition.name]
+			if touchButton then
+				local binding = Instance.new("InputBinding")
+				binding.UIButton = touchButton
+				binding.Parent = action
+			end
+			action.Pressed:Connect(function()
+				fire(definition.name, true)
+			end)
+			action.Released:Connect(function()
+				fire(definition.name, false)
+			end)
+			action.Parent = newContext
+		end
+		newContext.Enabled = gameplayEnabled
+		newContext.Parent = Players.LocalPlayer:WaitForChild("PlayerScripts")
+		context = newContext
+	end)
+	if not ok then
+		warn("[FZ-Input] Input Action System unavailable, using fallback: " .. tostring(err))
+		if context then
+			context:Destroy()
+			context = nil
+		end
+	end
+	return ok
+end
+
+local function bindWithFallback()
+	local keyToAction: { [Enum.KeyCode]: string } = {}
+	for _, definition in ACTIONS do
+		for _, key in definition.keys do
+			keyToAction[key] = definition.name
+		end
+	end
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed then
+			return
+		end
+		local name = keyToAction[input.KeyCode]
+		if name then
+			fire(name, true)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		local name = keyToAction[input.KeyCode]
+		if name then
+			fire(name, false)
+		end
+	end)
+	for name, button in touchButtons do
+		button.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				fire(name, true)
+			end
+		end)
+		button.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				fire(name, false)
+			end
+		end)
+	end
+end
+
+---------------------------------------------------------------------------
+-- Public API
+---------------------------------------------------------------------------
+
+function InputController.Init(hudGui: ScreenGui)
+	GuiService.AutoSelectGuiEnabled = false
+	initDeviceDetection()
+	createTouchButtons(hudGui)
+	usingActionSystem = not FORCE_LEGACY and bindWithActionSystem()
+	if not usingActionSystem then
+		bindWithFallback()
+	end
+end
+
+function InputController.GetDevice(): Device
+	return device
+end
+
+function InputController.IsUsingActionSystem(): boolean
+	return usingActionSystem
+end
+
+function InputController.SetGameplayEnabled(enabled: boolean)
+	gameplayEnabled = enabled
+	if context then
+		(context :: any).Enabled = enabled
+	end
+	if touchContainer then
+		touchContainer.Visible = enabled and device == "touch"
+	end
+	if not enabled then
+		-- Release everything that is still held so nothing gets stuck "on".
+		for name in table.clone(held) do
+			held[name] = nil
+			InputController.Action:Fire(name, false, device)
+		end
+	end
+end
+
+-- Lets gameplay code reflect state on touch buttons (e.g. sprint toggle highlighted).
+function InputController.SetTouchActive(name: string, active: boolean)
+	local button = touchButtons[name]
+	if button then
+		button.BackgroundColor3 = if active then Theme.Colors.Accent else Theme.Colors.Panel
+	end
+end
+
+return InputController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="44">
+            <Properties>
+              <string name="Name">MovementController</string>
+              <string name="Source"><![CDATA[-- MovementController: slow walk, short limited sprint with stamina.
+-- Keyboard: hold to sprint. Gamepad (L3) and touch: toggle, ends automatically when the
+-- player stops moving or runs out of breath. No permanent sprinting by design.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+
+local InputController = require(script.Parent.InputController)
+
+local MovementController = {}
+
+local M = Config.Movement
+local player = Players.LocalPlayer
+
+local stamina = 1
+local exhausted = false
+local wantsSprint = false
+local sprinting = false
+local regenTimer = 0
+local heartbeat: RBXScriptConnection? = nil
+local settings = nil
+local onStamina: ((number, boolean) -> ())? = nil
+
+local function cameraEffectsScale(): number
+	local value = settings and settings.Get("cameraEffects") or "full"
+	return if value == "off" then 0 elseif value == "reduced" then 0.5 else 1
+end
+
+local function setSprinting(value: boolean)
+	if sprinting == value then
+		return
+	end
+	sprinting = value
+	InputController.SetTouchActive("Sprint", value)
+	local camera = workspace.CurrentCamera
+	if camera then
+		local fov = M.BaseFov + (if value then M.SprintFovBoost * cameraEffectsScale() else 0)
+		TweenService:Create(camera, TweenInfo.new(0.35, Enum.EasingStyle.Sine), { FieldOfView = fov }):Play()
+	end
+end
+
+local function step(dt: number)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then
+		return
+	end
+	local moving = humanoid.MoveDirection.Magnitude > 0.1
+	if not moving and InputController.GetDevice() ~= "keyboard" then
+		wantsSprint = false -- toggle sprint ends when the player stops
+	end
+
+	local canSprint = wantsSprint and moving and not exhausted and stamina > 0
+	setSprinting(canSprint)
+
+	if sprinting then
+		stamina = math.max(0, stamina - dt / M.StaminaSeconds)
+		regenTimer = M.RegenDelay
+		if stamina <= 0 then
+			exhausted = true
+			wantsSprint = false
+		end
+	else
+		regenTimer = math.max(0, regenTimer - dt)
+		if regenTimer <= 0 then
+			stamina = math.min(1, stamina + dt / M.RegenSeconds)
+		end
+		if exhausted and stamina >= M.ExhaustedThreshold then
+			exhausted = false
+		end
+	end
+
+	humanoid.WalkSpeed = if sprinting then M.SprintSpeed else M.WalkSpeed
+	if onStamina then
+		onStamina(stamina, exhausted)
+	end
+end
+
+function MovementController.Init(settingsController, staminaCallback: (number, boolean) -> ())
+	settings = settingsController
+	onStamina = staminaCallback
+	InputController.Action:Connect(function(name, pressed, device)
+		if name ~= "Sprint" then
+			return
+		end
+		if device == "keyboard" then
+			wantsSprint = pressed
+		elseif pressed then
+			wantsSprint = not wantsSprint
+		end
+	end)
+end
+
+function MovementController.SetActive(active: boolean)
+	if active and not heartbeat then
+		heartbeat = RunService.Heartbeat:Connect(step)
+	elseif not active and heartbeat then
+		heartbeat:Disconnect()
+		heartbeat = nil
+		wantsSprint = false
+		setSprinting(false)
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = M.WalkSpeed
+		end
+	end
+end
+
+return MovementController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="45">
+            <Properties>
+              <string name="Name">SettingsController</string>
+              <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
+-- Changes apply instantly on this client and are persisted through the server.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+local Signal = require(Shared.Signal)
+
+local SettingsController = {}
+SettingsController.Changed = Signal.new() -- (key, value)
+
+local values: { [string]: any } = Config.DefaultSettings()
+local updateRemote = Net.Event("UpdateSetting")
+
+function SettingsController.Load(saved: { [string]: any }?)
+	for key, value in saved or {} do
+		local ok, sanitized = Config.ValidateSetting(key, value)
+		if ok then
+			values[key] = sanitized
+		end
+	end
+end
+
+function SettingsController.Get(key: string): any
+	return values[key]
+end
+
+function SettingsController.Set(key: string, value: any): boolean
+	local ok, sanitized = Config.ValidateSetting(key, value)
+	if not ok then
+		return false
+	end
+	if values[key] == sanitized then
+		return true
+	end
+	values[key] = sanitized
+	if key == "language" then
+		Localization.SetLanguage(sanitized)
+	end
+	SettingsController.Changed:Fire(key, sanitized)
+	updateRemote:FireServer(key, sanitized)
+	return true
+end
+
+-- Cycles enum / bool / int settings by delta (+1 / -1). Wraps for enums and bools.
+function SettingsController.Step(key: string, delta: number)
+	local definition = Config.Settings[key]
+	if not definition then
+		return
+	end
+	local current = values[key]
+	if definition.kind == "bool" then
+		SettingsController.Set(key, not current)
+	elseif definition.kind == "enum" then
+		local index = table.find(definition.values, current) or 1
+		local nextIndex = ((index - 1 + delta) % #definition.values) + 1
+		SettingsController.Set(key, definition.values[nextIndex])
+	elseif definition.kind == "int" then
+		SettingsController.Set(key, math.clamp((current or definition.default) + delta, definition.min, definition.max))
+	end
+end
+
+-- Display text for a setting value in the current language.
+function SettingsController.Describe(key: string): string
+	local definition = Config.Settings[key]
+	local value = values[key]
+	if not definition then
+		return ""
+	end
+	if key == "language" then
+		return Config.LanguageNames[value] or ""
+	elseif definition.kind == "bool" then
+		return Localization.T(if value then "VALUE_ON" else "VALUE_OFF")
+	elseif definition.kind == "enum" then
+		return Localization.T(definition.labels[value])
+	elseif definition.kind == "int" then
+		return tostring(value)
+	end
+	return tostring(value)
+end
+
+return SettingsController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="46">
+            <Properties>
+              <string name="Name">WorldTextController</string>
+              <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
+--   * ProximityPrompts tagged "FZ_Prompt" (attributes FZ_Action / FZ_Object)
+--   * TextLabels on SurfaceGuis tagged "FZ_WorldText" (attribute LocKey, LocParam_<name>)
+-- Text is set locally, so four players can read the same sign in four languages.
+-- Works with StreamingEnabled: objects are localized whenever they stream in.
+
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+
+local WorldTextController = {}
+
+local function localizePrompt(prompt: Instance)
+	if not prompt:IsA("ProximityPrompt") then
+		return
+	end
+	local action = prompt:GetAttribute("FZ_Action")
+	local object = prompt:GetAttribute("FZ_Object")
+	prompt.ActionText = if type(action) == "string" then Localization.T(action) else ""
+	prompt.ObjectText = if type(object) == "string" then Localization.T(object) else ""
+end
+
+local function localizeText(label: Instance)
+	if not label:IsA("TextLabel") then
+		return
+	end
+	local key = label:GetAttribute("LocKey")
+	if type(key) ~= "string" then
+		return
+	end
+	local params = {}
+	for name, value in label:GetAttributes() do
+		local paramName = string.match(name, "^LocParam_(.+)$")
+		if paramName then
+			params[paramName] = value
+		end
+	end
+	label.AutoLocalize = false
+	label.Text = Localization.T(key, params)
+end
+
+local function refreshAll()
+	for _, prompt in CollectionService:GetTagged("FZ_Prompt") do
+		localizePrompt(prompt)
+	end
+	for _, label in CollectionService:GetTagged("FZ_WorldText") do
+		localizeText(label)
+	end
+end
+
+function WorldTextController.Init()
+	CollectionService:GetInstanceAddedSignal("FZ_Prompt"):Connect(localizePrompt)
+	CollectionService:GetInstanceAddedSignal("FZ_WorldText"):Connect(localizeText)
+	Localization.Changed:Connect(refreshAll)
+	refreshAll()
+end
+
+return WorldTextController
+]]></string>
+            </Properties>
+          </Item>
+        </Item>
+        <Item class="LocalScript" referent="47">
+          <Properties>
+            <string name="Name">Main</string>
+            <string name="Source"><![CDATA[-- FREQUENCY ZERO - client bootstrap.
+--
+-- Flow: boot screen (logo only) -> load profile -> apply saved language BEFORE any text
+-- exists -> first start: language picker / otherwise: main menu -> play.
+-- Because no localized UI is created before the language is known, players never see
+-- placeholder or wrong-language text that changes a moment later.
+
+local CollectionService = game:GetService("CollectionService")
+local LocalizationService = game:GetService("LocalizationService")
+local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local Controllers = script.Parent:WaitForChild("Controllers")
+local UI = script.Parent:WaitForChild("UI")
+
+local InputController = require(Controllers.InputController)
+local SettingsController = require(Controllers.SettingsController)
+local GraphicsController = require(Controllers.GraphicsController)
+local MovementController = require(Controllers.MovementController)
+local FlashlightController = require(Controllers.FlashlightController)
+local WorldTextController = require(Controllers.WorldTextController)
+
+local Components = require(UI.Components)
+local Theme = require(UI.Theme)
+local Router = require(UI.Router)
+local Hud = require(UI.Hud)
+local DebugOverlay = require(UI.DebugOverlay)
+local MainMenu = require(UI.Screens.MainMenu)
+local LanguageSelect = require(UI.Screens.LanguageSelect)
+
+---------------------------------------------------------------------------
+-- 1. Screen layers (no text yet)
+---------------------------------------------------------------------------
+local backdropGui = Components.ScreenGui("FZ_Backdrop", 10, true)
+local menuGui = Components.ScreenGui("FZ_Menu", 20)
+Components.AttachScale(menuGui)
+local hudGui = Components.ScreenGui("FZ_HUD", 30)
+Components.AttachScale(hudGui)
+
+-- Dark on the left (menu column), revealing the scene on the right.
+local backdrop = Instance.new("Frame")
+backdrop.Name = "Backdrop"
+backdrop.BackgroundColor3 = Theme.Colors.Background
+backdrop.BorderSizePixel = 0
+backdrop.Size = UDim2.fromScale(1, 1)
+backdrop.Visible = false
+backdrop.Parent = backdropGui
+local gradient = Instance.new("UIGradient")
+gradient.Transparency = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 0.05),
+	NumberSequenceKeypoint.new(0.45, 0.35),
+	NumberSequenceKeypoint.new(1, 0.75),
+})
+gradient.Parent = backdrop
+
+InputController.Init(hudGui)
+
+---------------------------------------------------------------------------
+-- 2. Profile + language (before any localized UI is built)
+---------------------------------------------------------------------------
+local function waitForAttribute(name: string, timeout: number): boolean
+	local deadline = os.clock() + timeout
+	while player:GetAttribute(name) ~= true and os.clock() < deadline do
+		task.wait(0.1)
+	end
+	return player:GetAttribute(name) == true
+end
+
+local profile = nil
+if waitForAttribute("FZ_DataReady", 25) then
+	local ok, result = pcall(function()
+		return Net.Function("FetchProfile"):InvokeServer()
+	end)
+	if ok and type(result) == "table" then
+		profile = result
+	end
+end
+profile = profile
+	or { settings = {}, signalMarks = 0, progress = { chapter = 1, completed = {} }, persistent = false, isNew = true }
+
+SettingsController.Load(profile.settings)
+
+local function robloxLocale(): string
+	local ok, locale = pcall(function()
+		return LocalizationService.RobloxLocaleId
+	end)
+	if ok and type(locale) == "string" and locale ~= "" then
+		return locale
+	end
+	return player.LocaleId
+end
+
+local savedLanguage = SettingsController.Get("language")
+local detectedLanguage = Localization.Detect(robloxLocale()) or Config.FallbackLanguage
+Localization.SetLanguage(savedLanguage or detectedLanguage)
+
+if RunService:IsStudio() then
+	for _, problem in Localization.Validate() do
+		warn("[FZ-Loc] " .. problem)
+	end
+end
+
+---------------------------------------------------------------------------
+-- 3. Controllers and HUD
+---------------------------------------------------------------------------
+local state = "boot" -- boot | language | menu | playing | paused
+local router = Router.new(menuGui, InputController)
+
+local controls = nil
+local function getControls()
+	if controls then
+		return controls
+	end
+	local ok, result = pcall(function()
+		local playerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule") :: ModuleScript)
+		return (playerModule :: any):GetControls()
+	end)
+	if ok then
+		controls = result
+	else
+		warn("[FZ] PlayerModule controls unavailable: " .. tostring(result))
+	end
+	return controls
+end
+
+local function setGameplay(enabled: boolean)
+	InputController.SetGameplayEnabled(enabled)
+	MovementController.SetActive(enabled)
+	-- No world interactions (E / X / tap prompts) while a menu or document is open.
+	pcall(function()
+		(ProximityPromptService :: any).Enabled = enabled
+	end)
+	local c = getControls()
+	if c then
+		if enabled then
+			c:Enable()
+		else
+			c:Disable()
+		end
+	end
+end
+
+local function setMenuCamera(active: boolean)
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	if active then
+		local anchor = CollectionService:GetTagged("FZ_MenuCamera")[1]
+		if anchor and anchor:IsA("BasePart") then
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.CFrame = anchor.CFrame
+		end
+	else
+		camera.CameraType = Enum.CameraType.Custom
+		camera.FieldOfView = Config.Movement.BaseFov
+	end
+end
+
+GraphicsController.Init(SettingsController)
+WorldTextController.Init()
+Hud.Init(hudGui, SettingsController, InputController, {
+	onOpen = function()
+		setGameplay(false)
+	end,
+	onClose = function()
+		if state == "playing" then
+			setGameplay(true)
+		end
+	end,
+})
+DebugOverlay.Init(hudGui, {
+	profile = GraphicsController.GetProfileName,
+	quality = GraphicsController.GetRobloxQualityLevel,
+	device = InputController.GetDevice,
+	input = function()
+		return if InputController.IsUsingActionSystem() then "IAS" else "UIS"
+	end,
+})
+MovementController.Init(SettingsController, Hud.SetStamina)
+FlashlightController.Init()
+
+Net.Event("Subtitle").OnClientEvent:Connect(Hud.ShowSubtitle)
+Net.Event("Document").OnClientEvent:Connect(Hud.ShowDocument)
+Net.Event("Notify").OnClientEvent:Connect(function(key, params)
+	if type(key) == "string" then
+		Hud.Notify(key, if type(params) == "table" then params else nil)
+	end
+end)
+SessionState.Observe("Objective", function(key)
+	if state == "playing" and type(key) == "string" then
+		Hud.ShowObjective(key)
+	end
+end)
+
+---------------------------------------------------------------------------
+-- 4. App flow
+---------------------------------------------------------------------------
+local readyRemote = Net.Event("ClientReady")
+local pauseOpenedAt = 0
+
+local app = {
+	Settings = SettingsController,
+	Input = InputController,
+	Hud = Hud,
+	Debug = DebugOverlay,
+	Profile = profile,
+}
+router.App = app
+
+function app.HasProgress(): boolean
+	return profile.isNew == false
+end
+
+function app.Play(_chapter: number?)
+	if state == "menu" then
+		state = "playing"
+		router:Clear()
+		backdrop.Visible = false
+		setMenuCamera(false)
+		setGameplay(true)
+		readyRemote:FireServer()
+		local objective = SessionState.Get("Objective")
+		if type(objective) == "string" then
+			Hud.ShowObjective(objective, false)
+		end
+	elseif state == "paused" then
+		state = "playing"
+		router:Clear()
+		backdrop.Visible = false
+		setGameplay(true)
+	end
+end
+
+local function openPause()
+	if state ~= "playing" or Hud.IsDocumentOpen() then
+		return
+	end
+	state = "paused"
+	pauseOpenedAt = os.clock()
+	setGameplay(false)
+	backdrop.Visible = true
+	router:Replace(MainMenu, { mode = "pause" })
+end
+
+InputController.Action:Connect(function(name, pressed)
+	if name == "Pause" and pressed then
+		openPause()
+	end
+end)
+
+-- The same buttons close the in-game menu again (only from its first page).
+UserInputService.InputBegan:Connect(function(input)
+	if state ~= "paused" or #router.Stack ~= 1 or os.clock() - pauseOpenedAt < 0.25 then
+		return
+	end
+	local key = input.KeyCode
+	if key == Enum.KeyCode.ButtonSelect or (key == Enum.KeyCode.P and not UserInputService:GetFocusedTextBox()) then
+		app.Play()
+	end
+end)
+
+local function showMainMenu()
+	state = "menu"
+	backdrop.Visible = true
+	setMenuCamera(true)
+	router:Replace(MainMenu, { mode = "main" })
+end
+
+setGameplay(false)
+if savedLanguage == nil then
+	state = "language"
+	backdrop.Visible = true
+	router:Replace(LanguageSelect, {
+		firstStart = true,
+		suggested = detectedLanguage,
+		onChosen = function(code: string)
+			SettingsController.Set("language", code)
+			showMainMenu()
+		end,
+	})
+else
+	showMainMenu()
+end
+
+if player:GetAttribute("FZ_DataPersistent") == false then
+	Hud.Notify("ERROR_DATA")
+end
+
+---------------------------------------------------------------------------
+-- 5. Remove boot screen (fade)
+---------------------------------------------------------------------------
+local boot = player:WaitForChild("PlayerGui"):FindFirstChild("FZ_Boot")
+if boot then
+	local background = boot:FindFirstChild("Background")
+	if background then
+		for _, child in background:GetDescendants() do
+			if child:IsA("TextLabel") then
+				TweenService:Create(child, Theme.Slow, { TextTransparency = 1 }):Play()
+			elseif child:IsA("Frame") then
+				TweenService:Create(child, Theme.Slow, { BackgroundTransparency = 1 }):Play()
+			end
+		end
+		local fade = TweenService:Create(background, Theme.Slow, { BackgroundTransparency = 1 })
+		fade.Completed:Once(function()
+			boot:Destroy()
+		end)
+		fade:Play()
+	else
+		boot:Destroy()
+	end
+end
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="Folder" referent="48">
+          <Properties>
+            <string name="Name">UI</string>
+          </Properties>
+          <Item class="ModuleScript" referent="49">
+            <Properties>
+              <string name="Name">Components</string>
+              <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
+-- All text goes through Localization.Bind, so language changes update instantly and
+-- Roblox auto-translation never touches our text.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+
+local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+local Theme = require(script.Parent.Theme)
+
+local Components = {}
+
+local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Shared invisible selection object: we draw our own focus state instead of Roblox's box.
+local hiddenSelection = Instance.new("Frame")
+hiddenSelection.BackgroundTransparency = 1
+hiddenSelection.Size = UDim2.fromScale(1, 1)
+
+function Components.ScreenGui(name: string, displayOrder: number, fullBleed: boolean?): ScreenGui
+	local gui = Instance.new("ScreenGui")
+	gui.Name = name
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = displayOrder
+	gui.AutoLocalize = false
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	gui.ScreenInsets = if fullBleed then Enum.ScreenInsets.None else Enum.ScreenInsets.CoreUISafeInsets
+	gui.Parent = playerGui
+	return gui
+end
+
+-- Responsive scaling: logical layout at 720p height, clamped so touch targets stay large
+-- on phones and text does not become huge on 4K screens.
+function Components.AttachScale(gui: ScreenGui): UIScale
+	local scale = Instance.new("UIScale")
+	scale.Parent = gui
+	local function update()
+		local camera = workspace.CurrentCamera
+		if not camera then
+			return
+		end
+		local viewport = camera.ViewportSize
+		scale.Scale = math.clamp(viewport.Y / 720, 0.9, 1.5)
+	end
+	local connection
+	local function bindCamera()
+		if connection then
+			connection:Disconnect()
+		end
+		local camera = workspace.CurrentCamera
+		if camera then
+			connection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
+		end
+		update()
+	end
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(bindCamera)
+	bindCamera()
+	return scale
+end
+
+export type TextProps = {
+	Name: string?,
+	Key: string?,
+	Params: { [string]: any }?,
+	Text: string?,
+	Font: Enum.Font?,
+	TextSize: number?,
+	Color: Color3?,
+	Size: UDim2?,
+	Position: UDim2?,
+	AnchorPoint: Vector2?,
+	XAlign: Enum.TextXAlignment?,
+	YAlign: Enum.TextYAlignment?,
+	Wrapped: boolean?,
+	AutoY: boolean?,
+	RichText: boolean?,
+	LayoutOrder: number?,
+	Parent: Instance?,
+}
+
+function Components.Text(props: TextProps): TextLabel
+	local label = Instance.new("TextLabel")
+	label.Name = props.Name or (props.Key or "Text")
+	label.BackgroundTransparency = 1
+	label.AutoLocalize = false
+	label.Font = props.Font or Theme.Fonts.Body
+	label.TextSize = props.TextSize or Theme.Sizes.TextBody
+	label.TextColor3 = props.Color or Theme.Colors.Text
+	label.TextXAlignment = props.XAlign or Enum.TextXAlignment.Left
+	label.TextYAlignment = props.YAlign or Enum.TextYAlignment.Center
+	label.TextWrapped = props.Wrapped ~= false
+	label.RichText = props.RichText == true
+	label.Size = props.Size or UDim2.new(1, 0, 0, (props.TextSize or Theme.Sizes.TextBody) + 8)
+	if props.AutoY then
+		label.AutomaticSize = Enum.AutomaticSize.Y
+	end
+	if props.Position then
+		label.Position = props.Position
+	end
+	if props.AnchorPoint then
+		label.AnchorPoint = props.AnchorPoint
+	end
+	label.LayoutOrder = props.LayoutOrder or 0
+	if props.Key then
+		Localization.Bind(label, props.Key, props.Params)
+	else
+		label.Text = props.Text or ""
+	end
+	label.Parent = props.Parent
+	return label
+end
+
+function Components.List(parent: Instance, padding: number?, horizontal: boolean?): UIListLayout
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, padding or Theme.Sizes.Gap)
+	layout.FillDirection = if horizontal then Enum.FillDirection.Horizontal else Enum.FillDirection.Vertical
+	layout.Parent = parent
+	return layout
+end
+
+function Components.Padding(parent: Instance, left: number, top: number?, right: number?, bottom: number?)
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, left)
+	padding.PaddingTop = UDim.new(0, top or left)
+	padding.PaddingRight = UDim.new(0, right or left)
+	padding.PaddingBottom = UDim.new(0, bottom or top or left)
+	padding.Parent = parent
+	return padding
+end
+
+export type ButtonProps = {
+	Key: string?,
+	Params: { [string]: any }?,
+	Text: string?,
+	TagKey: string?, -- small right-aligned hint ("Suggested", "No signal yet", ...)
+	TagParams: { [string]: any }?,
+	OnActivated: (() -> ())?,
+	LayoutOrder: number?,
+	Height: number?,
+	Disabled: boolean?,
+	Font: Enum.Font?,
+	Parent: Instance?,
+}
+
+export type Button = {
+	Instance: TextButton,
+	Label: TextLabel,
+	Tag: TextLabel,
+	SetDisabled: (disabled: boolean) -> (),
+	SetFocused: (focused: boolean) -> (),
+}
+
+function Components.Button(props: ButtonProps): Button
+	local height = props.Height or Theme.Sizes.Button
+	local button = Instance.new("TextButton")
+	button.Name = props.Key or "Button"
+	button.AutoButtonColor = false
+	button.AutoLocalize = false
+	button.Text = ""
+	button.BackgroundColor3 = Theme.Colors.TextBright
+	button.BackgroundTransparency = 1
+	button.BorderSizePixel = 0
+	button.Size = UDim2.new(1, 0, 0, height)
+	button.LayoutOrder = props.LayoutOrder or 0
+	button.Selectable = true
+	button.SelectionImageObject = hiddenSelection
+
+	local bar = Instance.new("Frame")
+	bar.Name = "FocusBar"
+	bar.BackgroundColor3 = Theme.Colors.Accent
+	bar.BorderSizePixel = 0
+	bar.AnchorPoint = Vector2.new(0, 0.5)
+	bar.Position = UDim2.fromScale(0, 0.5)
+	bar.Size = UDim2.new(0, 3, 0.55, 0)
+	bar.BackgroundTransparency = 1
+	bar.Parent = button
+
+	local label = Components.Text({
+		Name = "Label",
+		Key = props.Key,
+		Params = props.Params,
+		Text = props.Text,
+		Font = props.Font or Theme.Fonts.Medium,
+		TextSize = Theme.Sizes.TextButton,
+		Wrapped = false,
+		Size = UDim2.new(1, -18, 1, 0),
+		Position = UDim2.fromOffset(16, 0),
+		Parent = button,
+	})
+	label.TextTruncate = Enum.TextTruncate.AtEnd
+
+	local tag = Components.Text({
+		Name = "Tag",
+		Key = props.TagKey,
+		Params = props.TagParams,
+		Font = Theme.Fonts.Mono,
+		TextSize = Theme.Sizes.TextSmall,
+		Color = Theme.Colors.TextDim,
+		XAlign = Enum.TextXAlignment.Right,
+		Wrapped = false,
+		Size = UDim2.new(0.45, -12, 1, 0),
+		Position = UDim2.new(0.55, 0, 0, 0),
+		Parent = button,
+	})
+	tag.Visible = props.TagKey ~= nil
+	if tag.Visible then
+		label.Size = UDim2.new(0.6, -18, 1, 0)
+	end
+
+	local disabled = props.Disabled == true
+	local focused = false
+	local hovered = false
+
+	local function render()
+		local active = (focused or hovered) and not disabled
+		TweenService:Create(bar, Theme.Fast, { BackgroundTransparency = if active then 0 else 1 }):Play()
+		TweenService:Create(button, Theme.Fast, { BackgroundTransparency = if active then 0.93 else 1 }):Play()
+		TweenService:Create(label, Theme.Fast, {
+			TextColor3 = if disabled then Theme.Colors.TextFaint elseif active then Theme.Colors.TextBright else Theme.Colors.Text,
+			Position = UDim2.fromOffset(if active then 20 else 16, 0),
+		}):Play()
+	end
+
+	button.MouseEnter:Connect(function()
+		hovered = true
+		render()
+	end)
+	button.MouseLeave:Connect(function()
+		hovered = false
+		render()
+	end)
+	button.SelectionGained:Connect(function()
+		focused = true
+		render()
+	end)
+	button.SelectionLost:Connect(function()
+		focused = false
+		render()
+	end)
+	button.Activated:Connect(function()
+		if disabled or not props.OnActivated then
+			return
+		end
+		props.OnActivated()
+	end)
+
+	render()
+	button.Parent = props.Parent
+
+	return {
+		Instance = button,
+		Label = label,
+		Tag = tag,
+		SetDisabled = function(value: boolean)
+			disabled = value
+			render()
+		end,
+		SetFocused = function(value: boolean)
+			focused = value
+			render()
+		end,
+	}
+end
+
+-- Scrollable vertical column. Gamepad selection scrolls it automatically.
+function Components.ScrollColumn(parent: Instance, size: UDim2, position: UDim2?): ScrollingFrame
+	local frame = Instance.new("ScrollingFrame")
+	frame.Name = "Scroll"
+	frame.BackgroundTransparency = 1
+	frame.BorderSizePixel = 0
+	frame.Size = size
+	frame.Position = position or UDim2.new()
+	frame.CanvasSize = UDim2.new()
+	frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	frame.ScrollingDirection = Enum.ScrollingDirection.Y
+	frame.ScrollBarThickness = 3
+	frame.ScrollBarImageColor3 = Theme.Colors.TextFaint
+	frame.Selectable = false
+	frame.Parent = parent
+	Components.List(frame, Theme.Sizes.Gap)
+	Components.Padding(frame, 2, 2, 8, 12)
+	return frame
+end
+
+function Components.Heading(parent: Instance, key: string, layoutOrder: number?): TextLabel
+	return Components.Text({
+		Key = key,
+		Font = Theme.Fonts.Bold, -- Michroma is reserved for the Latin-only logo (accent coverage)
+		TextSize = Theme.Sizes.TextHeading + 4,
+		Color = Theme.Colors.TextBright,
+		Size = UDim2.new(1, 0, 0, 44),
+		LayoutOrder = layoutOrder or 0,
+		Parent = parent,
+	})
+end
+
+function Components.Spacer(parent: Instance, height: number, layoutOrder: number)
+	local spacer = Instance.new("Frame")
+	spacer.BackgroundTransparency = 1
+	spacer.Size = UDim2.new(1, 0, 0, height)
+	spacer.LayoutOrder = layoutOrder
+	spacer.Parent = parent
+	return spacer
+end
+
+-- Standard screen root: a CanvasGroup (for fades) holding a left-aligned content column.
+function Components.ScreenRoot(name: string): (CanvasGroup, Frame)
+	local root = Instance.new("CanvasGroup")
+	root.Name = name
+	root.BackgroundTransparency = 1
+	root.Size = UDim2.fromScale(1, 1)
+	root.GroupTransparency = 1
+
+	local column = Instance.new("Frame")
+	column.Name = "Column"
+	column.BackgroundTransparency = 1
+	column.AnchorPoint = Vector2.new(0, 0.5)
+	column.Position = UDim2.new(0, Theme.Sizes.Margin, 0.5, 0)
+	column.Size = UDim2.new(0, Theme.Sizes.ContentWidth, 1, -48)
+	column.Parent = root
+	local constraint = Instance.new("UISizeConstraint")
+	constraint.MaxSize = Vector2.new(Theme.Sizes.ContentWidth, math.huge)
+	constraint.Parent = column
+	return root, column
+end
+
+return Components
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="50">
+            <Properties>
+              <string name="Name">DebugOverlay</string>
+              <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
+-- Runs no per-frame work while hidden.
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+
+local Components = require(script.Parent.Components)
+local Theme = require(script.Parent.Theme)
+
+local DebugOverlay = {}
+
+local label: TextLabel? = nil
+local connection: RBXScriptConnection? = nil
+local providers = {}
+
+function DebugOverlay.Init(gui: ScreenGui, infoProviders)
+	providers = infoProviders
+	label = Components.Text({
+		Name = "Debug",
+		Text = "",
+		Font = Theme.Fonts.Mono,
+		TextSize = 14,
+		Color = Theme.Colors.TextBright,
+		XAlign = Enum.TextXAlignment.Right,
+		Size = UDim2.new(0, 520, 0, 20),
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -76, 0, 18),
+		Parent = gui,
+	})
+	;(label :: TextLabel).TextStrokeTransparency = 0.4
+	;(label :: TextLabel).Visible = false
+end
+
+function DebugOverlay.IsVisible(): boolean
+	return connection ~= nil
+end
+
+function DebugOverlay.Toggle()
+	local l = label :: TextLabel
+	if connection then
+		connection:Disconnect()
+		connection = nil
+		l.Visible = false
+		return
+	end
+	l.Visible = true
+	local frames, elapsed, worst = 0, 0, 0
+	connection = RunService.RenderStepped:Connect(function(dt)
+		frames += 1
+		elapsed += dt
+		worst = math.max(worst, dt)
+		if elapsed < 0.5 then
+			return
+		end
+		local fps = frames / elapsed
+		local ping = math.floor(Players.LocalPlayer:GetNetworkPing() * 1000 + 0.5)
+		local memory = math.floor(Stats:GetTotalMemoryUsageMb())
+		l.Text = string.format(
+			"%d FPS (min %d) | %d ms | %d MB | %s Q%d | %s | %s",
+			math.floor(fps + 0.5),
+			math.floor(1 / worst + 0.5),
+			ping,
+			memory,
+			providers.profile(),
+			providers.quality(),
+			providers.device(),
+			providers.input()
+		)
+		frames, elapsed, worst = 0, 0, 0
+	end)
+end
+
+return DebugOverlay
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="51">
+            <Properties>
+              <string name="Name">Hud</string>
+              <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
+-- context and fades away again.
+--   * Subtitles (radio / voices / sound captions). Safety-relevant captions ("critical")
+--     are shown even when subtitles are turned off.
+--   * Objective toast
+--   * Document reader (fax, notes)
+--   * Short notifications
+--   * Stamina line (only while not full)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+
+local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+
+local Components = require(script.Parent.Components)
+local Theme = require(script.Parent.Theme)
+
+local Hud = {}
+
+local SUBTITLE_SIZES = { small = 18, medium = 22, large = 28 }
+local MAX_LINES = 3
+
+local gui: ScreenGui
+local settings
+local input
+local subtitleFrame: Frame
+local objectiveFrame: CanvasGroup
+local objectiveText: TextLabel
+local notifyLabel: TextLabel
+local staminaTrack: Frame
+local staminaFill: Frame
+local documentLayer: Frame? = nil
+local documentCallbacks: { onOpen: () -> (), onClose: () -> () }? = nil
+
+type ActiveLine = { label: TextLabel, line: { [string]: any }, expires: number }
+local activeLines: { ActiveLine } = {}
+local currentObjective: string? = nil
+local objectiveToken = 0
+local notifyToken = 0
+local lineCounter = 0
+
+local function escape(text: string): string
+	return (string.gsub(text, "[<>&]", { ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;" }))
+end
+
+local function escapeParams(params: { [string]: any }?): { [string]: any }?
+	if not params then
+		return nil
+	end
+	local out = {}
+	for key, value in params do
+		out[key] = escape(tostring(value))
+	end
+	return out
+end
+
+local function subtitleText(line: { [string]: any }): string
+	-- Base strings are ours (no markup); only runtime params (e.g. player names) are escaped.
+	local text = Localization.T(line.text, escapeParams(line.params))
+	if line.speaker then
+		local color = if line.speaker == "SPEAKER_RELAY" then Theme.Colors.Relay else Theme.Colors.Radio
+		return string.format('<font color="%s">%s</font>  %s', Theme.Hex(color), escape(Localization.T(line.speaker)), text)
+	end
+	return string.format('<font color="%s"><i>%s</i></font>', Theme.Hex(Theme.Colors.World), text)
+end
+
+local function subtitleSize(): number
+	return SUBTITLE_SIZES[settings.Get("subtitleSize")] or SUBTITLE_SIZES.medium
+end
+
+local function removeLine(entry: ActiveLine)
+	local index = table.find(activeLines, entry)
+	if index then
+		table.remove(activeLines, index)
+	end
+	local tween = TweenService:Create(entry.label, Theme.Fade, { TextTransparency = 1, TextStrokeTransparency = 1 })
+	tween.Completed:Once(function()
+		entry.label:Destroy()
+	end)
+	tween:Play()
+end
+
+function Hud.ShowSubtitle(line: { [string]: any })
+	if type(line) ~= "table" or type(line.text) ~= "string" then
+		return
+	end
+	if not settings.Get("subtitles") and not line.critical then
+		return
+	end
+	if #activeLines >= MAX_LINES then
+		removeLine(activeLines[1])
+	end
+	local label = Components.Text({
+		Name = "Line",
+		Text = "",
+		RichText = true,
+		Font = Theme.Fonts.Medium,
+		TextSize = subtitleSize(),
+		Color = Theme.Colors.TextBright,
+		XAlign = Enum.TextXAlignment.Center,
+		AutoY = true,
+		Size = UDim2.fromScale(1, 0),
+		Parent = subtitleFrame,
+	})
+	label.Text = subtitleText(line)
+	label.TextStrokeColor3 = Color3.new(0, 0, 0)
+	label.TextStrokeTransparency = 1
+	label.TextTransparency = 1
+	lineCounter += 1
+	label.LayoutOrder = lineCounter
+	TweenService:Create(label, Theme.Fast, { TextTransparency = 0, TextStrokeTransparency = 0.45 }):Play()
+
+	local duration = math.clamp(tonumber(line.duration) or 4, 1.5, 12)
+	local entry: ActiveLine = { label = label, line = line, expires = os.clock() + duration }
+	table.insert(activeLines, entry)
+	task.delay(duration, function()
+		if table.find(activeLines, entry) then
+			removeLine(entry)
+		end
+	end)
+end
+
+function Hud.ShowObjective(key: string?, announce: boolean?)
+	currentObjective = key
+	if not key then
+		objectiveFrame.Visible = false
+		return
+	end
+	Localization.Bind(objectiveText, key)
+	objectiveToken += 1
+	local token = objectiveToken
+	objectiveFrame.Visible = true
+	objectiveFrame.GroupTransparency = 1
+	TweenService:Create(objectiveFrame, Theme.Slow, { GroupTransparency = 0 }):Play()
+	task.delay(if announce == false then 4 else 7, function()
+		if token == objectiveToken then
+			TweenService:Create(objectiveFrame, Theme.Slow, { GroupTransparency = 1 }):Play()
+		end
+	end)
+end
+
+function Hud.Notify(key: string, params: { [string]: any }?)
+	notifyToken += 1
+	local token = notifyToken
+	Localization.Bind(notifyLabel, key, params)
+	notifyLabel.Visible = true
+	notifyLabel.TextTransparency = 1
+	TweenService:Create(notifyLabel, Theme.Fast, { TextTransparency = 0 }):Play()
+	task.delay(4, function()
+		if token == notifyToken then
+			TweenService:Create(notifyLabel, Theme.Fade, { TextTransparency = 1 }):Play()
+		end
+	end)
+end
+
+function Hud.SetStamina(value: number, exhausted: boolean)
+	local visible = value < 0.999
+	if staminaTrack.Visible ~= visible then
+		staminaTrack.Visible = visible
+	end
+	staminaFill.Size = UDim2.fromScale(value, 1)
+	staminaFill.BackgroundColor3 = if exhausted then Theme.Colors.Accent else Theme.Colors.TextDim
+end
+
+local function formatDate(unix: number): string
+	local t = os.date("*t", unix)
+	return Localization.T("DATE_FORMAT", {
+		d = string.format("%02d", t.day),
+		m = string.format("%02d", t.month),
+		y = tostring(t.year),
+	})
+end
+
+function Hud.IsDocumentOpen(): boolean
+	return documentLayer ~= nil
+end
+
+function Hud.CloseDocument()
+	if not documentLayer then
+		return
+	end
+	documentLayer:Destroy()
+	documentLayer = nil
+	GuiService.SelectedObject = nil
+	if documentCallbacks then
+		documentCallbacks.onClose()
+	end
+end
+
+function Hud.ShowDocument(document: { [string]: any })
+	if type(document) ~= "table" or type(document.title) ~= "string" or type(document.body) ~= "string" then
+		return
+	end
+	Hud.CloseDocument()
+
+	local layer = Instance.new("Frame")
+	layer.Name = "Document"
+	layer.BackgroundColor3 = Color3.new(0, 0, 0)
+	layer.BackgroundTransparency = 0.35
+	layer.Size = UDim2.fromScale(1, 1)
+	layer.ZIndex = 20
+	layer.Parent = gui
+	documentLayer = layer
+
+	local unlock = Instance.new("TextButton")
+	unlock.Modal = true
+	unlock.Text = ""
+	unlock.BackgroundTransparency = 1
+	unlock.Size = UDim2.fromOffset(0, 0)
+	unlock.Selectable = false
+	unlock.Parent = layer
+
+	local panel = Instance.new("Frame")
+	panel.Name = "Paper"
+	panel.AnchorPoint = Vector2.new(0.5, 0.5)
+	panel.Position = UDim2.fromScale(0.5, 0.5)
+	panel.Size = UDim2.new(0, 520, 0, 0)
+	panel.AutomaticSize = Enum.AutomaticSize.Y
+	panel.BackgroundColor3 = Theme.Colors.Panel
+	panel.BorderSizePixel = 0
+	panel.ZIndex = 21
+	panel.Parent = layer
+	local sizeLimit = Instance.new("UISizeConstraint")
+	sizeLimit.MaxSize = Vector2.new(520, 600)
+	sizeLimit.Parent = panel
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Theme.Colors.PanelLine
+	stroke.Parent = panel
+	Components.Padding(panel, 28, 24)
+	Components.List(panel, 12)
+
+	local params = nil
+	if type(document.date) == "number" then
+		params = { date = formatDate(document.date) }
+	end
+	local title = Components.Text({ Key = document.title, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = panel })
+	title.ZIndex = 22
+	local body = Components.Text({ Key = document.body, Params = params, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, AutoY = true, Size = UDim2.fromScale(1, 0), YAlign = Enum.TextYAlignment.Top, LayoutOrder = 2, Parent = panel })
+	body.ZIndex = 22
+	local close = Components.Button({ Key = "DOC_CLOSE", LayoutOrder = 3, OnActivated = Hud.CloseDocument, Parent = panel })
+	close.Instance.ZIndex = 22
+	for _, child in close.Instance:GetDescendants() do
+		if child:IsA("GuiObject") then
+			child.ZIndex = 23
+		end
+	end
+
+	if documentCallbacks then
+		documentCallbacks.onOpen()
+	end
+	if input.GetDevice() == "gamepad" then
+		GuiService.SelectedObject = close.Instance
+	end
+end
+
+function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callbacks: { onOpen: () -> (), onClose: () -> () })
+	gui = hudGui
+	settings = settingsController
+	input = inputController
+	documentCallbacks = callbacks
+
+	subtitleFrame = Instance.new("Frame")
+	subtitleFrame.Name = "Subtitles"
+	subtitleFrame.BackgroundTransparency = 1
+	subtitleFrame.AnchorPoint = Vector2.new(0.5, 1)
+	subtitleFrame.Position = UDim2.new(0.5, 0, 1, -24)
+	subtitleFrame.Size = UDim2.new(0.62, 0, 0.4, 0)
+	subtitleFrame.Parent = gui
+	local subtitleLayout = Components.List(subtitleFrame, 6)
+	subtitleLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+	subtitleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+	objectiveFrame = Instance.new("CanvasGroup")
+	objectiveFrame.Name = "Objective"
+	objectiveFrame.BackgroundTransparency = 1
+	objectiveFrame.Position = UDim2.fromOffset(24, 16)
+	objectiveFrame.Size = UDim2.fromOffset(420, 70)
+	objectiveFrame.Visible = false
+	objectiveFrame.Parent = gui
+	Components.List(objectiveFrame, 2)
+	Components.Text({ Key = "OBJECTIVE_NEW", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = objectiveFrame })
+	objectiveText = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextHeading, Color = Theme.Colors.TextBright, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 2, Parent = objectiveFrame })
+
+	notifyLabel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.8, 0, 0, 28), Position = UDim2.new(0.5, 0, 0, 20), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
+	notifyLabel.Visible = false
+
+	staminaTrack = Instance.new("Frame")
+	staminaTrack.Name = "Stamina"
+	staminaTrack.AnchorPoint = Vector2.new(0.5, 1)
+	staminaTrack.Position = UDim2.new(0.5, 0, 1, -8)
+	staminaTrack.Size = UDim2.fromOffset(160, 2)
+	staminaTrack.BackgroundColor3 = Theme.Colors.TextFaint
+	staminaTrack.BackgroundTransparency = 0.5
+	staminaTrack.BorderSizePixel = 0
+	staminaTrack.Visible = false
+	staminaTrack.Parent = gui
+	staminaFill = Instance.new("Frame")
+	staminaFill.BorderSizePixel = 0
+	staminaFill.BackgroundColor3 = Theme.Colors.TextDim
+	staminaFill.Size = UDim2.fromScale(1, 1)
+	staminaFill.Parent = staminaTrack
+
+	-- Re-render visible subtitles when the language or subtitle size changes.
+	Localization.Changed:Connect(function()
+		for _, entry in activeLines do
+			entry.label.Text = subtitleText(entry.line)
+		end
+	end)
+	settings.Changed:Connect(function(key)
+		if key == "subtitleSize" then
+			for _, entry in activeLines do
+				entry.label.TextSize = subtitleSize()
+			end
+		end
+	end)
+
+	UserInputService.InputBegan:Connect(function(inputObject)
+		if not documentLayer then
+			return
+		end
+		local key = inputObject.KeyCode
+		if key == Enum.KeyCode.ButtonB or (key == Enum.KeyCode.Backspace and not UserInputService:GetFocusedTextBox()) then
+			Hud.CloseDocument()
+		end
+	end)
+end
+
+return Hud
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="52">
+            <Properties>
+              <string name="Name">Router</string>
+              <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
+--
+-- A screen module exposes .new(router, args) and returns:
+--   { Root: GuiObject, Focus: GuiObject?, OnBack: (() -> boolean)?, Destroy: (() -> ())? }
+-- OnBack returning true means "handled", otherwise the router pops the screen.
+-- Back works with: gamepad B / Circle, keyboard Backspace, and the on-screen Back button.
+
+local GuiService = game:GetService("GuiService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local Signal = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Signal"))
+local Theme = require(script.Parent.Theme)
+
+local Router = {}
+Router.__index = Router
+
+function Router.new(container: GuiObject, input)
+	local self = setmetatable({
+		Container = container,
+		Input = input,
+		Stack = {},
+		Changed = Signal.new(), -- fired with the number of open screens
+		RootBackHandler = nil :: (() -> ())?, -- called when Back is pressed on the last screen
+	}, Router)
+
+	-- Modal button: frees the mouse in first person while any menu is open.
+	local modal = Instance.new("TextButton")
+	modal.Name = "MouseUnlock"
+	modal.Modal = true
+	modal.Text = ""
+	modal.BackgroundTransparency = 1
+	modal.Size = UDim2.fromOffset(0, 0)
+	modal.Selectable = false
+	modal.Visible = false
+	modal.Parent = container
+	self._modal = modal
+
+	UserInputService.InputBegan:Connect(function(inputObject)
+		if #self.Stack == 0 then
+			return
+		end
+		local key = inputObject.KeyCode
+		if key == Enum.KeyCode.ButtonB or (key == Enum.KeyCode.Backspace and not UserInputService:GetFocusedTextBox()) then
+			self:Back()
+		end
+	end)
+
+	input.DeviceChanged:Connect(function()
+		self:RefreshFocus()
+	end)
+
+	return self
+end
+
+function Router:Top()
+	return self.Stack[#self.Stack]
+end
+
+function Router:IsOpen(): boolean
+	return #self.Stack > 0
+end
+
+function Router:RefreshFocus()
+	local top = self:Top()
+	if top and self.Input.GetDevice() == "gamepad" then
+		local current = GuiService.SelectedObject
+		if not current or not current:IsDescendantOf(top.Root) then
+			GuiService.SelectedObject = top.Focus
+		end
+	elseif not top then
+		GuiService.SelectedObject = nil
+	end
+end
+
+local function fadeIn(root: GuiObject)
+	root.Visible = true
+	if root:IsA("CanvasGroup") then
+		root.GroupTransparency = 1
+		TweenService:Create(root, Theme.Fade, { GroupTransparency = 0 }):Play()
+	end
+end
+
+function Router:_show(screen)
+	screen.Root.Parent = self.Container
+	fadeIn(screen.Root)
+	self._modal.Visible = true
+	self:RefreshFocus()
+	self.Changed:Fire(#self.Stack)
+end
+
+function Router:Push(screenModule, args: any?)
+	local previous = self:Top()
+	if previous then
+		previous.Root.Visible = false
+	end
+	local screen = screenModule.new(self, args)
+	table.insert(self.Stack, screen)
+	self:_show(screen)
+	return screen
+end
+
+function Router:Pop()
+	local screen = table.remove(self.Stack)
+	if not screen then
+		return
+	end
+	if screen.Destroy then
+		screen.Destroy()
+	end
+	screen.Root:Destroy()
+	local top = self:Top()
+	if top then
+		self:_show(top)
+	else
+		self._modal.Visible = false
+		GuiService.SelectedObject = nil
+		self.Changed:Fire(0)
+	end
+end
+
+function Router:Replace(screenModule, args: any?)
+	self:Clear(true)
+	return self:Push(screenModule, args)
+end
+
+function Router:Clear(silent: boolean?)
+	while #self.Stack > 0 do
+		local screen = table.remove(self.Stack)
+		if screen.Destroy then
+			screen.Destroy()
+		end
+		screen.Root:Destroy()
+	end
+	self._modal.Visible = false
+	GuiService.SelectedObject = nil
+	if not silent then
+		self.Changed:Fire(0)
+	end
+end
+
+function Router:Back()
+	local top = self:Top()
+	if not top then
+		return
+	end
+	if top.OnBack and top.OnBack() then
+		return
+	end
+	if #self.Stack > 1 then
+		self:Pop()
+	elseif self.RootBackHandler then
+		self.RootBackHandler()
+	end
+end
+
+return Router
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="Folder" referent="53">
+            <Properties>
+              <string name="Name">Screens</string>
+            </Properties>
+            <Item class="ModuleScript" referent="54">
+              <Properties>
+                <string name="Name">Admin</string>
+                <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
+-- action; this screen is only a convenience UI. World tools (creature spawning, monster
+-- mode, teleports, story triggers) are added together with the creature and the map.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local Admin = {}
+
+function Admin.new(router)
+	local app = router.App
+	local root, column = Components.ScreenRoot("Admin")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	Components.Heading(column, "ADMIN_TITLE", 1)
+	Components.Text({
+		Text = string.format("input: %s | device: %s", if app.Input.IsUsingActionSystem() then "InputActionSystem" else "fallback", app.Input.GetDevice()),
+		Font = Theme.Fonts.Mono,
+		TextSize = 13,
+		Color = Theme.Colors.TextFaint,
+		LayoutOrder = 2,
+		Parent = column,
+	})
+	Components.Spacer(column, 10, 3)
+
+	local status = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 20, Parent = column })
+
+	local debugButton = Components.Button({ Key = "ADMIN_DEBUG", LayoutOrder = 10, Parent = column, OnActivated = function()
+		app.Debug.Toggle()
+	end })
+	Components.Button({ Key = "ADMIN_GRANT_TEST", LayoutOrder = 11, Parent = column, OnActivated = function()
+		local ok, response = pcall(function()
+			return Net.Function("AdminAction"):InvokeServer("grant_test_marks")
+		end)
+		local success = ok and type(response) == "table" and response.ok
+		Localization.Bind(status, if success then "ADMIN_DONE" else "ADMIN_DENIED")
+	end })
+	Components.Spacer(column, 10, 15)
+	Components.Button({ Key = "MENU_BACK", LayoutOrder = 30, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+
+	return { Root = root, Focus = debugButton.Instance }
+end
+
+return Admin
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="55">
+              <Properties>
+                <string name="Name">Chapters</string>
+                <string name="Source"><![CDATA[-- Chapter overview. Locked chapters are visible (they create anticipation) but cannot be
+-- started; nothing is ever locked behind Robux.
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local Chapters = {}
+
+local AVAILABLE_IN_BUILD = 1 -- chapters that exist in this build
+
+function Chapters.new(router)
+	local app = router.App
+	local root, column = Components.ScreenRoot("Chapters")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	Components.Heading(column, "MENU_CHAPTERS", 1)
+	Components.Spacer(column, 10, 2)
+
+	local completed = app.Profile.progress and app.Profile.progress.completed or {}
+	local focus = nil
+	for number = 1, 4 do
+		local unlocked = number <= AVAILABLE_IN_BUILD and (number == 1 or table.find(completed, number - 1) ~= nil)
+		local button = Components.Button({
+			Key = string.format("CHAPTER_%02d_TITLE", number),
+			TagKey = if unlocked then "CHAPTER_LABEL" else "CHAPTER_LOCKED",
+			TagParams = if unlocked then { number = number } else nil,
+			Disabled = not unlocked,
+			LayoutOrder = 10 + number,
+			Parent = column,
+			OnActivated = function()
+				app.Play(number)
+			end,
+		})
+		if unlocked and not focus then
+			focus = button.Instance
+		end
+	end
+
+	Components.Spacer(column, 10, 20)
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 21, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+
+	return { Root = root, Focus = focus or back.Instance }
+end
+
+return Chapters
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="56">
+              <Properties>
+                <string name="Name">Extras</string>
+                <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
+-- here only after the server confirmed authorization (see AdminService).
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local Extras = {}
+
+local RESULT_KEYS = {
+	ok = "CODE_OK",
+	invalid = "CODE_INVALID",
+	used = "CODE_USED",
+	rate_limited = "CODE_RATE_LIMITED",
+	error = "CODE_ERROR",
+	admin = "ADMIN_GRANTED",
+}
+
+function Extras.new(router)
+	local player = Players.LocalPlayer
+	local root, column = Components.ScreenRoot("Extras")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	Components.Heading(column, "EXTRAS_TITLE", 1)
+	local balance = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 2, Parent = column })
+	local function refreshBalance()
+		Localization.Bind(balance, "EXTRAS_BALANCE", { amount = player:GetAttribute("FZ_SignalMarks") or 0 })
+	end
+	refreshBalance()
+
+	Components.Spacer(column, 12, 3)
+	Components.Text({ Key = "EXTRAS_CODE_TITLE", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextButton, Color = Theme.Colors.TextBright, LayoutOrder = 4, Parent = column })
+	Components.Text({ Key = "EXTRAS_CODE_HINT", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 5, Parent = column })
+
+	local box = Instance.new("TextBox")
+	box.Name = "CodeInput"
+	box.AutoLocalize = false
+	box.ClearTextOnFocus = false
+	box.Text = ""
+	box.Font = Theme.Fonts.Mono
+	box.TextSize = Theme.Sizes.TextButton
+	box.TextColor3 = Theme.Colors.TextBright
+	box.PlaceholderColor3 = Theme.Colors.TextFaint
+	box.BackgroundColor3 = Theme.Colors.Panel
+	box.BackgroundTransparency = 0.1
+	box.BorderSizePixel = 0
+	box.Size = UDim2.new(1, 0, 0, Theme.Sizes.Button)
+	box.TextXAlignment = Enum.TextXAlignment.Left
+	box.LayoutOrder = 6
+	box.Selectable = true
+	Localization.Bind(box, "EXTRAS_CODE_PLACEHOLDER", nil, "PlaceholderText")
+	Components.Padding(box, 16, 0)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Theme.Colors.PanelLine
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = box
+	box.Parent = column
+	box:GetPropertyChangedSignal("Text"):Connect(function()
+		if #box.Text > Config.Codes.MaxLength then
+			box.Text = string.sub(box.Text, 1, Config.Codes.MaxLength)
+		end
+	end)
+	box.SelectionGained:Connect(function()
+		stroke.Color = Theme.Colors.Accent
+	end)
+	box.SelectionLost:Connect(function()
+		stroke.Color = Theme.Colors.PanelLine
+	end)
+
+	local result = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextBright, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 8, Parent = column })
+
+	local maintenance
+	local pending = false
+	local redeemButton
+	local function redeem()
+		local text = box.Text
+		if pending or #string.gsub(text, "%s", "") == 0 then
+			return
+		end
+		pending = true
+		redeemButton.SetDisabled(true)
+		local ok, response = pcall(function()
+			return Net.Function("RedeemCode"):InvokeServer(text)
+		end)
+		pending = false
+		redeemButton.SetDisabled(false)
+		local status = if ok and type(response) == "table" then response.status else "error"
+		local key = RESULT_KEYS[status] or "CODE_ERROR"
+		local positive = status == "ok" or status == "admin"
+		result.TextColor3 = if positive then Theme.Colors.Relay else Theme.Colors.TextDim
+		Localization.Bind(result, key, { amount = if ok and type(response) == "table" then response.amount or 0 else 0 })
+		if positive then
+			box.Text = ""
+		end
+		if status == "admin" then
+			maintenance.Instance.Visible = true
+		end
+	end
+
+	redeemButton = Components.Button({ Key = "EXTRAS_REDEEM", LayoutOrder = 7, Parent = column, OnActivated = redeem })
+	box.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			redeem()
+		end
+	end)
+
+	Components.Spacer(column, 10, 9)
+	maintenance = Components.Button({ Key = "ADMIN_TITLE", LayoutOrder = 10, Parent = column, OnActivated = function()
+		router:Push(require(script.Parent.Admin))
+	end })
+	maintenance.Instance.Visible = player:GetAttribute("FZ_Admin") == true
+
+	Components.Button({ Key = "MENU_BACK", LayoutOrder = 11, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+
+	local connections = {
+		player:GetAttributeChangedSignal("FZ_SignalMarks"):Connect(refreshBalance),
+	}
+
+	return {
+		Root = root,
+		Focus = box,
+		Destroy = function()
+			for _, connection in connections do
+				connection:Disconnect()
+			end
+		end,
+	}
+end
+
+return Extras
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="57">
+              <Properties>
+                <string name="Name">LanguageSelect</string>
+                <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
+-- skipped with Back) and from Settings -> Language. One click / one button press selects.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Localization = require(Shared.Localization)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local LanguageSelect = {}
+
+-- args: { firstStart: boolean, suggested: string?, onChosen: ((string) -> ())? }
+function LanguageSelect.new(router, args)
+	local app = router.App
+	local firstStart = args and args.firstStart
+	local suggested = args and args.suggested
+	local current = if firstStart then suggested else app.Settings.Get("language")
+
+	local root = Instance.new("CanvasGroup")
+	root.Name = "LanguageSelect"
+	root.BackgroundTransparency = 1
+	root.Size = UDim2.fromScale(1, 1)
+
+	local column = Instance.new("Frame")
+	column.BackgroundTransparency = 1
+	column.AnchorPoint = Vector2.new(0.5, 0.5)
+	column.Position = UDim2.fromScale(0.5, 0.5)
+	column.Size = UDim2.new(0, 420, 1, -32)
+	column.Parent = root
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	if firstStart then
+		Components.Text({ Text = "FREQUENCY ZERO", Font = Theme.Fonts.Title, TextSize = 18, Color = Theme.Colors.TextDim, LayoutOrder = 1, Parent = column })
+	end
+	Components.Heading(column, "LANG_PROMPT", 2)
+	if firstStart and Localization.GetLanguage() ~= Config.FallbackLanguage then
+		-- Bilingual header on first start, in case the suggestion is wrong.
+		Components.Text({
+			Text = Localization.T("LANG_PROMPT", nil, Config.FallbackLanguage),
+			Font = Theme.Fonts.Body,
+			TextSize = Theme.Sizes.TextBody,
+			Color = Theme.Colors.TextDim,
+			LayoutOrder = 3,
+			Parent = column,
+		})
+	end
+	Components.Spacer(column, 8, 4)
+
+	local focus = nil
+	for index, code in Config.Languages do
+		local button = Components.Button({
+			Text = Config.LanguageNames[code],
+			TagKey = if code == suggested and firstStart then "LANG_SUGGESTED" else nil,
+			LayoutOrder = 10 + index,
+			Parent = column,
+			OnActivated = function()
+				if firstStart and args.onChosen then
+					args.onChosen(code)
+				else
+					app.Settings.Set("language", code)
+					router:Pop()
+				end
+			end,
+		})
+		if code == current or (focus == nil and index == 1) then
+			focus = button.Instance
+		end
+		if code == current and not firstStart then
+			button.Tag.Visible = true
+			button.Tag.Text = "●"
+			button.Tag.TextColor3 = Theme.Colors.Accent
+		end
+	end
+
+	Components.Spacer(column, 8, 20)
+	Components.Text({ Key = "LANG_HINT", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 21, Parent = column })
+	if not firstStart then
+		Components.Button({ Key = "MENU_BACK", LayoutOrder = 30, Parent = column, OnActivated = function()
+			router:Pop()
+		end })
+	end
+
+	return {
+		Root = root,
+		Focus = focus,
+		OnBack = function()
+			return firstStart == true -- first start: a language must be chosen
+		end,
+	}
+end
+
+return LanguageSelect
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="58">
+              <Properties>
+                <string name="Name">Lobby</string>
+                <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
+-- One Roblox server = one team. Friends who accept the invite join this server.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SocialService = game:GetService("SocialService")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+
+local Lobby = {}
+
+function Lobby.new(router)
+	local app = router.App
+	local root, column = Components.ScreenRoot("Lobby")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	Components.Heading(column, "LOBBY_TITLE", 1)
+	local count = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 2, Parent = column })
+
+	local list = Instance.new("Frame")
+	list.Name = "Players"
+	list.BackgroundTransparency = 1
+	list.Size = UDim2.fromScale(1, 0)
+	list.AutomaticSize = Enum.AutomaticSize.Y
+	list.LayoutOrder = 3
+	list.Parent = column
+	Components.List(list, 2)
+
+	local function refresh()
+		for _, child in list:GetChildren() do
+			if child:IsA("TextLabel") then
+				child:Destroy()
+			end
+		end
+		local players = Players:GetPlayers()
+		Localization.Bind(count, "LOBBY_COUNT", { count = #players, max = Config.MaxPartySize })
+		for index, player in players do
+			local suffix = if player == Players.LocalPlayer then "  " .. Localization.T("LOBBY_YOU") else ""
+			Components.Text({
+				Text = string.format("%s  @%s%s", player.DisplayName, player.Name, suffix),
+				Font = Theme.Fonts.Body,
+				TextSize = Theme.Sizes.TextBody,
+				Color = Theme.Colors.Text,
+				Wrapped = false,
+				LayoutOrder = index,
+				Parent = list,
+			})
+		end
+	end
+	refresh()
+	local connections = {
+		Players.PlayerAdded:Connect(refresh),
+		Players.PlayerRemoving:Connect(function()
+			task.defer(refresh)
+		end),
+		Localization.Changed:Connect(refresh),
+	}
+
+	Components.Spacer(column, 10, 4)
+	local invite = Components.Button({ Key = "LOBBY_INVITE", LayoutOrder = 5, Parent = column, OnActivated = function()
+		task.spawn(function()
+			local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, Players.LocalPlayer)
+			if ok and canInvite then
+				pcall(SocialService.PromptGameInvite, SocialService, Players.LocalPlayer)
+			else
+				app.Hud.Notify("LOBBY_INVITE_UNAVAILABLE")
+			end
+		end)
+	end })
+	Components.Text({ Key = "LOBBY_SOLO_HINT", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 6, Parent = column })
+	Components.Spacer(column, 10, 7)
+	Components.Button({ Key = "MENU_BACK", LayoutOrder = 8, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+
+	return {
+		Root = root,
+		Focus = invite.Instance,
+		Destroy = function()
+			for _, connection in connections do
+				connection:Disconnect()
+			end
+		end,
+	}
+end
+
+return Lobby
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="59">
+              <Properties>
+                <string name="Name">MainMenu</string>
+                <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
+-- No shop button yet: the shop arrives after the vertical slice (see roadmap).
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local MainMenu = {}
+
+function MainMenu.new(router, args)
+	local app = router.App
+	local pause = args and args.mode == "pause"
+	local root, column = Components.ScreenRoot(if pause then "PauseMenu" else "MainMenu")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	if pause then
+		Components.Heading(column, "PAUSE_TITLE", 1)
+		Components.Text({ Key = "PAUSE_NOTE", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 2, Parent = column })
+	else
+		Components.Text({ Text = "FREQUENCY ZERO", Font = Theme.Fonts.Title, TextSize = Theme.Sizes.TextTitle, Color = Theme.Colors.TextBright, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1, Parent = column })
+		Components.Text({ Key = "MENU_TAGLINE", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 2, Parent = column })
+	end
+	Components.Spacer(column, 18, 3)
+
+	local Lobby = require(script.Parent.Lobby)
+	local Chapters = require(script.Parent.Chapters)
+	local Settings = require(script.Parent.Settings)
+	local Extras = require(script.Parent.Extras)
+
+	local primaryKey = if pause then "MENU_RESUME" elseif app.HasProgress() then "MENU_CONTINUE" else "MENU_PLAY"
+	local primary = Components.Button({ Key = primaryKey, LayoutOrder = 10, Parent = column, OnActivated = function()
+		app.Play()
+	end })
+	Components.Button({ Key = "MENU_LOBBY", LayoutOrder = 11, Parent = column, OnActivated = function()
+		router:Push(Lobby)
+	end })
+	if not pause then
+		Components.Button({ Key = "MENU_CHAPTERS", LayoutOrder = 12, Parent = column, OnActivated = function()
+			router:Push(Chapters)
+		end })
+	end
+	Components.Button({ Key = "MENU_SETTINGS", LayoutOrder = 13, Parent = column, OnActivated = function()
+		router:Push(Settings)
+	end })
+	Components.Button({ Key = "MENU_EXTRAS", LayoutOrder = 14, Parent = column, OnActivated = function()
+		router:Push(Extras)
+	end })
+
+	Components.Text({
+		Text = "v" .. Config.Version,
+		Font = Theme.Fonts.Mono,
+		TextSize = 13,
+		Color = Theme.Colors.TextFaint,
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, Theme.Sizes.Margin + 16, 1, -12),
+		Size = UDim2.fromOffset(200, 18),
+		Parent = root,
+	})
+
+	return {
+		Root = root,
+		Focus = primary.Instance,
+		OnBack = function()
+			if pause then
+				app.Play()
+			end
+			return true
+		end,
+	}
+end
+
+return MainMenu
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="60">
+              <Properties>
+                <string name="Name">Settings</string>
+                <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
+--   mouse / touch: tap the row (next value) or the ‹ › arrows
+--   gamepad: A = next value, D-pad left / right = previous / next
+--   keyboard: click, or arrow keys while the row is focused
+-- Changes apply immediately (no "apply" step) and are saved automatically.
+
+local GuiService = game:GetService("GuiService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Localization = require(Shared.Localization)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local Settings = {}
+
+local function arrow(text: string, parent: Instance, position: UDim2, onActivated: () -> ()): TextButton
+	local button = Instance.new("TextButton")
+	button.AutoLocalize = false
+	button.Text = text
+	button.Font = Theme.Fonts.Medium
+	button.TextSize = 24
+	button.TextColor3 = Theme.Colors.TextDim
+	button.BackgroundTransparency = 1
+	button.Size = UDim2.new(0, 36, 1, 0)
+	button.Position = position
+	button.Selectable = false
+	button.ZIndex = 3
+	button.Parent = parent
+	button.Activated:Connect(onActivated)
+	return button
+end
+
+function Settings.new(router)
+	local app = router.App
+	local settings = app.Settings
+	local root, column = Components.ScreenRoot("Settings")
+	column.Size = UDim2.new(0, Theme.Sizes.ContentWidth + 60, 1, -48)
+	Components.List(column, Theme.Sizes.Gap)
+
+	Components.Heading(column, "SETTINGS_TITLE", 1)
+	local scroll = Components.ScrollColumn(column, UDim2.new(1, 0, 1, -110))
+	scroll.LayoutOrder = 2
+
+	local rows: { [GuiObject]: string } = {}
+	local valueLabels: { [string]: TextLabel } = {}
+	local focus = nil
+
+	local function refreshValues()
+		for key, label in valueLabels do
+			label.Text = settings.Describe(key)
+		end
+	end
+
+	local function step(key: string, delta: number, wrapInts: boolean?)
+		if key == "language" then
+			router:Push(require(script.Parent.LanguageSelect), { firstStart = false })
+			return
+		end
+		local definition = Config.Settings[key]
+		if wrapInts and definition.kind == "int" and settings.Get(key) >= definition.max then
+			settings.Set(key, definition.min)
+		else
+			settings.Step(key, delta)
+		end
+	end
+
+	for index, entry in Config.SettingsOrder do
+		local key = entry.key
+		-- Row button and value area are siblings (value area on top), so a tap on an
+		-- arrow is handled only by the arrow, never also by the row.
+		local wrapper = Instance.new("Frame")
+		wrapper.Name = key
+		wrapper.BackgroundTransparency = 1
+		wrapper.Size = UDim2.new(1, 0, 0, Theme.Sizes.Button)
+		wrapper.LayoutOrder = index * 2
+		wrapper.Parent = scroll
+
+		local row = Components.Button({
+			Key = entry.label,
+			Parent = wrapper,
+			OnActivated = function()
+				step(key, 1, true)
+			end,
+		})
+		row.Instance.Size = UDim2.fromScale(1, 1)
+		row.Label.Size = UDim2.new(0.5, -16, 1, 0)
+		rows[row.Instance] = key
+		if not focus then
+			focus = row.Instance
+		end
+
+		local valueArea = Instance.new("Frame")
+		valueArea.Name = "Value"
+		valueArea.BackgroundTransparency = 1
+		valueArea.Active = false
+		valueArea.ZIndex = 2
+		valueArea.AnchorPoint = Vector2.new(1, 0)
+		valueArea.Position = UDim2.fromScale(1, 0)
+		valueArea.Size = UDim2.new(0.5, 0, 1, 0)
+		valueArea.Parent = wrapper
+
+		local value = Components.Text({
+			Text = "",
+			Font = Theme.Fonts.Mono,
+			TextSize = Theme.Sizes.TextSmall + 1,
+			Color = Theme.Colors.TextBright,
+			XAlign = Enum.TextXAlignment.Center,
+			Wrapped = false,
+			Size = UDim2.new(1, -72, 1, 0),
+			Position = UDim2.fromOffset(36, 0),
+			Parent = valueArea,
+		})
+		value.TextTruncate = Enum.TextTruncate.AtEnd
+		value.ZIndex = 2
+		valueLabels[key] = value
+
+		if key ~= "language" then
+			arrow("‹", valueArea, UDim2.fromScale(0, 0), function()
+				step(key, -1)
+			end)
+			arrow("›", valueArea, UDim2.new(1, -36, 0, 0), function()
+				step(key, 1)
+			end)
+		end
+
+		if entry.description then
+			Components.Text({
+				Key = entry.description,
+				TextSize = Theme.Sizes.TextSmall,
+				Color = Theme.Colors.TextDim,
+				AutoY = true,
+				Size = UDim2.fromScale(1, 0),
+				LayoutOrder = index * 2 + 1,
+				Parent = scroll,
+			})
+		end
+	end
+
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 3, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+	back.Instance.Size = UDim2.new(1, 0, 0, Theme.Sizes.Button)
+
+	refreshValues()
+	local connections = {
+		settings.Changed:Connect(refreshValues),
+		Localization.Changed:Connect(refreshValues),
+		UserInputService.InputBegan:Connect(function(input)
+			local selected = GuiService.SelectedObject
+			local key = selected and rows[selected]
+			if not key or key == "language" then
+				return
+			end
+			if input.KeyCode == Enum.KeyCode.DPadLeft or input.KeyCode == Enum.KeyCode.Left then
+				step(key, -1)
+			elseif input.KeyCode == Enum.KeyCode.DPadRight or input.KeyCode == Enum.KeyCode.Right then
+				step(key, 1)
+			end
+		end),
+	}
+
+	-- D-pad left/right must change values instead of moving focus out of the row.
+	for row in rows do
+		row.NextSelectionLeft = row
+		row.NextSelectionRight = row
+	end
+
+	return {
+		Root = root,
+		Focus = focus,
+		Destroy = function()
+			for _, connection in connections do
+				connection:Disconnect()
+			end
+		end,
+	}
+end
+
+return Settings
+]]></string>
+              </Properties>
+            </Item>
+          </Item>
+          <Item class="ModuleScript" referent="61">
+            <Properties>
+              <string name="Name">Theme</string>
+              <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
+
+local Theme = {}
+
+Theme.Colors = {
+	Background = Color3.fromRGB(6, 8, 9),
+	Panel = Color3.fromRGB(13, 17, 19),
+	PanelLine = Color3.fromRGB(38, 44, 46),
+	Text = Color3.fromRGB(206, 202, 192),
+	TextBright = Color3.fromRGB(240, 236, 226),
+	TextDim = Color3.fromRGB(128, 134, 131),
+	TextFaint = Color3.fromRGB(78, 84, 82),
+	Accent = Color3.fromRGB(201, 64, 48), -- "signal red": focus bar, warnings, live signal
+	Radio = Color3.fromRGB(214, 184, 120), -- unknown voices on the radio (warm amber)
+	Relay = Color3.fromRGB(146, 192, 188), -- the Relay voice (cold teal)
+	World = Color3.fromRGB(180, 180, 172), -- sound captions
+}
+
+Theme.Fonts = {
+	Title = Enum.Font.Michroma,
+	Body = Enum.Font.BuilderSans,
+	Medium = Enum.Font.BuilderSansMedium,
+	Bold = Enum.Font.BuilderSansBold,
+	Mono = Enum.Font.RobotoMono,
+}
+
+-- Logical sizes at UIScale 1 (UIScale adapts them to the device, see Components.AttachScale).
+Theme.Sizes = {
+	Button = 48,
+	Gap = 6,
+	TextTitle = 30,
+	TextHeading = 24,
+	TextButton = 22,
+	TextBody = 18,
+	TextSmall = 15,
+	Margin = 48,
+	ContentWidth = 440,
+}
+
+Theme.Fast = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+Theme.Fade = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+Theme.Slow = TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+
+function Theme.Hex(color: Color3): string
+	return string.format("#%02X%02X%02X", math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5))
+end
+
+return Theme
+]]></string>
+            </Properties>
+          </Item>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

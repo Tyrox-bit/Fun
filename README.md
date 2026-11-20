@@ -1,13 +1,28 @@
 # FREQUENCY ZERO
 
-Psychologisches Koop-Horrorspiel für Roblox (1–4 Spieler, PC / Mobile / Konsole).
+Natives Roblox-Erlebnis (Roblox Studio + Luau), veröffentlicht auf Roblox und spielbar in der Roblox-App auf PC, Smartphone, Tablet und Konsole. Psychologisches Koop-Horrorspiel für 1–4 Spieler.
+
+> Kein eigenständiges Handyspiel, keine Web-App, kein Unity: Der gesamte Code besteht aus Roblox-Scripts, LocalScripts und ModuleScripts für die echten Roblox-Services. (`index.html` im Repo-Root stammt aus dem ursprünglichen Repository und gehört nicht zum Spiel.)
 Design, Story und Roadmap: [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
 
 **Stand v0.1 – Fundament (Phase 1):** Sprachsystem (DE/EN/ES/FR/PT-BR), Sprachauswahl beim ersten Start, Speicherstände mit Session-Lock, Einstellungen, Cross-Platform-Eingabe, Interaktionssystem, Menüs mit Controller-Navigation, HUD (Untertitel, Ziele, Dokumente), Taschenlampe, Sprint mit Ausdauer, Codes, Admin-Autorisierung, Leistungsanzeige und ein Greybox-Testgelände mit dem Spielanfang (Ankunftsfunkspruch → Fax → Relais).
 
 ---
 
-## Installation (Rojo, empfohlen)
+## Voraussetzung
+
+Roblox Studio läuft nur auf **Windows oder macOS**. Entwickeln und Veröffentlichen geht nicht am Smartphone. Spielen und Testen auf dem Handy geht danach ganz normal über die Roblox-App.
+
+## Installation A – fertige Place-Datei (am einfachsten)
+
+1. [`build/FrequencyZero.rbxlx`](build/FrequencyZero.rbxlx) auf den PC/Mac herunterladen.
+2. Roblox Studio → **Datei → Öffnen** (File → Open from File) → die Datei wählen.
+3. **Play** drücken. Das Testgelände wird beim Start automatisch gebaut.
+4. Zum Veröffentlichen: **Datei → Auf Roblox veröffentlichen**, danach die einmaligen Einstellungen unten setzen.
+
+Die Datei wird aus `src/` mit Rojo 7.4.4 erzeugt (`rojo build default.project.json -o build/FrequencyZero.rbxlx`). Ohne Rojo liefert `python3 tools/build_place.py` denselben Explorer-Baum (gegen Rojo geprüft: 62 Objekte, alle 44 Skripte zeichengleich). Wenn du in Studio direkt etwas änderst, gilt ab dann die Studio-Version – für eine weitere Zusammenarbeit über dieses Repository ist Weg B besser.
+
+## Installation B – Rojo (für die laufende Entwicklung)
 
 1. [Rojo](https://rojo.space) 7.4 oder neuer installieren (CLI + Studio-Plugin).
 2. Im Repository-Ordner: `rojo serve`
@@ -41,10 +56,23 @@ StarterPlayer               CameraMode = LockFirstPerson, WalkSpeed 10
     UI/…                    Theme, Components, Router, Hud, DebugOverlay, Screens/…
 ```
 
+## Was funktioniert – und was noch einzurichten ist
+
+| Bereich | Status |
+|---|---|
+| Projektstruktur, alle Scripts/LocalScripts/ModuleScripts in den richtigen Services | ✅ in der Place-Datei enthalten |
+| Sprachsystem (5 Sprachen), Sprachauswahl beim ersten Start, Menüs, Einstellungen, HUD, Codes, Taschenlampe, Sprint, Testgelände mit Spielanfang | ✅ geschrieben, offline geprüft – **noch nicht in Studio ausgeführt** |
+| Speicherstände (DataStore) | ⚙️ braucht: Spiel veröffentlichen + API-Zugriff einschalten (s. u.) |
+| Wartungsmenü | ⚙️ braucht: Attribut `FZ_AdminGesture` auf ServerStorage |
+| Lighting Future, Max Players 4, StreamingEnabled | ⚙️ einmalig in Studio setzen (s. u.) |
+| Funkgerät-Mechanik, Kreatur (Lauscher), Audio, echte Karte, Shop | ⏳ nächste Phasen |
+| Sounds, 3D-Modelle, Animationen | ⏳ müssen importiert/erstellt werden (Liste unten), keine erfundenen Asset-IDs |
+
 ### Einmalige Studio-Einstellungen (nicht per Skript setzbar)
 
 | Wo | Einstellung | Warum |
 |---|---|---|
+| Datei → Auf Roblox veröffentlichen | einmal veröffentlichen | DataStores gibt es nur für veröffentlichte Spiele |
 | Game Settings → Security | **Enable Studio Access to API Services** an | Speicherstände in Studio testen (sonst Session-Modus mit Hinweis) |
 | Game Settings → Basic Info / Places | **Max Players = 4** | 1 Server = 1 Team |
 | Lighting | **Technology = Future** | Schatten der Punkt-/Spotlights |
@@ -63,6 +91,7 @@ Adminrechte: Besitzer des Spiels (User) bzw. Gruppenrang ≥ 254 sind automatisc
 ```
 python3 tools/check_localization.py   # alle Sprachen vollständig, Platzhalter identisch, alle im Code genutzten Schlüssel existieren
 python3 tools/check_luau_blocks.py    # Blockstruktur (function/if/do … end, Klammern) aller .luau-Dateien
+python3 tools/build_place.py          # erzeugt build/FrequencyZero.rbxlx (ohne Rojo)
 ```
 
 Das ersetzt **keinen** Studio-Test: Typfehler und API-Fehler findet nur Studio bzw. `luau-analyze`.
@@ -84,7 +113,7 @@ Das ersetzt **keinen** Studio-Test: Typfehler und API-Fehler findet nur Studio b
 | 11 | Extras → falscher Code ×6 schnell | Ab dem 6. Versuch „Zu viele Versuche“. |
 | 12 | Extras → eigene Geste (`FZ_AdminGesture`) | „Wartungszugang gewährt.“, Eintrag „Wartung“ erscheint; dort Leistungsanzeige (FPS, Ping, Speicher, Profil). Mit `AllowAllInStudio = false` und fremder UserId: nur „Auf dieser Frequenz ist nichts.“ |
 | 13 | Controller only | Jeder Menüpunkt erreichbar, B = zurück, D-Pad links/rechts ändert Einstellungen. Keine Maus nötig. |
-| 14 | Device-Emulator iPhone quer | Menü passt ohne Abschneiden; Touch-Buttons nur im Spiel sichtbar; Buttons ≥ ca. 43 pt hoch. |
+| 14 | Device-Emulator iPhone quer (Studio: Test → Device) | Menü passt ohne Abschneiden; Touch-Buttons nur im Spiel sichtbar; Buttons ≥ ca. 43 pt hoch. |
 | 15 | Output-Fenster | Keine `[FZ-Loc] Missing translation`-Warnungen; `[FZ] Server ready`. |
 
 Bitte Ergebnisse (v. a. Fehlermeldungen aus dem Output-Fenster) zurückmelden – daraus wird der nächste Schritt.
@@ -98,3 +127,9 @@ Keine Asset-IDs sind erfunden; alles hier fehlt bewusst und wird über Creator S
 - **Audio:** Funkrauschen (Loop, 3 Intensitäten), Fax-Druck, Schritte je Untergrund (Beton, Linoleum, Metall, Asphalt nass), Türmechanik, Generatorbrummen, Regen außen/innen, Lauscher-Signatur (Knacken, Stotter-Statik), UI-Klick/-Fokus (leise), englische Sprachaufnahmen für alle `RADIO_*`-Zeilen (Sprecher, keine KI-Stimmen).
 - **Modelle:** Funkgerät-Viewmodel mit Rig, Taschenlampe, Lauscher (Rig + Animationen: Idle, Lauschen, Gehen, Stotter-Sprung, Jagd), Fax, Konsolen, Monitore, Architektur-Kit Beton/Stahl.
 - **Texturen:** SurfaceAppearance-Sets für Hero-Objekte, MaterialVariants für Beton/Linoleum/Lack.
+
+## Auf echten Geräten testen
+
+1. Veröffentlichen (privat lassen).
+2. Am Handy/Tablet/Konsole in der Roblox-App unter „Erstellungen“ bzw. über den Spiellink starten.
+3. Wartungsmenü → Leistungsanzeige einschalten und FPS/Ping notieren.
