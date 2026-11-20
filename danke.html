@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Danke für deine Bestellung – Casper</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="/assets/js/tracking.js" defer></script>
+</head>
+<body class="is-sale">
+  <header class="header">
+    <div class="wrap header__inner">
+      <a href="/" class="logo" aria-label="Casper – Startseite"><span class="logo__mark" aria-hidden="true"></span><span class="logo__text">Casper</span></a>
+    </div>
+  </header>
+
+  <main class="section thanks">
+    <div class="wrap wrap--narrow center">
+      <div class="thanks__check" aria-hidden="true">✓</div>
+      <h1 class="display display--md" data-title>Danke für deine Bestellung!</h1>
+      <p class="lead" data-text>Deine Zahlung ist eingegangen. Du bekommst gleich eine Bestätigung per E-Mail.</p>
+
+      <div class="thanks__card" data-card hidden>
+        <div><span>Bestellnummer</span><strong data-order>–</strong></div>
+        <div><span>Paket</span><strong data-bundle>–</strong></div>
+        <div><span>Gesamt</span><strong data-total>–</strong></div>
+      </div>
+
+      <div class="thanks__next">
+        <h2 class="h2">Wie geht's weiter?</h2>
+        <ol>
+          <li><strong>Heute:</strong> Wir packen dein Damast-Duo in die Geschenkbox.</li>
+          <li><strong>In 1–2 Werktagen:</strong> Versand mit DHL – du bekommst die Sendungsnummer per E-Mail.</li>
+          <li><strong>Danach:</strong> Auspacken, Tomate schneiden, grinsen. 🔥</li>
+        </ol>
+      </div>
+
+      <div class="thanks__share">
+        <p><strong>Zeig's deinen Leuten:</strong> Markier uns in deiner Story, wenn das Duo ankommt.</p>
+        <button type="button" class="btn btn--ghost" data-share>Link zum Angebot teilen</button>
+      </div>
+
+      <a href="/" class="btn btn--primary">Zurück zur Startseite</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <nav class="footer__links" aria-label="Rechtliches">
+        <a href="/impressum">Impressum</a><a href="/agb">AGB</a><a href="/widerrufsbelehrung">Widerrufsbelehrung</a><a href="/datenschutz">Datenschutz</a>
+      </nav>
+      <a href="/vertrag-widerrufen" class="btn btn--small btn--ghost">Vertrag widerrufen</a>
+    </div>
+  </footer>
+  <div class="toast" role="status" aria-live="polite" data-toast hidden></div>
+
+  <script>
+  (function () {
+    var $ = function (s) { return document.querySelector(s); };
+    var id = new URLSearchParams(location.search).get('session_id');
+    var euro = function (c) { return (c / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }); };
+
+    fetch('/shop.config.json').then(function (r) { return r.json(); }).then(function (cfg) {
+      if (window.CasperTracking) window.CasperTracking.init(cfg.tracking);
+    });
+
+    $('[data-share]').addEventListener('click', function () {
+      var url = location.origin + '/?utm_source=share&utm_medium=referral';
+      if (navigator.share) navigator.share({ title: 'Casper Damast-Duo', text: 'Black Friday: Damast-Messerset −50 %', url: url }).catch(function () {});
+      else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () {
+        var t = $('[data-toast]'); t.textContent = 'Link kopiert ✓'; t.hidden = false; setTimeout(function () { t.hidden = true; }, 3000);
+      });
+    });
+
+    if (!id) return;
+    fetch('/api/session?id=' + encodeURIComponent(id))
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (o) {
+        if (o.firstName) $('[data-title]').textContent = 'Danke, ' + o.firstName + '!';
+        if (o.paymentStatus !== 'paid') {
+          $('[data-text]').textContent = 'Deine Bestellung ist eingegangen. Sobald die Zahlung bestätigt ist, bekommst du eine E-Mail.';
+        }
+        $('[data-order]').textContent = '#' + o.orderId;
+        $('[data-bundle]').textContent = o.bundleTitle + ' · Damast-Duo';
+        $('[data-total]').textContent = euro(o.amountTotal);
+        $('[data-card]').hidden = false;
+
+        // Purchase-Event nur EINMAL pro Bestellung senden
+        var key = 'casper_purchase_' + id;
+        var done = false;
+        try { done = !!localStorage.getItem(key); localStorage.setItem(key, '1'); } catch (e) {}
+        if (!done && window.CasperTracking) {
+          window.CasperTracking.track('Purchase', {
+            value: o.amountTotal / 100, currency: 'EUR', content_ids: [o.bundleId],
+            content_name: o.bundleTitle, event_id: id,
+          });
+        }
+      })
+      .catch(function () {});
+  })();
+  </script>
+</body>
+</html>

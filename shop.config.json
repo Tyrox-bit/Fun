@@ -1,0 +1,118 @@
+{
+  "_hinweis": "ZENTRALE KONFIGURATION. Alle Preise in CENT (11900 = 119,00 €). Frontend UND Server lesen diese Datei – der Server rechnet Preise immer selbst, im Browser kann niemand manipulieren.",
+
+  "brand": {
+    "name": "Casper",
+    "tagline": "Damaststahl für jeden Tag.",
+    "email": "hallo@casper-messer.de",
+    "siteUrl": "https://www.casper-messer.de"
+  },
+
+  "legal": {
+    "_hinweis": "Wird automatisch in Impressum, AGB, Widerrufsbelehrung, Datenschutz und E-Mails eingesetzt. [Eckige Klammern] = noch ausfüllen.",
+    "company": "Casper",
+    "owner": "[Vor- und Nachname]",
+    "street": "[Straße Hausnummer]",
+    "zipCity": "[PLZ Ort]",
+    "country": "Deutschland",
+    "phone": "[Telefonnummer]",
+    "email": "hallo@casper-messer.de",
+    "vatId": "[USt-IdNr. – falls vorhanden, sonst leer lassen]",
+    "kleinunternehmer": false
+  },
+
+  "campaign": {
+    "id": "black-week-2026",
+    "name": "Black Week",
+    "headline": "BLACK FRIDAY",
+    "start": "2026-11-20T00:00:00+01:00",
+    "end": "2026-11-30T23:59:59+01:00",
+    "_hinweis": "Nach 'end' verschwindet der Countdown automatisch und Server + Seite nehmen wieder den Normalpreis (compareAtPrice)."
+  },
+
+  "stock": {
+    "totalSets": 40,
+    "countFrom": "2026-11-01T00:00:00+01:00",
+    "_hinweis": "totalSets = echter Bestand zum Zeitpunkt countFrom. Verkäufe danach werden live aus Stripe abgezogen. Bei Nachlieferung: totalSets erhöhen und countFrom auf heute setzen."
+  },
+
+  "product": {
+    "name": "Damast-Duo",
+    "fullName": "Casper Damast-Duo – Kochmesser & Schälmesser",
+    "short": "Kochmesser 20 cm + Schälmesser 9 cm aus Damaststahl",
+    "image": "/assets/img/product.png",
+    "specs": [
+      { "label": "Klinge", "value": "67 Lagen Damaststahl, VG-10-Kern" },
+      { "label": "Härte", "value": "60 ± 2 HRC" },
+      { "label": "Schliff", "value": "15° pro Seite, handgeschärft" },
+      { "label": "Griff", "value": "G10, wasserfest & rutschfest" },
+      { "label": "Kochmesser", "value": "20 cm Klinge, ca. 220 g" },
+      { "label": "Schälmesser", "value": "9 cm Klinge, ca. 90 g" },
+      { "label": "Lieferumfang", "value": "2 Messer + Geschenkbox" }
+    ]
+  },
+
+  "bundles": [
+    {
+      "id": "duo-1",
+      "sets": 1,
+      "title": "1 Set",
+      "subtitle": "Für deine Küche",
+      "compareAtPrice": 19900,
+      "salePrice": 9900,
+      "badge": null
+    },
+    {
+      "id": "duo-2",
+      "sets": 2,
+      "title": "2 Sets",
+      "subtitle": "Eins für dich, eins zum Verschenken",
+      "compareAtPrice": 39800,
+      "salePrice": 17900,
+      "badge": "Gratis Versand"
+    },
+    {
+      "id": "duo-3",
+      "sets": 3,
+      "title": "3 Sets",
+      "subtitle": "Weihnachten erledigt",
+      "compareAtPrice": 59700,
+      "salePrice": 24900,
+      "badge": "Bester Preis pro Set"
+    }
+  ],
+  "defaultBundle": "duo-2",
+
+  "pricing": {
+    "currency": "eur",
+    "vatNote": "inkl. MwSt.",
+    "lowestPriceNote": true,
+    "_hinweis": "compareAtPrice MUSS der niedrigste Preis der letzten 30 Tage vor der Aktion sein (§ 11 PAngV). Wurde das Set noch nie zu diesem Preis verkauft, ist der Streichpreis unzulässig."
+  },
+
+  "shipping": {
+    "countries": ["DE"],
+    "carrier": "DHL Paket",
+    "price": 490,
+    "freeFromSets": 2,
+    "deliveryDaysMin": 2,
+    "deliveryDaysMax": 4
+  },
+
+  "guarantee": {
+    "enabled": false,
+    "days": 30,
+    "_hinweis": "Nur aktivieren, wenn du freiwillig eine Geld-zurück-Garantie gibst – dann auch Abschnitt in den AGB ergänzen. Das gesetzliche 14-Tage-Widerrufsrecht darf NICHT als Vorteil beworben werden."
+  },
+
+  "tracking": {
+    "metaPixelId": "",
+    "tiktokPixelId": "",
+    "_hinweis": "ID eintragen = Pixel ist aktiv. Cookie-Banner erscheint dann automatisch, Pixel laden erst nach Einwilligung. Datenschutzerklärung ergänzen!"
+  },
+
+  "reviews": [],
+  "_reviews_hinweis": "Nur ECHTE Bewertungen eintragen, z. B. { \"name\": \"Lena K.\", \"stars\": 5, \"text\": \"...\", \"verified\": true }. Leer = Sektion bleibt unsichtbar.",
+
+  "showPlaceholders": true
+}

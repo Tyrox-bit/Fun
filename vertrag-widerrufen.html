@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vertrag widerrufen – Casper</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="/assets/js/tracking.js" defer></script>
+  <script src="/assets/js/legal.js" defer></script>
+</head>
+<body>
+  <header class="header"><div class="wrap header__inner"><a href="/" class="logo" aria-label="Casper – Startseite"><span class="logo__mark" aria-hidden="true"></span><span class="logo__text">Casper</span></a><a href="/" class="btn btn--small btn--ghost">Zum Angebot</a></div></header>
+
+  <main class="legal">
+    <div class="wrap wrap--narrow">
+      <h1>Vertrag widerrufen</h1>
+      <p>Hier kannst du deinen Kaufvertrag online widerrufen. Du bekommst sofort eine Eingangsbestätigung per E-Mail. Infos zu Fristen und Rücksendung findest du in der <a href="/widerrufsbelehrung">Widerrufsbelehrung</a>.</p>
+
+      <form class="form" data-withdraw novalidate>
+        <label>Vor- und Nachname*
+          <input name="name" autocomplete="name" required maxlength="120">
+        </label>
+        <label>E-Mail-Adresse* <small style="font-weight:400;color:var(--muted)">(an diese senden wir die Bestätigung)</small>
+          <input name="email" type="email" autocomplete="email" required maxlength="160">
+        </label>
+        <label>Bestellnummer*  <small style="font-weight:400;color:var(--muted)">(steht in deiner Bestellbestätigung, z. B. #A1B2C3D4)</small>
+          <input name="orderRef" required maxlength="60">
+        </label>
+        <label>Bestellt bzw. erhalten am
+          <input name="orderDate" maxlength="40" placeholder="z. B. 27.11.2026">
+        </label>
+        <label>Anmerkung (optional)
+          <textarea name="note" rows="3" maxlength="1000"></textarea>
+        </label>
+        <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+
+        <p style="margin:0;color:var(--muted);font-size:.9rem">Mit Klick auf den Button erklärst du verbindlich den Widerruf des oben genannten Vertrags.</p>
+        <button type="submit" class="btn btn--primary btn--xl btn--block">Widerruf bestätigen</button>
+        <p class="error" role="alert" data-error hidden></p>
+      </form>
+
+      <div class="success" data-success hidden>
+        <strong>Dein Widerruf ist eingegangen.</strong><br>
+        Eingang: <span data-received></span>. Die Bestätigung ist per E-Mail unterwegs. Wir melden uns mit den nächsten Schritten.
+      </div>
+
+      <p style="margin-top:28px">Alternativ kannst du den Widerruf auch formlos per E-Mail an <a data-legal="email" href="#">hallo@casper-messer.de</a> schicken.</p>
+    </div>
+  </main>
+
+  <footer class="footer"><div class="wrap footer__inner"><nav class="footer__links" aria-label="Rechtliches"><a href="/impressum">Impressum</a><a href="/agb">AGB</a><a href="/widerrufsbelehrung">Widerrufsbelehrung</a><a href="/datenschutz">Datenschutz</a><a href="/versand-zahlung">Versand & Zahlung</a></nav></div></footer>
+
+  <script>
+  (function () {
+    var form = document.querySelector('[data-withdraw]');
+    var err = document.querySelector('[data-error]');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      err.hidden = true;
+      var data = Object.fromEntries(new FormData(form));
+      if (!data.name || !data.email || !data.orderRef || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) {
+        err.textContent = 'Bitte Name, gültige E-Mail und Bestellnummer angeben.';
+        err.hidden = false;
+        return;
+      }
+      var btn = form.querySelector('button');
+      btn.classList.add('is-busy');
+      fetch('/api/widerruf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.body.error);
+          document.querySelector('[data-received]').textContent = res.body.received || '';
+          form.hidden = true;
+          document.querySelector('[data-success]').hidden = false;
+        })
+        .catch(function (e) {
+          btn.classList.remove('is-busy');
+          err.textContent = e.message || 'Senden fehlgeschlagen. Bitte schick deinen Widerruf per E-Mail.';
+          err.hidden = false;
+        });
+    });
+  })();
+  </script>
+</body>
+</html>

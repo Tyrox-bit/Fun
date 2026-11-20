@@ -1,0 +1,15 @@
+{
+  "name": "casper-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Casper Damast-Duo – Black Friday Landing Page mit Stripe-Checkout (inkl. PayPal & Klarna)",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "node dev-server.js",
+    "images": "node scripts/generate-images.js && node scripts/render-png.js",
+    "check": "node scripts/check.js"
+  },
+  "dependencies": {
+    "stripe": "^23.2.0"
+  }
+}
