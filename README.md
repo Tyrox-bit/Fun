@@ -60,13 +60,35 @@ StarterPlayer               CameraMode = LockFirstPerson, WalkSpeed 10
 
 | Bereich | Status |
 |---|---|
-| Projektstruktur, alle Scripts/LocalScripts/ModuleScripts in den richtigen Services | ✅ in der Place-Datei enthalten |
-| Sprachsystem (5 Sprachen), Sprachauswahl beim ersten Start, Menüs, Einstellungen, HUD, Codes, Taschenlampe, Sprint, Testgelände mit Spielanfang | ✅ geschrieben, offline geprüft – **noch nicht in Studio ausgeführt** |
-| Speicherstände (DataStore) | ⚙️ braucht: Spiel veröffentlichen + API-Zugriff einschalten (s. u.) |
-| Wartungsmenü | ⚙️ braucht: Attribut `FZ_AdminGesture` auf ServerStorage |
-| Lighting Future, Max Players 4, StreamingEnabled | ⚙️ einmalig in Studio setzen (s. u.) |
-| Funkgerät-Mechanik, Kreatur (Lauscher), Audio, echte Karte, Shop | ⏳ nächste Phasen |
-| Sounds, 3D-Modelle, Animationen | ⏳ müssen importiert/erstellt werden (Liste unten), keine erfundenen Asset-IDs |
+| Projektstruktur: 84 Objekte, alle Scripts/LocalScripts/ModuleScripts in den richtigen Services | ✅ in der Place-Datei |
+| **Karte „Relaisanlage 07“** nach deinem Grundriss (Sektoren A–E, Zentralkern + Radom, Kontrollraum, Hof, Antenne, Zaun, Pförtnerloge, Wald) | ✅ wird beim Start gebaut |
+| **Kapitel-1-Ablauf**: Fax → Kontrollraum → 3 Sicherungen (zufällig verteilt) → Prognose brechen → Relais B → Zentralkern → Antenne | ✅ |
+| **Kreatur-KI** (hört, sieht, sucht, jagt, Lüftungsschächte, Licht blendet) mit Platzhalter-Monster und prozeduraler Animation | ✅ – dein Monster: siehe `docs/CREATURE.md` |
+| **Proximity-Voice + Funkgerät** (Push-to-talk, Mikro stumm/frei, Teammitglieder stummschalten, leiser + mehr Rauschen mit Entfernung) | ✅ – braucht Voice-Chat-berechtigte Konten |
+| Gesundheit, am Boden liegen, Aufhelfen, Checkpoints | ✅ |
+| **Shop** mit Techniker-, Observer-, Sanitäter-Set, Taschenlampen-Upgrade, Funkgerät-Designs | ✅ (nur Signalmarken) |
+| Sprache (5), Menüs, Einstellungen, Codes, Wartungsmenü inkl. **Als Kreatur spielen** | ✅ |
+| **28 eigene Sounds** in `assets/audio/` | ⚙️ einmal hochladen und die IDs in `Shared/Assets.luau` eintragen (bis dahin bleibt das Spiel still, ohne Fehler) |
+| Alles oben | ⚠️ geschrieben und offline geprüft, **noch nicht in Studio ausgeführt** |
+| Echte 3D-Modelle (Meshes), Animationen für dein Monster, Kapitel 2–4 | ⏳ folgt / kommt von dir |
+
+### Steuerung
+
+| Aktion | PC | Controller | Touch |
+|---|---|---|---|
+| Interagieren | E | X / □ | Antippen |
+| Rennen | Shift (halten) | L3 (umschalten) | „Rennen“ |
+| Taschenlampe (blendet die Kreatur) | F | R1 / RB | „Licht“ |
+| Funk senden | R (halten oder umschalten, Einstellungen) | L1 / LB | „Funk“ |
+| Mikrofon stumm / frei | M | Steuerkreuz links | „Mikro“ |
+| Nachtsicht (Observer-Set) | N | Steuerkreuz oben | „Nacht“ |
+| Menü | P | View / Share | „II“ |
+
+### Sounds hochladen (einmalig, ca. 10 Minuten)
+
+1. Creator Hub → Development Items → Audio → die Dateien aus `assets/audio/*.ogg` hochladen. Alle sind selbst synthetisiert, es gibt also keine Lizenzprobleme.
+2. Die IDs in `src/ReplicatedStorage/Shared/Assets.luau` eintragen, z. B. `radio_static_loop = "rbxassetid://123456"`.
+3. Neu bauen (`rojo build …`) bzw. in Studio im ModuleScript `ReplicatedStorage/Shared/Assets` direkt eintragen.
 
 ### Einmalige Studio-Einstellungen (nicht per Skript setzbar)
 
@@ -75,8 +97,7 @@ StarterPlayer               CameraMode = LockFirstPerson, WalkSpeed 10
 | Datei → Auf Roblox veröffentlichen | einmal veröffentlichen | DataStores gibt es nur für veröffentlichte Spiele |
 | Game Settings → Security | **Enable Studio Access to API Services** an | Speicherstände in Studio testen (sonst Session-Modus mit Hinweis) |
 | Game Settings → Basic Info / Places | **Max Players = 4** | 1 Server = 1 Team |
-| Lighting | **Technology = Future** | Schatten der Punkt-/Spotlights |
-| Workspace | **StreamingEnabled = true** | Performance auf Mobilgeräten |
+| Game Settings → Communication | **Microphone (Voice Chat) an** | Proximity-Voice und Funk. `VoiceChatService.UseAudioApi = Enabled` und `EnableDefaultVoice = false` sind schon in der Datei gesetzt (Future-Licht ebenfalls) |
 | ServerStorage → Attribute | String-Attribut **`FZ_AdminGesture`** (min. 6 Zeichen, nur dir bekannt) | Geheime Zugangsgeste für das Wartungsmenü. Wird absichtlich *nicht* eingecheckt. |
 | Creator Dashboard → Localization | Automatische Übersetzung für unsere Sprachen nicht nötig | Alle eigenen Texte haben `AutoLocalize = false` |
 
@@ -115,6 +136,14 @@ Das ersetzt **keinen** Studio-Test: Typfehler und API-Fehler findet nur Studio b
 | 13 | Controller only | Jeder Menüpunkt erreichbar, B = zurück, D-Pad links/rechts ändert Einstellungen. Keine Maus nötig. |
 | 14 | Device-Emulator iPhone quer (Studio: Test → Device) | Menü passt ohne Abschneiden; Touch-Buttons nur im Spiel sichtbar; Buttons ≥ ca. 43 pt hoch. |
 | 15 | Output-Fenster | Keine `[FZ-Loc] Missing translation`-Warnungen; `[FZ] Server ready`. |
+| 16 | Kontrollraum-Terminal | Ziel „Finde Sicherungen (0/3)“, 3 leuchtende Sicherungen in 3 verschiedenen Sektoren (bei jedem Neustart anders). |
+| 17 | 1. Sicherung | Relais: „Jetzt ist es wach. Geht. Rennt nicht.“ – Kreatur erscheint in Sektor C und patrouilliert. |
+| 18 | 2. Sicherung → innerhalb 30 s Schalter in Sektor A halten | „Ihr… habt ihn gehalten.“ + Belohnung. Ohne Schalter: Licht in A geht aus, die Kreatur kommt nachsehen. |
+| 19 | Vor der Kreatur sprinten / still stehen / mit F anleuchten | Sprinten lockt sie an, Stillstand nicht; Licht ins Gesicht: sie hält sich die Arme vors Gesicht und zieht sich zurück. |
+| 20 | Drei Treffer kassieren (2 Spieler) | „Du bist am Boden“, kriechen; Teammitglied hält „Aufhelfen“ → zurück mit 35 HP. Solo: zurück zum Checkpoint. |
+| 21 | Funk mit 2 Voice-Konten (veröffentlichtes Spiel) | R halten → Partner hört dich gefiltert über Funk; je weiter weg, desto leiser und verrauschter. M = stumm. In „Team“ Spieler antippen = für dich stummschalten. |
+| 22 | Shop | Ohne genug Signalmarken: „Noch nicht genug“. Wartung → „100 Testmarken“ mehrfach → Sanitäter-Set freischalten (zweimal tippen = bestätigen) → ausrüsten. |
+| 23 | Wartung → Als Kreatur spielen | Third-Person im Monster, F = Angriff (nur Studio/private Server), „Zurück zu meinem Charakter“. |
 
 Bitte Ergebnisse (v. a. Fehlermeldungen aus dem Output-Fenster) zurückmelden – daraus wird der nächste Schritt.
 

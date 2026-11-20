@@ -122,13 +122,13 @@ function Hud.ShowSubtitle(line: { [string]: any })
 	end)
 end
 
-function Hud.ShowObjective(key: string?, announce: boolean?)
+function Hud.ShowObjective(key: string?, announce: boolean?, params: { [string]: any }?)
 	currentObjective = key
 	if not key then
 		objectiveFrame.Visible = false
 		return
 	end
-	Localization.Bind(objectiveText, key)
+	Localization.Bind(objectiveText, key, params)
 	objectiveToken += 1
 	local token = objectiveToken
 	objectiveFrame.Visible = true

@@ -93,7 +93,7 @@ Die Station bricht in Zeitschichten auf (2009 / heute / Schleife). Finale Kombin
 ### 3. Der Lauscher (Kreatur)
 - **Silhouette:** über 2,5 m, extrem schmal, Kopf ist ein alter Trichterlautsprecher mit Stoffbespannung, zu lange Arme, bewegt sich in **Signalaussetzern** (springt wenige Frames wie ein abreißender Stream). Jeder Sprung wird von einem kurzen statischen Knacken angekündigt – Warnsignal und Markenzeichen.
 - **Audio-Identität:** wiederholt verzerrt, zeitversetzt, was er gehört hat – inklusive der Schritte der Spieler.
-- **Regeln (fair und lernbar):** Hört Gehen in 6 m, Sprinten in 18 m, aktive Funkübertragung in 25 m. Licht ist ihm egal (Taschenlampe ist sicher). Stillstand macht unhörbar.
+- **Regeln (fair und lernbar):** Hört Gehen (7 Studs), Sprinten (20), Funkübertragung (28) und Türen (16). Stillstand macht unhörbar. **Licht blendet ihn kurz** (Taschenlampe ins Gesicht → 1,8 s geblendet, danach zieht er sich zurück, 9 s Abklingzeit). Er kommt auch durch **Lüftungsschächte**, kündigt das aber immer durch Rasseln am Ausgang an. (Angepasst an die Konzeptgrafik des Owners.)
 - **Zustände:** Ruhend → Patrouille → Lauschen (bleibt stehen, Kopf neigt sich, Knacken) → Untersuchen (läuft zum letzten Geräusch) → Suchen (Raster um den Punkt) → Verfolgen (nur bei direktem Kontakt < 8 m, angekündigt) → Rückzug (verliert Spur, kehrt in sein Revier zurück).
 - **Gefangen werden:** kein Sofort-Tod. Der Spieler wird zum **Echo** (Bild rauscht, er hört das Team nur noch übers Funkgerät). Mitspieler können ihn innerhalb von 25 s an seiner Position „zurückstimmen“ (Interaktion). Solo/zu spät: Rückkehr zum letzten Checkpoint, nichts geht verloren.
 - Server-autoritativ (PathfindingService, Zustandsmaschine auf dem Server), Clients rendern nur Animation/Audio.
@@ -172,6 +172,7 @@ Laufwege: keiner länger als ~25 s ohne Ereignis, Interaktion oder Sichtachse au
 
 ## 6. Art Direction
 
+- **Karte v0.2:** „Relaisanlage 07“ nach dem Grundriss des Owners: Eingang/Kontrolle (Start), Sektor A Verwaltung, B Labore (Relais), C Forschung/Archiv, D Unterkünfte, E Technik, runder Zentralkern mit Radom auf dem Dach, Außenbereich mit Antenne (Extraktion), Zaun, Pförtnerloge, Wald. Gebaut per Skript (`Server/Map/RelayStation07.luau`), austauschbar über `docs/MAP_CONTRACT.md`. Der große Lageplan (Damm, See, Kirche, Mine, Fabrikruine) ist für die Kapitel 2–4 vorgesehen.
 - **Ort:** Europäischer Behörden-Brutalismus der späten 70er, Technik aus den 90ern/2000ern: Sichtbeton, lackierter Stahl (Graugrün), Linoleum, Bakelit, Glasbausteine, Kabeltrassen. Jeder Raum hat eine Funktion, die man ihm ansieht.
 - **Materialien:** PBR-SurfaceAppearance für Hero-Objekte (Funkgerät, Fax, Konsolen, Kreatur), MaterialVariants (Beton-, Linoleum-, Lackvarianten) für Architektur – keine Free Models.
 - **Farbwelt:** Entsättigtes Teal in den Schatten, warmes Natrium-Orange für praktische Lichtquellen, **ein** Akzent: Signalrot für Interaktion/Gefahr/Live-Signal. Kühles Weiß ausschließlich für Zukunftsmomente (Monitore, Prognosen). UI übernimmt exakt diese Palette (`UI/Theme.luau`).
@@ -199,10 +200,18 @@ Laufwege: keiner länger als ~25 s ohne Ereignis, Interaktion oder Sichtachse au
 | UI (Router, Menüs, HUD) | `Client/UI` | fertig |
 | CodeRedemption | `CodeService`, `ServerStorage/Secrets/Codes` | fertig |
 | OwnerAdmin (Autorisierung, Log) | `AdminService` | Grundgerüst; Welt-Tools folgen mit Kreatur |
-| Funkgerät, AudioManager, Lauscher-KI, HorrorDirector, Shop | – | nächste Phasen |
+| Karte Relaisanlage 07 | `Server/Map/RelayStation07` | v0.2 (skriptgebaut, Blockout-Qualität) |
+| Proximity-Voice + Funkgerät (Audio API) | `VoiceService`, `VoiceController`, `RadioController` | v0.2 |
+| Kreatur-KI + Platzhalter-Rig + prozedurale Animation | `CreatureService`, `Creature/Rig`, `CreatureVisualsController` | v0.2 |
+| Gesundheit, am Boden, Aufhelfen | `HealthService`, `HealthController` | v0.2 |
+| Shop (Signalmarken), Sets, Gamepass-Anbindung | `ShopService`, `Shared/Catalog`, `Screens/Shop` | v0.2 |
+| Strom, Türen, Geräusche | `PowerService`, `DoorService`, `NoiseService` | v0.2 |
+| Sounds (28 eigene, synthetisiert) | `assets/audio`, `AudioController` | erzeugt; Upload + IDs nötig |
+| Funkgerät-Peilmechanik (Kanäle orten), HorrorDirector | – | nächste Phase |
 
 ### Monetarisierung (Planung, Umsetzung erst nach dem Vertical Slice)
 - **Signalmarken** (verdient: Kapitel, Geheimnisse, gebrochene Prognosen, Codes) → Funkgeräte-Designs, Taschenlampen-Gehäuse, Lobby-Kosmetik, Abzeichen.
+- **Ausrüstungs-Sets (v0.2, aus der Konzeptgrafik):** Techniker-Set 1800 (40 % schnelleres Bedienen), Observer-Set 2400 (Nachtsicht mit Akku, Spuren der Kreatur), Sanitäter-Set 1600 (doppelt so schnell aufhelfen, mehr Gesundheit, mehr Regeneration), Taschenlampen-Upgrade 900. **Nur mit erspielten Signalmarken.** Der „+“-Button aus der Grafik (Signalmarken für Robux) wird bewusst *nicht* umgesetzt. Sonst wären spielverändernde Sets kaufbar, also Pay-to-Win.
 - **Gamepasses** für dauerhafte Kosmetik (z. B. Unterstützerpaket mit exklusivem Funkgerät-Gehäuse). **Developer Products** nur für einzelne kosmetische Bundles. Preise erst nach Test und Prüfung der aktuellen Roblox-Richtlinien.
 - Shop nur aus dem Menü erreichbar, nie während Verfolgung/Story-Szene, keine Kaufaufforderung nach dem Scheitern. Hauptspiel vollständig ohne Robux.
 - Kaufabwicklung ausschließlich über `MarketplaceService.ProcessReceipt` (serverseitig, idempotent über Receipt-ID im Save).

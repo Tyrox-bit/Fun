@@ -11,6 +11,9 @@
 -- Default bindings
 --   Sprint      LeftShift | L3 (left stick click) | touch "Run" (toggle)
 --   Flashlight  F         | R1 / RB               | touch "Light"
+--   Radio       R         | L1 / LB               | touch "Radio"   (push to talk)
+--   Mic         M         | D-pad left            | touch "Mic"     (mute / unmute)
+--   NightVision N         | D-pad up              | touch "Night"   (observer set only)
 --   Pause       P         | View / Share (Select) | touch "II"
 -- GuiService.AutoSelectGuiEnabled is turned off so the Select button is free for our
 -- menu; the Router sets gamepad focus explicitly whenever a menu opens.
@@ -37,7 +40,10 @@ InputController.DeviceChanged = Signal.new() -- (device: Device)
 local ACTIONS = {
 	{ name = "Sprint", keys = { Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonL3 }, touchKey = "TOUCH_SPRINT" },
 	{ name = "Flashlight", keys = { Enum.KeyCode.F, Enum.KeyCode.ButtonR1 }, touchKey = "TOUCH_LIGHT" },
-	{ name = "Pause", keys = { Enum.KeyCode.P, Enum.KeyCode.ButtonSelect }, touchText = "II", small = true },
+	{ name = "Radio", keys = { Enum.KeyCode.R, Enum.KeyCode.ButtonL1 }, touchKey = "TOUCH_RADIO" },
+	{ name = "NightVision", keys = { Enum.KeyCode.N, Enum.KeyCode.DPadUp }, touchKey = "TOUCH_NIGHT", hidden = true },
+	{ name = "Mic", keys = { Enum.KeyCode.M, Enum.KeyCode.DPadLeft }, touchKey = "TOUCH_MIC", small = true, slot = 1 },
+	{ name = "Pause", keys = { Enum.KeyCode.P, Enum.KeyCode.ButtonSelect }, touchText = "II", small = true, slot = 0 },
 }
 
 local device: Device = "keyboard"
@@ -163,7 +169,8 @@ local function createTouchButtons(parent: ScreenGui)
 		if definition.small then
 			button.Size = UDim2.fromOffset(48, 48)
 			button.AnchorPoint = Vector2.new(1, 0)
-			button.Position = UDim2.new(1, -16, 0, 8)
+			button.Position = UDim2.new(1, -16 - (definition.slot or 0) * 58, 0, 8)
+			button.TextSize = 12
 		else
 			button.Size = UDim2.fromOffset(72, 72)
 			button.AnchorPoint = Vector2.new(1, 1)
@@ -175,6 +182,7 @@ local function createTouchButtons(parent: ScreenGui)
 		else
 			button.Text = definition.touchText or ""
 		end
+		button.Visible = not definition.hidden
 		button.Parent = container
 		touchButtons[definition.name] = button
 	end
@@ -297,6 +305,13 @@ function InputController.SetGameplayEnabled(enabled: boolean)
 			held[name] = nil
 			InputController.Action:Fire(name, false, device)
 		end
+	end
+end
+
+function InputController.SetTouchVisible(name: string, visible: boolean)
+	local button = touchButtons[name]
+	if button then
+		button.Visible = visible
 	end
 end
 

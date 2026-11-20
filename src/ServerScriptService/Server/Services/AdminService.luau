@@ -96,6 +96,91 @@ ACTIONS.grant_test_marks = function(player: Player)
 	return { ok = ok }
 end
 
+-- World tools. Anything that can affect other players is limited to Studio and private
+-- servers, so admins can never harass or break public sessions.
+local function isTestServer(): boolean
+	return RunService:IsStudio() or game.PrivateServerId ~= ""
+end
+
+local function lazy(name: string)
+	return require(script.Parent[name])
+end
+
+ACTIONS.spawn_creature = function(player: Player)
+	if not isTestServer() then
+		return { ok = false, reason = "public" }
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return { ok = false }
+	end
+	local cf = root.CFrame * CFrame.new(0, 3, -18)
+	lazy("CreatureService").Spawn(CFrame.lookAt(cf.Position, root.Position * Vector3.new(1, 0, 1) + Vector3.new(0, cf.Position.Y, 0)))
+	return { ok = true }
+end
+
+ACTIONS.toggle_ai = function()
+	local creatures = lazy("CreatureService")
+	creatures.SetAIEnabled(not creatures.IsAIEnabled())
+	return { ok = true, enabled = creatures.IsAIEnabled() }
+end
+
+ACTIONS.play_creature = function(player: Player)
+	if not isTestServer() then
+		return { ok = false, reason = "public" }
+	end
+	local Rig = require(script.Parent.Parent.Creature.Rig)
+	local old = player.Character
+	local pivot = if old then old:GetPivot() else CFrame.new(0, 10, 0)
+	local model = Rig.Create()
+	model.Name = player.Name
+	model:PivotTo(pivot + Vector3.new(0, 4, 0))
+	player:SetAttribute("FZ_MonsterMode", true)
+	player.CameraMode = Enum.CameraMode.Classic
+	player.CameraMinZoomDistance = 10
+	player.CameraMaxZoomDistance = 18
+	model.Parent = workspace
+	Rig.Tag(model)
+	player.Character = model
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.WalkSpeed = 14
+	end
+	if old then
+		old:Destroy()
+	end
+	return { ok = true }
+end
+
+ACTIONS.play_human = function(player: Player)
+	player:SetAttribute("FZ_MonsterMode", false)
+	player.CameraMode = Enum.CameraMode.LockFirstPerson
+	player.CameraMinZoomDistance = 0.5
+	player.CameraMaxZoomDistance = 0.5
+	player:LoadCharacter()
+	return { ok = true }
+end
+
+ACTIONS.tp_core = function(player: Player)
+	local character = player.Character
+	if character then
+		character:PivotTo(CFrame.new(0, 4, 32))
+	end
+	return { ok = true }
+end
+
+ACTIONS.toggle_speed = function(player: Player)
+	player:SetAttribute("FZ_AdminSpeed", not player:GetAttribute("FZ_AdminSpeed"))
+	return { ok = true }
+end
+
+ACTIONS.reset = function()
+	lazy("GameFlowService").ResetChapter()
+	lazy("HealthService").HealAll()
+	lazy("DoorService").CloseAll()
+	return { ok = true }
+end
+
 ACTIONS.get_log = function()
 	local recent = {}
 	for i = math.max(1, #auditLog - 19), #auditLog do
@@ -125,6 +210,32 @@ function AdminService.Start()
 		AdminService.Log(player, action)
 		return handler(player)
 	end
+
+	-- Monster mode attack: same telegraphed damage as the AI, test servers only.
+	local attackLimiter = RateLimiter.new(1, 0.6)
+	Net.Event("MonsterAttack").OnServerEvent:Connect(function(player: Player)
+		if not player:GetAttribute("FZ_MonsterMode") or not isAllowed(player) or not isTestServer() or not attackLimiter:Allow(player) then
+			return
+		end
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not root then
+			return
+		end
+		local creatureConfig = require(ReplicatedStorage.Shared.Config).Creature
+		player.Character:SetAttribute("State", "Attack")
+		task.delay(creatureConfig.AttackWindup, function()
+			if not player.Character then
+				return
+			end
+			player.Character:SetAttribute("State", "Chase")
+			for _, other in Players:GetPlayers() do
+				local otherRoot = other ~= player and other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if otherRoot and (otherRoot.Position - root.Position).Magnitude <= creatureConfig.AttackRange + 1.5 then
+					lazy("HealthService").Damage(other, creatureConfig.Damage)
+				end
+			end
+		end)
+	end)
 
 	Players.PlayerRemoving:Connect(function(player)
 		authorizedCache[player] = nil

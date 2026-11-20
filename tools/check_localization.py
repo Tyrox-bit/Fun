@@ -19,7 +19,7 @@ REFERENCE = "en"
 ENTRY = re.compile(r'^\s*([A-Z][A-Z0-9_]*)\s*=\s*"((?:[^"\\]|\\.)*)"\s*,\s*$')
 PLACEHOLDER = re.compile(r"{([A-Za-z0-9_]+)}")
 # Keys referenced from code: string literals that look like our key format.
-KEY_USE = re.compile(r'"((?:MENU|LANG|LOBBY|CHAPTER|SETTINGS|VALUE|EXTRAS|CODE|ADMIN|TOUCH|INTERACT|OBJECT|OBJECTIVE|SPEAKER|SFX|RADIO|FAX|DOC|SIGN|NOTE|ERROR|PAUSE|DATE)_[A-Z0-9_]+)"')
+KEY_USE = re.compile(r'"((?:MENU|LANG|LOBBY|CHAPTER|SETTINGS|VALUE|EXTRAS|CODE|ADMIN|TOUCH|INTERACT|OBJECT|OBJECTIVE|SPEAKER|SFX|RADIO|FAX|DOC|SIGN|NOTE|ERROR|PAUSE|DATE|ITEM|HUD|SHOP|MIC|VOICE|DOOR|REWARD)_[A-Z0-9_]+)"')
 
 
 def load(path: Path) -> dict:
@@ -72,6 +72,10 @@ def main() -> int:
         if f"CHAPTER_0{number}_TITLE" not in reference:
             problems.append(f"missing CHAPTER_0{number}_TITLE")
 
+    used_keys = {k for k, _ in used}
+    unused = sorted(k for k in reference if k not in used_keys and not k.startswith(dynamic_prefixes))
+    if unused:
+        print(f"not referenced in code ({len(unused)}): {', '.join(unused)}")
     longest = max(tables, key=lambda l: sum(len(v) for v in tables[l].values()))
     print(f"languages: {', '.join(tables)} | keys: {len(reference)} | keys used in code: {len({k for k, _ in used})}")
     print(f"longest language overall (watch UI overflow): {longest}")

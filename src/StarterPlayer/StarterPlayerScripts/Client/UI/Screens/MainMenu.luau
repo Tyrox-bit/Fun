@@ -4,6 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 
 local Components = require(script.Parent.Parent.Components)
 local Theme = require(script.Parent.Parent.Theme)
@@ -30,6 +31,7 @@ function MainMenu.new(router, args)
 	local Chapters = require(script.Parent.Chapters)
 	local Settings = require(script.Parent.Settings)
 	local Extras = require(script.Parent.Extras)
+	local Shop = require(script.Parent.Shop)
 
 	local primaryKey = if pause then "MENU_RESUME" elseif app.HasProgress() then "MENU_CONTINUE" else "MENU_PLAY"
 	local primary = Components.Button({ Key = primaryKey, LayoutOrder = 10, Parent = column, OnActivated = function()
@@ -46,9 +48,19 @@ function MainMenu.new(router, args)
 	Components.Button({ Key = "MENU_SETTINGS", LayoutOrder = 13, Parent = column, OnActivated = function()
 		router:Push(Settings)
 	end })
-	Components.Button({ Key = "MENU_EXTRAS", LayoutOrder = 14, Parent = column, OnActivated = function()
+	Components.Button({ Key = "MENU_SHOP", LayoutOrder = 14, Parent = column, OnActivated = function()
+		router:Push(Shop)
+	end })
+	Components.Button({ Key = "MENU_EXTRAS", LayoutOrder = 15, Parent = column, OnActivated = function()
 		router:Push(Extras)
 	end })
+	if pause then
+		local mic = Components.Button({ Key = if app.Radio.IsMuted() then "MIC_UNMUTE" else "MIC_MUTE", LayoutOrder = 16, Parent = column })
+		mic.Instance.Activated:Connect(function()
+			app.Radio.ToggleMute()
+			Localization.Bind(mic.Label, if app.Radio.IsMuted() then "MIC_UNMUTE" else "MIC_MUTE")
+		end)
+	end
 
 	Components.Text({
 		Text = "v" .. Config.Version,

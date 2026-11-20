@@ -2,6 +2,7 @@
 -- Only localization KEYS travel over the network; every client renders them in its own
 -- language. Targets can be a single player (individual perception) or "all".
 
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -52,7 +53,9 @@ function StoryService.ShowDocument(player: Player, document: { [string]: any })
 	documentRemote:FireClient(player, document)
 end
 
-function StoryService.SetObjective(key: string?)
+-- params are replicated as JSON (e.g. { count = 1, total = 3 } for "Find fuses (1/3)").
+function StoryService.SetObjective(key: string?, params: { [string]: any }?)
+	SessionState.Set("ObjectiveParams", if params then HttpService:JSONEncode(params) else nil)
 	SessionState.Set("Objective", key)
 end
 
@@ -68,6 +71,13 @@ end
 
 function StoryService.GetFlag(name: string): any
 	return flags[name]
+end
+
+function StoryService.ResetFlags()
+	for name in flags do
+		SessionState.Set("Flag_" .. name, nil)
+	end
+	table.clear(flags)
 end
 
 return StoryService

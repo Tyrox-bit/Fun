@@ -14,12 +14,20 @@ local EVENTS = {
 	"Subtitle", -- S->C (line)
 	"Document", -- S->C (document)
 	"Notify", -- S->C (key, params)
+	"Sfx", -- S->C (soundName, position | instance, volume?)
+	"RadioState", -- C->S (transmitting)
+	"MicMute", -- C->S (muted)
+	"FlashCreature", -- C->S () flashlight cone hits the creature (server validates)
+	"MonsterAttack", -- C->S () admin monster mode
+	"Footprint", -- S->C (position) observer set only
+	"Hurt", -- S->C (amount)
 }
 
 local FUNCTIONS = {
 	"FetchProfile", -- C->S () -> snapshot of settings/progress
 	"RedeemCode", -- C->S (code) -> result
 	"AdminAction", -- C->S (action, payload) -> result
+	"ShopAction", -- C->S (action, itemId) -> result
 }
 
 local Net = {}

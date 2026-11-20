@@ -6,6 +6,8 @@
 -- placeholder or wrong-language text that changes a moment later.
 
 local CollectionService = game:GetService("CollectionService")
+local HttpService = game:GetService("HttpService")
+local SoundService = game:GetService("SoundService")
 local LocalizationService = game:GetService("LocalizationService")
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -31,6 +33,12 @@ local GraphicsController = require(Controllers.GraphicsController)
 local MovementController = require(Controllers.MovementController)
 local FlashlightController = require(Controllers.FlashlightController)
 local WorldTextController = require(Controllers.WorldTextController)
+local AudioController = require(Controllers.AudioController)
+local VoiceController = require(Controllers.VoiceController)
+local RadioController = require(Controllers.RadioController)
+local CreatureVisualsController = require(Controllers.CreatureVisualsController)
+local HealthController = require(Controllers.HealthController)
+local EquipmentController = require(Controllers.EquipmentController)
 
 local Components = require(UI.Components)
 local Theme = require(UI.Theme)
@@ -142,6 +150,10 @@ local function setGameplay(enabled: boolean)
 	pcall(function()
 		(ProximityPromptService :: any).Enabled = enabled
 	end)
+	if not enabled then
+		RadioController.Stop()
+	end
+	EquipmentController.SetActive(enabled)
 	local c = getControls()
 	if c then
 		if enabled then
@@ -191,6 +203,34 @@ DebugOverlay.Init(hudGui, {
 })
 MovementController.Init(SettingsController, Hud.SetStamina)
 FlashlightController.Init()
+AudioController.Init()
+VoiceController.Init()
+RadioController.Init(hudGui, SettingsController)
+CreatureVisualsController.Init(Hud.ShowSubtitle)
+HealthController.Init(hudGui, SettingsController)
+EquipmentController.Init()
+
+-- Scare intensity: creature sounds are mixed down on "reduced" (medic set dampens too).
+local function applyScareMix()
+	local group = SoundService:FindFirstChild("FZ_Creature")
+	if group and group:IsA("SoundGroup") then
+		local level = SettingsController.Get("scareIntensity")
+		local volume = if level == "reduced" then 0.55 elseif level == "intense" then 1 else 0.85
+		if player:GetAttribute("FZ_ScareDampening") then
+			volume *= 0.8
+		end
+		group.Volume = volume
+	end
+end
+applyScareMix()
+SettingsController.Changed:Connect(applyScareMix)
+player:GetAttributeChangedSignal("FZ_ScareDampening"):Connect(applyScareMix)
+
+if not VoiceController.IsAvailable() then
+	task.delay(8, function()
+		Hud.Notify("VOICE_UNAVAILABLE")
+	end)
+end
 
 Net.Event("Subtitle").OnClientEvent:Connect(Hud.ShowSubtitle)
 Net.Event("Document").OnClientEvent:Connect(Hud.ShowDocument)
@@ -199,10 +239,25 @@ Net.Event("Notify").OnClientEvent:Connect(function(key, params)
 		Hud.Notify(key, if type(params) == "table" then params else nil)
 	end
 end)
-SessionState.Observe("Objective", function(key)
-	if state == "playing" and type(key) == "string" then
-		Hud.ShowObjective(key)
+local function objectiveParams(): { [string]: any }?
+	local raw = SessionState.Get("ObjectiveParams")
+	if type(raw) ~= "string" then
+		return nil
 	end
+	local ok, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
+	return if ok and type(decoded) == "table" then decoded else nil
+end
+local function showObjective(announce: boolean?)
+	local key = SessionState.Get("Objective")
+	if state == "playing" and type(key) == "string" then
+		Hud.ShowObjective(key, announce, objectiveParams())
+	end
+end
+SessionState.Observe("Objective", function()
+	showObjective()
+end)
+SessionState.Observe("ObjectiveParams", function()
+	showObjective()
 end)
 
 ---------------------------------------------------------------------------
@@ -217,6 +272,8 @@ local app = {
 	Hud = Hud,
 	Debug = DebugOverlay,
 	Profile = profile,
+	Voice = VoiceController,
+	Radio = RadioController,
 }
 router.App = app
 
@@ -232,10 +289,7 @@ function app.Play(_chapter: number?)
 		setMenuCamera(false)
 		setGameplay(true)
 		readyRemote:FireServer()
-		local objective = SessionState.Get("Objective")
-		if type(objective) == "string" then
-			Hud.ShowObjective(objective, false)
-		end
+		showObjective(false)
 	elseif state == "paused" then
 		state = "playing"
 		router:Clear()

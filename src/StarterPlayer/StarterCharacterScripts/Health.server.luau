@@ -1,0 +1,2 @@
+-- Intentionally empty. A Script named "Health" in StarterCharacterScripts replaces
+-- Roblox's default health regeneration, so HealthService alone controls healing.

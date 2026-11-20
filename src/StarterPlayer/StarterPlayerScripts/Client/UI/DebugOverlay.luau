@@ -25,7 +25,7 @@ function DebugOverlay.Init(gui: ScreenGui, infoProviders)
 		XAlign = Enum.TextXAlignment.Right,
 		Size = UDim2.new(0, 520, 0, 20),
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -76, 0, 18),
+		Position = UDim2.new(1, -136, 0, 18),
 		Parent = gui,
 	})
 	;(label :: TextLabel).TextStrokeTransparency = 0.4

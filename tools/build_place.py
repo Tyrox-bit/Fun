@@ -29,6 +29,9 @@ KNOWN_PROPERTIES = {
     "CharacterWalkSpeed": ("float", None),
     "EnableMouseLockOption": ("bool", None),
     "StreamingEnabled": ("bool", None),
+    "Technology": ("token", {"Legacy": 0, "Voxel": 1, "Compatibility": 2, "ShadowMap": 3, "Future": 4}),
+    "UseAudioApi": ("token", {"Disabled": 0, "Automatic": 1, "Enabled": 2}),
+    "EnableDefaultVoice": ("bool", None),
 }
 
 _ids = itertools.count()
@@ -113,6 +116,8 @@ def from_path(path: Path, name: str | None = None) -> Item:
 def from_node(name: str, node: dict) -> Item:
     if "$path" in node:
         item = from_path(ROOT / node["$path"], name)
+        if "$className" in node and item.class_name == "Folder":
+            item.class_name = node["$className"]
     else:
         item = Item(node.get("$className", "Folder"), name)
     item.props.update(node.get("$properties", {}))

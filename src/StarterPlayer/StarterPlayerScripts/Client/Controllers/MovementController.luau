@@ -54,7 +54,7 @@ local function step(dt: number)
 		wantsSprint = false -- toggle sprint ends when the player stops
 	end
 
-	local canSprint = wantsSprint and moving and not exhausted and stamina > 0
+	local canSprint = wantsSprint and moving and not exhausted and stamina > 0 and not player:GetAttribute("FZ_Downed")
 	setSprinting(canSprint)
 
 	if sprinting then
@@ -74,7 +74,18 @@ local function step(dt: number)
 		end
 	end
 
-	humanoid.WalkSpeed = if sprinting then M.SprintSpeed else M.WalkSpeed
+	if player:GetAttribute("FZ_MonsterMode") then
+		return -- the creature rig keeps the speed the server gave it
+	end
+	local speed = if sprinting then M.SprintSpeed else M.WalkSpeed
+	if player:GetAttribute("FZ_Downed") then
+		speed = Config.Health.CrawlSpeed
+		wantsSprint = false
+	end
+	if player:GetAttribute("FZ_AdminSpeed") then
+		speed *= 2
+	end
+	humanoid.WalkSpeed = speed
 	if onStamina then
 		onStamina(stamina, exhausted)
 	end

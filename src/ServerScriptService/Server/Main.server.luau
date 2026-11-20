@@ -8,7 +8,7 @@ require(Shared.Net).Init()
 require(Shared.SessionState).Init()
 
 if not workspace:FindFirstChild("FZ_Map") then
-	require(script.Parent.Dev.Greybox).Build()
+	require(script.Parent.Map.RelayStation07).Build()
 end
 
 local SERVICES = {
@@ -17,6 +17,13 @@ local SERVICES = {
 	"AdminService",
 	"CodeService",
 	"InteractionService",
+	"NoiseService",
+	"DoorService",
+	"PowerService",
+	"HealthService",
+	"VoiceService",
+	"ShopService",
+	"CreatureService",
 	"FlashlightService",
 	"GameFlowService",
 }
@@ -24,7 +31,12 @@ local SERVICES = {
 for _, name in SERVICES do
 	local module = script.Parent.Services:FindFirstChild(name)
 	local ok, err = pcall(function()
-		require(module).Start()
+		local service = require(module)
+		if name == "PowerService" then
+			service.Start(require(script.Parent.Services.DoorService))
+		else
+			service.Start()
+		end
 	end)
 	if not ok then
 		warn(string.format("[FZ] %s failed to start: %s", name, tostring(err)))

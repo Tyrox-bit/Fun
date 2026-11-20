@@ -57,14 +57,24 @@ local function resolve(name: string): string
 	return "high"
 end
 
-local function applyDecor(light: Instance)
-	for _, descendant in light:GetDescendants() do
+local watched: { [Instance]: boolean } = {}
+
+local function applyDecor(fixture: Instance)
+	-- A fixture without power stays off no matter which profile is selected.
+	local on = resolvedProfile.decorLights and fixture:GetAttribute("Powered") ~= false
+	for _, descendant in fixture:GetDescendants() do
 		if descendant:IsA("Light") then
-			descendant.Enabled = resolvedProfile.decorLights
+			descendant.Enabled = on
 		end
 	end
-	if light:IsA("Light") then
-		light.Enabled = resolvedProfile.decorLights
+	if not watched[fixture] then
+		watched[fixture] = true
+		fixture:GetAttributeChangedSignal("Powered"):Connect(function()
+			applyDecor(fixture)
+		end)
+		fixture.Destroying:Connect(function()
+			watched[fixture] = nil
+		end)
 	end
 end
 

@@ -4,19 +4,27 @@
     "$className": "DataModel",
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
-      "Boot": { "$path": "src/ReplicatedFirst/Boot.client.luau" }
+      "Boot": {
+        "$path": "src/ReplicatedFirst/Boot.client.luau"
+      }
     },
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Shared": { "$path": "src/ReplicatedStorage/Shared" }
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "Server": { "$path": "src/ServerScriptService/Server" }
+      "Server": {
+        "$path": "src/ServerScriptService/Server"
+      }
     },
     "ServerStorage": {
       "$className": "ServerStorage",
-      "Secrets": { "$path": "src/ServerStorage/Secrets" }
+      "Secrets": {
+        "$path": "src/ServerStorage/Secrets"
+      }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
@@ -27,7 +35,26 @@
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "Client": { "$path": "src/StarterPlayer/StarterPlayerScripts/Client" }
+        "Client": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/Client"
+        }
+      },
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$path": "src/StarterPlayer/StarterCharacterScripts"
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future"
+      }
+    },
+    "VoiceChatService": {
+      "$className": "VoiceChatService",
+      "$properties": {
+        "UseAudioApi": "Enabled",
+        "EnableDefaultVoice": false
       }
     }
   }

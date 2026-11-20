@@ -16,8 +16,8 @@ local Admin = {}
 function Admin.new(router)
 	local app = router.App
 	local root, column = Components.ScreenRoot("Admin")
-	local layout = Components.List(column, Theme.Sizes.Gap)
-	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+	local scroll = Components.ScrollColumn(column, UDim2.fromScale(1, 1))
+	column = scroll :: any
 
 	Components.Heading(column, "ADMIN_TITLE", 1)
 	Components.Text({
@@ -42,7 +42,27 @@ function Admin.new(router)
 		local success = ok and type(response) == "table" and response.ok
 		Localization.Bind(status, if success then "ADMIN_DONE" else "ADMIN_DENIED")
 	end })
-	Components.Spacer(column, 10, 15)
+	local function action(key: string, order: number, actionName: string)
+		Components.Button({ Key = key, LayoutOrder = order, Height = 40, Parent = column, OnActivated = function()
+			local ok, response = pcall(function()
+				return Net.Function("AdminAction"):InvokeServer(actionName)
+			end)
+			local success = ok and type(response) == "table" and response.ok
+			local reason = ok and type(response) == "table" and response.reason
+			Localization.Bind(status, if success then "ADMIN_DONE" elseif reason == "public" then "ADMIN_PUBLIC_BLOCKED" else "ADMIN_DENIED")
+			if success and (actionName == "play_creature" or actionName == "play_human" or actionName == "tp_core") then
+				app.Play()
+			end
+		end })
+	end
+	action("ADMIN_SPAWN_CREATURE", 12, "spawn_creature")
+	action("ADMIN_CREATURE_AI", 13, "toggle_ai")
+	action("ADMIN_PLAY_CREATURE", 14, "play_creature")
+	action("ADMIN_PLAY_HUMAN", 15, "play_human")
+	action("ADMIN_TP_CORE", 16, "tp_core")
+	action("ADMIN_SPEED", 17, "toggle_speed")
+	action("ADMIN_RESET", 18, "reset")
+	Components.Spacer(column, 10, 19)
 	Components.Button({ Key = "MENU_BACK", LayoutOrder = 30, Parent = column, OnActivated = function()
 		router:Pop()
 	end })

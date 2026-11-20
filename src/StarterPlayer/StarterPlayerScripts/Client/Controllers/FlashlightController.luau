@@ -2,6 +2,7 @@
 -- replicated head light (FlashlightService) so teammates see it too. The local player's
 -- own replicated copy is muted locally to avoid a double light.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -19,6 +20,33 @@ local follow: RBXScriptConnection? = nil
 local setRemote = Net.Event("SetFlashlight")
 
 local OFFSET = CFrame.new(0.6, -0.5, -0.4)
+local BLIND_RANGE = 26 -- matches Config.Creature.BlindRange; the server re-validates
+local nextBlindCheck = 0
+local blindRay = RaycastParams.new()
+blindRay.FilterType = Enum.RaycastFilterType.Exclude
+
+-- While the light is on, report when the beam hits a creature's head (4 Hz).
+local function checkBlind(camera: Camera)
+	local now = os.clock()
+	if now < nextBlindCheck then
+		return
+	end
+	nextBlindCheck = now + 0.25
+	local range = BLIND_RANGE * (tonumber(player:GetAttribute("FZ_FlashRange")) or 1)
+	for _, model in CollectionService:GetTagged("FZ_CreatureRig") do
+		local head = model:FindFirstChild("Head")
+		if head and head:IsA("BasePart") and model ~= player.Character and not model:GetAttribute("Hidden") then
+			local offset = head.Position - camera.CFrame.Position
+			if offset.Magnitude < range and camera.CFrame.LookVector:Dot(offset.Unit) > math.cos(math.rad(14)) then
+				blindRay.FilterDescendantsInstances = { player.Character :: Instance, camera }
+				local hit = workspace:Raycast(camera.CFrame.Position, offset, blindRay)
+				if hit and hit.Instance:IsDescendantOf(model) then
+					Net.Event("FlashCreature"):FireServer()
+				end
+			end
+		end
+	end
+end
 
 local function ensurePart(): Part
 	if lightPart and lightPart.Parent then
@@ -68,11 +96,13 @@ function FlashlightController.Set(value: boolean)
 	local part = ensurePart()
 	local light = part:FindFirstChild("Light") :: SpotLight
 	light.Enabled = value
+	light.Range = 40 * (tonumber(player:GetAttribute("FZ_FlashRange")) or 1)
 	if value and not follow then
 		follow = RunService.RenderStepped:Connect(function()
 			local camera = workspace.CurrentCamera
 			if camera then
 				part.CFrame = camera.CFrame * OFFSET
+				checkBlind(camera)
 			end
 		end)
 	elseif not value and follow then
@@ -90,6 +120,10 @@ end
 function FlashlightController.Init()
 	InputController.Action:Connect(function(name, pressed)
 		if name == "Flashlight" and pressed then
+			if player:GetAttribute("FZ_MonsterMode") then
+				Net.Event("MonsterAttack"):FireServer() -- admin test: F / RB attacks as the creature
+				return
+			end
 			FlashlightController.Set(not enabled)
 		end
 	end)

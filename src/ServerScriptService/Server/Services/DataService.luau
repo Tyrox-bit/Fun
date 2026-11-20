@@ -70,6 +70,8 @@ local function defaultData(): { [string]: any }
 			completed = {}, -- array of chapter numbers
 		},
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
+		inventory = {}, -- [itemId] = true
+		equipped = {}, -- { set = itemId?, radioSkin = itemId? }
 	}
 end
 
@@ -283,6 +285,20 @@ function DataService.Mutate(player: Player, mutator: ({ [string]: any }) -> ()):
 	return true
 end
 
+-- Adds earned Signal Marks (never negative) and tells the player.
+function DataService.Grant(player: Player, amount: number): boolean
+	if amount <= 0 then
+		return false
+	end
+	local ok = DataService.Mutate(player, function(data)
+		data.signalMarks += math.floor(amount)
+	end)
+	if ok then
+		Net.Event("Notify"):FireClient(player, "REWARD_MARKS", { amount = math.floor(amount) })
+	end
+	return ok
+end
+
 -- Immediate save for important changes (code rewards, chapter completion).
 function DataService.SaveNow(player: Player): boolean
 	local profile = profiles[player]
@@ -365,6 +381,8 @@ function DataService.Start()
 			settings = deepCopy(data.settings),
 			signalMarks = data.signalMarks,
 			progress = { chapter = data.progress.chapter, completed = deepCopy(data.progress.completed) },
+			inventory = deepCopy(data.inventory),
+			equipped = deepCopy(data.equipped),
 			persistent = profile.Persistent,
 			isNew = data.stats.sessions <= 1,
 		}

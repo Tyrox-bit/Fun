@@ -37,7 +37,7 @@ end
 
 local function placeAtCheckpoint(player: Player)
 	local character = player.Character
-	if not character then
+	if not character or player:GetAttribute("FZ_MonsterMode") then
 		return
 	end
 	local checkpoint = findCheckpoint(SessionState.Get("Checkpoint") or "C1_START")
@@ -60,12 +60,24 @@ function GameFlowService.SetCheckpoint(id: string)
 	SessionState.Set("Checkpoint", id)
 end
 
+function GameFlowService.PlaceAtCheckpoint(player: Player)
+	placeAtCheckpoint(player)
+end
+
+function GameFlowService.ResetChapter()
+	local chapter = chapters[SessionState.Get("Chapter") or 1]
+	if chapter and chapter.Reset then
+		chapter.Reset()
+	end
+end
+
 function GameFlowService.Start()
 	SessionState.Set("Chapter", 1)
 	SessionState.Set("Checkpoint", "C1_START")
 
+	local context = { setCheckpoint = GameFlowService.SetCheckpoint }
 	for _, chapter in chapters do
-		chapter.Start()
+		chapter.Start(context)
 	end
 
 	local limiter = RateLimiter.new(2, 0.5)

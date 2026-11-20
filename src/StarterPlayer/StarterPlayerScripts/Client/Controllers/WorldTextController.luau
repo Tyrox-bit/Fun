@@ -5,6 +5,7 @@
 -- Works with StreamingEnabled: objects are localized whenever they stream in.
 
 local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
@@ -19,6 +20,21 @@ local function localizePrompt(prompt: Instance)
 	local object = prompt:GetAttribute("FZ_Object")
 	prompt.ActionText = if type(action) == "string" then Localization.T(action) else ""
 	prompt.ObjectText = if type(object) == "string" then Localization.T(object) else ""
+	-- Equipment changes hold times locally (technician / medic). The base value is kept.
+	if prompt:GetAttribute("FZ_BaseHold") == nil then
+		prompt:SetAttribute("FZ_BaseHold", prompt.HoldDuration)
+	end
+	local base = prompt:GetAttribute("FZ_BaseHold") :: number
+	local player = Players.LocalPlayer
+	local multiplier = if object == "OBJECT_TEAMMATE"
+		then tonumber(player:GetAttribute("FZ_ReviveMultiplier")) or 1
+		else tonumber(player:GetAttribute("FZ_HoldMultiplier")) or 1
+	prompt.HoldDuration = base * multiplier
+	-- Your own "help up" prompt is for your teammates, not for you.
+	local character = player.Character
+	if character and prompt:IsDescendantOf(character) then
+		prompt.Enabled = false
+	end
 end
 
 local function localizeText(label: Instance)
@@ -53,6 +69,9 @@ function WorldTextController.Init()
 	CollectionService:GetInstanceAddedSignal("FZ_Prompt"):Connect(localizePrompt)
 	CollectionService:GetInstanceAddedSignal("FZ_WorldText"):Connect(localizeText)
 	Localization.Changed:Connect(refreshAll)
+	local player = Players.LocalPlayer
+	player:GetAttributeChangedSignal("FZ_HoldMultiplier"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("FZ_ReviveMultiplier"):Connect(refreshAll)
 	refreshAll()
 end
 

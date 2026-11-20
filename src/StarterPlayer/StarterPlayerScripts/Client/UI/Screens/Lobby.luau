@@ -33,23 +33,40 @@ function Lobby.new(router)
 
 	local function refresh()
 		for _, child in list:GetChildren() do
-			if child:IsA("TextLabel") then
+			if child:IsA("GuiObject") then
 				child:Destroy()
 			end
 		end
 		local players = Players:GetPlayers()
 		Localization.Bind(count, "LOBBY_COUNT", { count = #players, max = Config.MaxPartySize })
 		for index, player in players do
-			local suffix = if player == Players.LocalPlayer then "  " .. Localization.T("LOBBY_YOU") else ""
-			Components.Text({
-				Text = string.format("%s  @%s%s", player.DisplayName, player.Name, suffix),
-				Font = Theme.Fonts.Body,
-				TextSize = Theme.Sizes.TextBody,
-				Color = Theme.Colors.Text,
-				Wrapped = false,
-				LayoutOrder = index,
-				Parent = list,
-			})
+			local isSelf = player == Players.LocalPlayer
+			local suffix = if isSelf then "  " .. Localization.T("LOBBY_YOU") else ""
+			if isSelf then
+				Components.Text({
+					Text = string.format("%s  @%s%s", player.DisplayName, player.Name, suffix),
+					Font = Theme.Fonts.Body,
+					TextSize = Theme.Sizes.TextBody,
+					Color = Theme.Colors.Text,
+					Wrapped = false,
+					LayoutOrder = index,
+					Parent = list,
+				})
+			else
+				-- Tap a teammate to mute / unmute their voice and radio for you only.
+				local muted = app.Voice.IsMuted(player)
+				local row = Components.Button({
+					Text = string.format("%s  @%s", player.DisplayName, player.Name),
+					TagKey = if muted then "LOBBY_UNMUTE" else "LOBBY_MUTE",
+					Height = 40,
+					LayoutOrder = index,
+					Parent = list,
+				})
+				row.Instance.Activated:Connect(function()
+					app.Voice.SetMuted(player, not app.Voice.IsMuted(player))
+					refresh()
+				end)
+			end
 		end
 	end
 	refresh()
