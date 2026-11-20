@@ -3,17 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "description": "Kaspar Damast-Duo – Black Friday Landing Page mit Stripe-Checkout (inkl. PayPal & Klarna)",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "node dev-server.js",
-    "images": "node scripts/generate-images.js && node scripts/render-png.js",
+    "images": "node scripts/generate-images.js && node tools/duo-bild.js",
     "check": "node scripts/check.js",
     "setup": "node scripts/setup.js",
     "medien": "node tools/medien.js",
     "produkte": "node scripts/build-products.js",
     "produktbilder": "node tools/produktbilder.js",
     "videos": "node tools/medien.js",
-    "check:launch": "node scripts/launch-check.js"
+    "check:launch": "node scripts/launch-check.js",
+    "duo-bild": "node tools/duo-bild.js"
   },
   "dependencies": {
     "stripe": "^23.2.0"

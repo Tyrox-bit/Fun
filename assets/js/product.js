@@ -199,6 +199,12 @@
       var btn = $('[data-bundle-add="' + b.id + '"]'); if (btn) btn.disabled = total === null;
     });
     setup3d(p.view3d);
+    // Black-Friday-Hinweis nur im Aktionszeitraum
+    var promo = $('[data-pp-promo]');
+    if (promo && cfg.campaign) {
+      var now = Date.now();
+      promo.hidden = !(now >= Date.parse(cfg.campaign.start) && now <= Date.parse(cfg.campaign.end));
+    }
     if (window.KasparTracking) window.KasparTracking.track('ViewContent', { value: priced ? p.price / 100 : undefined, currency: 'EUR', content_ids: [id], content_name: p.name });
   });
 

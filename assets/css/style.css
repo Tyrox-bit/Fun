@@ -602,3 +602,25 @@ body:not(.show-placeholders) [data-placeholder] { display: none; }
 .lightbox__nav--next { right: max(12px, env(safe-area-inset-right, 0px)); }
 .lightbox__x:hover, .lightbox__nav:hover { background: rgba(255, 255, 255, .26); }
 .cart__meta .qty { justify-self: start; }
+
+/* ===== Aktionsseite mit echten Produktfotos ===== */
+.gallery[data-photos] .gallery__main, .hero .gallery[data-photos] .gallery__main { aspect-ratio: 3 / 2; background: var(--photo); }
+.gallery[data-photos] .gallery__main > img { object-fit: contain; }
+.gallery[data-photos] .gallery__thumb { background: var(--photo); }
+.gallery[data-photos] .gallery__thumb img { object-fit: contain; }
+.duo__img--photo { padding: 0; min-height: 0; background: var(--photo); }
+.duo__img--photo img { width: 100%; aspect-ratio: 3 / 2; object-fit: contain; filter: none; }
+.duo__more { display: inline-block; margin-top: 14px; font-weight: 700; color: var(--accent-text); text-decoration: none; }
+.duo__more:hover { text-decoration: underline; }
+.duo-pack { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.duo-pack img { width: 100%; aspect-ratio: 3 / 2; object-fit: contain; background: var(--photo); border: 1px solid var(--line); border-radius: var(--radius); }
+.benefit__icon { display: grid; place-items: center; width: 50px; height: 50px; margin-bottom: 14px; border: 1px solid var(--gold-line); border-radius: 50%; color: var(--gold); }
+.benefit__icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (min-width: 600px) { .pp-more--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .pp-more--4 { grid-template-columns: repeat(4, 1fr); } }
+.pp-promo { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: #0b0c0e; color: #f5f5f4; text-decoration: none; font-size: .9rem; line-height: 1.35; }
+.pp-promo s { color: #a3a39f; }
+.pp-promo .badge { flex: none; }
+.pp-promo__text { flex: 1; min-width: 0; }
+.pp-promo__go { font-size: 1.2rem; color: #ffa33d; }
+.pp-promo:hover { background: #17181b; }

@@ -38,17 +38,17 @@
 
   "product": {
     "name": "Damast-Duo",
-    "fullName": "Kaspar Damast-Duo – Kochmesser & Schälmesser",
-    "short": "Kochmesser 20 cm + Schälmesser 9 cm aus Damaststahl",
+    "fullName": "KASPAR Damast-Duo – Chefmesser & Officemesser",
+    "short": "KASPAR Damast Chefmesser + Officemesser, je in Geschenkbox mit Schutz-Noppen",
     "image": "/assets/img/product.png",
+    "items": ["chefmesser", "officemesser"],
+    "_hinweis": "Das Aktions-Set besteht aus diesen Messern aus catalog.products. Nur belegte Angaben eintragen (keine Lagenzahl, Härte, Stahlsorte, Längen ohne Nachweis).",
     "specs": [
-      { "label": "Klinge", "value": "67 Lagen Damaststahl, VG-10-Kern" },
-      { "label": "Härte", "value": "60 ± 2 HRC" },
-      { "label": "Schliff", "value": "15° pro Seite, handgeschärft" },
-      { "label": "Griff", "value": "G10, wasserfest & rutschfest" },
-      { "label": "Kochmesser", "value": "20 cm Klinge, ca. 220 g" },
-      { "label": "Schälmesser", "value": "9 cm Klinge, ca. 90 g" },
-      { "label": "Lieferumfang", "value": "2 Messer + Geschenkbox" }
+      { "label": "Klinge", "value": "Damastklinge" },
+      { "label": "Griff", "value": "Facettierter Resin-Holz-Griff – jeder ein Unikat" },
+      { "label": "Chefmesser", "value": "Für Fleisch, Fisch und Gemüse" },
+      { "label": "Officemesser", "value": "Für Obst, Gemüse und Schälarbeiten" },
+      { "label": "Lieferumfang", "value": "2 Messer, jeweils in KASPAR-Geschenkbox mit Schutz-Noppen" }
     ]
   },
 

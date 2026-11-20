@@ -71,7 +71,8 @@ const todo = (v) => !v || /^\[.*\]$/.test(String(v));
   // ---------------------------------------------------------------- Medien
   head('Fotos & Videos');
   const gal = (cfg.media && cfg.media.gallery) || [];
-  gal.length ? ok(`${gal.length} Produktfoto(s)`) : block('Noch Platzhalter-Grafiken statt echter Fotos', 'Fotos nach assets/img/produkt/ legen → npm run medien');
+  const realPhotos = gal.length || /data-photos/.test(read('index.html'));
+  realPhotos ? ok('Aktionsseite zeigt echte Produktfotos') : block('Noch Platzhalter-Grafiken statt echter Fotos', 'Fotos nach assets/img/produkt/ legen → npm run medien');
   const reels = (cfg.media && cfg.media.reels) || [];
   reels.length ? ok(`${reels.length} Video(s)`) : warn('Keine Videos – stärkster Verkaufshebel fehlt', 'VIDEO-DREHPLAN.md → Clips nach assets/video/raw/ → npm run medien');
   reels.filter((r) => !r.captions || !r.captions.length).forEach((r) => warn(`Video „${r.title}“ hat keine Untertitel`, 'In shop.config.json → media.reels ergänzen'));

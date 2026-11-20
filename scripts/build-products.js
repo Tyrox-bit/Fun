@@ -81,6 +81,19 @@ function bundleCard(b, currentId) {
         </article>`;
 }
 
+// Hinweis auf das Black-Friday-Duo (nur bei Messern aus product.items, nur während der Aktion sichtbar)
+function promo(p) {
+  const items = (cfg.product && cfg.product.items) || [];
+  if (!items.includes(p.id) || !cfg.bundles || !cfg.bundles[0]) return '';
+  const other = items.filter((x) => x !== p.id).map((x) => product(x)).filter(Boolean).map((x) => x.shortName).join(' + ');
+  const b = cfg.bundles[0];
+  return `<a class="pp-promo" href="/#angebot" data-pp-promo hidden>
+          <span class="badge badge--sale">${esc(cfg.campaign.headline)}</span>
+          <span class="pp-promo__text">Im <b>Damast-Duo</b> mit dem ${esc(other)}: <b>${euro(b.salePrice)}</b> statt <s>${euro(b.compareAtPrice)}</s></span>
+          <span class="pp-promo__go" aria-hidden="true">→</span>
+        </a>`;
+}
+
 function page(p) {
   const labels = cat.imageLabels;
   const images = [1, 2, 3, 4, 5].map((n, i) => ({ src: img(p.id, n), label: labels[i], alt: `${p.name} – ${labels[i]}` }));
@@ -149,6 +162,7 @@ function page(p) {
           <span class="pp-price__note">inkl. MwSt. · zzgl. Versand${Number.isInteger(cat.freeShippingFromItems) ? `, ab ${cat.freeShippingFromItems} Messern versandkostenfrei` : ''}</span>
         </div>
 
+        ${promo(p)}
         <ul class="pp-highlights">
           ${cat.highlights.map((h) => `<li>${icon(h.icon)}<span>${esc(h.text)}</span></li>`).join('\n          ')}
         </ul>
