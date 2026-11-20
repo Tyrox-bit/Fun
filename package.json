@@ -8,7 +8,10 @@
     "dev": "node dev-server.js",
     "images": "node scripts/generate-images.js && node scripts/render-png.js",
     "check": "node scripts/check.js",
-    "videos": "bash scripts/compress-videos.sh"
+    "setup": "node scripts/setup.js",
+    "medien": "node tools/medien.js",
+    "videos": "node tools/medien.js",
+    "check:launch": "node scripts/launch-check.js"
   },
   "dependencies": {
     "stripe": "^23.2.0"

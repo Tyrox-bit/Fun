@@ -28,48 +28,50 @@ Optimiert für Traffic von Instagram und TikTok: mobil zuerst, schnell, ohne Fra
 
 ---
 
-## Livegang in 7 Schritten
+## 🚀 Livegang – 3 Befehle, der Rest ist fertig
 
-### 1. Daten eintragen – `shop.config.json`
-Alles Wichtige steht in **einer** Datei:
-- `legal` → Name, Adresse, Telefon, USt-ID (füllt automatisch Impressum, AGB usw.)
-- `bundles` → Preise in **Cent** (9900 = 99 €)
-- `campaign.start` / `campaign.end` → Aktionszeitraum
-- `stock.totalSets` → echter Bestand
-- `shipping` → Versandkosten, Gratis-Versand ab X Sets, Lieferzeit
-- `product.specs` → **bitte alle technischen Angaben prüfen** (67 Lagen, VG-10, HRC …)
+> Einmalig: [Node.js](https://nodejs.org) installieren (LTS), dann im Projektordner `npm install`.
 
-### 2. Stripe einrichten
-1. Konto auf [stripe.com](https://stripe.com) anlegen und verifizieren.
-2. **Einstellungen → Zahlungsmethoden:** PayPal, Klarna, Apple Pay, Google Pay aktivieren. PayPal verknüpfst du dort mit deinem PayPal-Geschäftskonto.
-3. **Einstellungen → E-Mails:** „Erfolgreiche Zahlungen“ aktivieren (Stripe-Beleg zusätzlich).
-4. **Entwickler → API-Schlüssel:** Secret Key kopieren (zuerst `sk_test_…`).
+### 1. `npm run setup` – Firmendaten, Stripe, E-Mail (ca. 10 Min.)
+Der Assistent fragt alles nacheinander ab und erledigt automatisch:
+- trägt deine **Firmendaten** in Impressum, AGB, Widerrufsbelehrung, Datenschutz und E-Mails ein
+- prüft deinen **Stripe-Schlüssel**, zeigt welche Zahlarten aktiv sind und **schaltet Klarna/Google Pay & Co. ein**
+- legt den **Stripe-Webhook** für Bestellbestätigungen an (inkl. Secret)
+- legt deine **Mail-Domain bei Resend** an (EU-Server) und zeigt dir die **DNS-Einträge** zum Abtippen
+- schickt dir eine **Testmail**, sobald die Domain verifiziert ist (`npm run setup -- --testmail`)
+- schreibt alles in `.env` – deren Inhalt kopierst du **auf einmal** nach Vercel
 
-### 3. Auf Vercel veröffentlichen
-1. [vercel.com](https://vercel.com) → mit GitHub anmelden → dieses Repository importieren → *Deploy*. Keine Build-Einstellungen nötig.
-2. **Settings → Environment Variables:** Werte aus `.env.example` eintragen.
-3. **Settings → Domains:** deine Domain verbinden.
-4. Unter **Settings → Legal** den Auftragsverarbeitungsvertrag (DPA) abschließen.
+Was nur du machen kannst (dauert jeweils ein paar Minuten, Wartezeit beachten):
+| | |
+|---|---|
+| **Stripe-Konto** | [stripe.com](https://stripe.com) → registrieren → Ausweis & Bankkonto. Verifizierung kann **1–2 Tage** dauern → **heute starten!** |
+| **PayPal** | Stripe-Dashboard → Einstellungen → Zahlungsmethoden → PayPal → mit deinem PayPal-Geschäftskonto verbinden |
+| **Resend** | [resend.com](https://resend.com) → kostenlos registrieren → API Key (Full access) |
+| **DNS** | Die vom Assistenten angezeigten Einträge bei deinem Domain-Anbieter eintragen |
 
-### 4. Webhook für Bestellbestätigungen
-Stripe → **Entwickler → Webhooks → Endpunkt hinzufügen**
-- URL: `https://DEINE-DOMAIN/api/stripe-webhook`
-- Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
-- Signing Secret → als `STRIPE_WEBHOOK_SECRET` in Vercel eintragen
+### 2. `npm run medien` – Fotos & Videos (ca. 1 Min.)
+- Fotos → `assets/img/produkt/` (Reihenfolge = Dateiname, z. B. `01-duo.jpg`, `02-kochmesser.jpg`, `03-schaelmesser.jpg`)
+- Videos → `assets/video/raw/` (z. B. `tomate.mov`, `hero-klinge.mov`) – siehe [`VIDEO-DREHPLAN.md`](VIDEO-DREHPLAN.md)
 
-### 5. E-Mails (Resend)
-[resend.com](https://resend.com) → Domain verifizieren → API-Key als `RESEND_API_KEY`, Absender als `MAIL_FROM`, deine Adresse als `SHOP_EMAIL`.
-Ohne Resend funktioniert der Shop trotzdem, aber **Bestellbestätigung und Widerrufsbutton brauchen einen Mailversand** – also vor Livegang einrichten.
+Das Skript verkleinert alles, baut Galerie, „Im Set“-Bilder, Hero-Video, Reels, Vorschaubilder, das **Stripe-Produktbild** und die **Link-Vorschau für Instagram-DMs** – und trägt alles selbst ein. Keine Zusatzsoftware nötig.
+Danach nur noch Untertitel für die Videos in `shop.config.json → media.reels` ergänzen.
 
-### 6. Testkauf
-Mit `sk_test_…` die Seite öffnen und mit der Testkarte `4242 4242 4242 4242` (beliebiges Datum/CVC) bestellen. Prüfen: Danke-Seite, E-Mails, Bestand sinkt.
-Danach `sk_live_…` + Live-Webhook eintragen → **einmal echt kaufen und erstatten**.
+### 3. `npm run check:launch` – Startprüfung
+Zeigt dir mit ✓ / ⚠ / ✗, was noch fehlt – lokal **und** auf der Live-Seite (sind die Schlüssel auf Vercel angekommen?).
 
-### 7. Rechtstexte final machen ⚠️
-Die Texte sind **Entwürfe von Claude, keine Rechtsberatung.** Für einen Shop mit echten Kunden:
-- **Widerrufsbelehrung + Muster-Widerrufsformular** aus einem Rechtstext-Generator (IT-Recht Kanzlei, Händlerbund, Trusted Shops o. ä.) übernehmen. Die müssen dem gesetzlichen Muster entsprechen.
-- AGB und Datenschutz dort prüfen bzw. ersetzen lassen. Die Dienste kosten ca. 10–25 €/Monat und aktualisieren die Texte bei Gesetzesänderungen automatisch.
-- Gelb markierte Stellen auf den Seiten = noch offen.
+### Veröffentlichen (einmalig, 5 Min.)
+1. [vercel.com](https://vercel.com) → mit GitHub anmelden → dieses Repository importieren → *Deploy* (keine Einstellungen nötig)
+2. **Settings → Environment Variables** → Inhalt der Datei `.env` einfügen → *Save* → *Redeploy*
+3. **Settings → Domains** → deine Domain verbinden · **Settings → Legal** → Auftragsverarbeitungsvertrag abschließen
+4. Testkauf mit `sk_test_…` und Karte `4242 4242 4242 4242` → dann `npm run setup` mit `sk_live_…` → `.env` erneut nach Vercel → **einmal echt kaufen und erstatten**
+
+### Rechtstexte ⚠️ (der einzige Teil, den kein Skript ersetzen kann)
+Die Texte sind **Entwürfe von Claude, keine Rechtsberatung.**
+- **Widerrufsbelehrung + Muster-Widerrufsformular** aus einem Rechtstext-Generator (IT-Recht Kanzlei, Händlerbund, Trusted Shops o. ä., ca. 10–25 €/Monat) in `widerrufsbelehrung.html` übernehmen.
+- AGB und Datenschutz dort prüfen bzw. ersetzen lassen. Gelb markierte Stellen = noch offen.
+
+### Was du sonst noch anpassen kannst – `shop.config.json`
+`bundles` (Preise in Cent: 9900 = 99 €) · `campaign` (Zeitraum) · `stock.totalSets` · `shipping` · `product.specs` (**bitte prüfen**: 67 Lagen, VG-10, HRC …) · `tracking` (Pixel-IDs)
 
 ---
 

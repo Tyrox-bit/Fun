@@ -4,3 +4,4 @@ node_modules/
 .vercel
 .DS_Store
 assets/video/raw/
+tools/node_modules/

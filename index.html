@@ -54,6 +54,7 @@
       <div class="hero__bg" aria-hidden="true"></div>
       <div class="wrap hero__grid">
         <div class="hero__media">
+          <!-- GALERIE:START – wird von „npm run medien“ automatisch erzeugt -->
           <div class="gallery" data-gallery>
             <div class="gallery__main" data-tilt>
               <span class="badge badge--sale hero__badge" data-sale-only><span data-discount>−50 %</span></span>
@@ -67,6 +68,7 @@
               <button class="gallery__thumb" role="listitem" data-src="/assets/img/damascus.svg" aria-label="Bild 4: Damastmuster"><img src="/assets/img/damascus.svg" alt="" width="80" height="80" loading="lazy"></button>
             </div>
           </div>
+          <!-- GALERIE:END -->
         </div>
 
         <div class="hero__copy">
@@ -169,12 +171,12 @@
         <h2 class="h2 center" data-reveal>Das Arbeitstier & der Feinmechaniker</h2>
         <div class="duo" data-stagger>
           <article class="duo__card">
-            <img src="/assets/img/knife-chef.svg" alt="Kochmesser 20 cm" width="1020" height="260" loading="lazy">
+            <img src="/assets/img/knife-chef.svg" alt="Kochmesser 20 cm" width="1020" height="260" loading="lazy" data-set-img="chef">
             <h3>Kochmesser · 20 cm</h3>
             <p>Gemüse würfeln, Fleisch portionieren, Kräuter hacken. Das Messer, das du jeden Tag in der Hand hast.</p>
           </article>
           <article class="duo__card">
-            <img src="/assets/img/knife-paring.svg" alt="Schälmesser 9 cm" width="1020" height="260" loading="lazy">
+            <img src="/assets/img/knife-paring.svg" alt="Schälmesser 9 cm" width="1020" height="260" loading="lazy" data-set-img="paring">
             <h3>Schälmesser · 9 cm</h3>
             <p>Obst schälen, Garnelen putzen, Knoblauch in hauchdünne Scheiben. Präzision für die kleinen Jobs.</p>
           </article>
@@ -328,7 +330,7 @@
         <a href="#" data-consent-open hidden>Cookie-Einstellungen</a>
       </nav>
       <a href="/vertrag-widerrufen" class="btn btn--small btn--ghost">Vertrag widerrufen</a>
-      <p class="footer__copy">© <span data-year>2026</span> Casper · Alle Preise inkl. MwSt.</p>
+      <p class="footer__copy">© <span data-year>2026</span> Casper · Alle Preise <span data-vat>inkl. MwSt.</span></p>
     </div>
   </footer>
 

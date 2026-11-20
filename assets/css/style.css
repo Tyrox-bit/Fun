@@ -458,3 +458,10 @@ body:not(.show-placeholders) [data-placeholder] { display: none; }
 
 /* Hero-Video */
 .gallery__main video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ===== Echte Produktfotos (gesetzt von „npm run medien“) ===== */
+.gallery[data-photos] .gallery__main > img { object-fit: cover; padding: 0; animation: none; }
+.gallery[data-photos] .gallery__main::before { display: none; }
+.gallery[data-photos] .gallery__thumb { padding: 0; overflow: hidden; }
+.gallery[data-photos] .gallery__thumb img { object-fit: cover; }
+.duo__card img.is-photo { aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; filter: none; }

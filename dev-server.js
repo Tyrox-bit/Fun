@@ -21,7 +21,7 @@ const TYPES = {
   '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp',
   '.woff2': 'font/woff2', '.mp4': 'video/mp4', '.ico': 'image/x-icon',
 };
-const BLOCKED = /^\/(lib|scripts|node_modules|\.env|\.git|dev-server\.js|package)/;
+const BLOCKED = /^\/(lib|scripts|tools|node_modules|\.env|\.git|dev-server\.js|package)/;
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);

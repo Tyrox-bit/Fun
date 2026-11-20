@@ -52,12 +52,12 @@ Kein Studio nötig, das Handy reicht. Gerade das Ungeschliffene wirkt echt und e
 
 ```bash
 # 1. Originale vom Handy nach assets/video/raw/ kopieren
-#    (z. B. tomate.mov, zwiebel.mov, unboxing.mov, hero-klinge.mov)
-# 2. Komprimieren (macht kleine MP4s + Vorschaubilder):
-npm run videos
+#    (z. B. 1-tomate.mov, 2-zwiebel.mov, 3-unboxing.mov, hero-klinge.mov)
+# 2. Fertig machen – komprimiert, Vorschaubilder, trägt alles in die Config ein:
+npm run medien
 ```
 
-3. In `shop.config.json` → `media` eintragen:
+3. Nur noch die **Untertitel** in `shop.config.json` → `media.reels` ergänzen. So sieht ein fertiger Eintrag aus:
 
 ```json
 "media": {
