@@ -108,7 +108,7 @@ const HERO = `
   <rect width="1000" height="1000" fill="url(#glow)"/>
   <g filter="url(#shadow)" transform="translate(40,330) rotate(-28 500 130) scale(.95)">${CHEF}</g>
   <g filter="url(#shadow)" transform="translate(150,560) rotate(-28 500 130) scale(.82)">${PARING}</g>`;
-fs.writeFileSync(path.join(OUT, 'hero.svg'), svg('0 0 1000 1000', HERO, 'role="img" aria-label="Casper Damast-Duo: Kochmesser und Schälmesser (Platzhalterbild)"'));
+fs.writeFileSync(path.join(OUT, 'hero.svg'), svg('0 0 1000 1000', HERO, 'role="img" aria-label="Kaspar Damast-Duo: Kochmesser und Schälmesser (Platzhalterbild)"'));
 
 // Damast-Textur für Hintergründe
 const TEX = `<rect width="800" height="400" fill="#0b0b0c"/>${damascusLines({ x0: 0, x1: 800, y0: 0, y1: 400, spacing: 9, seed: 2.2, amp: 1.6 })}`;
@@ -118,9 +118,9 @@ fs.writeFileSync(path.join(OUT, 'damascus.svg'), svg('0 0 800 400', TEX, 'preser
 const LOGO = `
   <g fill="currentColor">
     <path d="M24 8 L36 20 L36 52 L12 52 L12 20 Z"/>
-    <text x="50" y="42" font-family="Anton, Impact, sans-serif" font-size="36" letter-spacing="6">CASPER</text>
+    <text x="50" y="42" font-family="Anton, Impact, sans-serif" font-size="36" letter-spacing="6">KASPAR</text>
   </g>`;
-fs.writeFileSync(path.join(OUT, 'logo.svg'), svg('0 0 250 60', LOGO, 'role="img" aria-label="Casper"'));
+fs.writeFileSync(path.join(OUT, 'logo.svg'), svg('0 0 250 60', LOGO, 'role="img" aria-label="Kaspar"'));
 
 // Favicon
 fs.writeFileSync(

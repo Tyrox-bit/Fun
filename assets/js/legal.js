@@ -32,6 +32,6 @@
     });
     document.querySelectorAll('[data-carrier]').forEach(function (el) { el.textContent = cfg.shipping.carrier; });
 
-    if (window.CasperTracking) window.CasperTracking.init(cfg.tracking);
+    if (window.KasparTracking) window.KasparTracking.init(cfg.tracking);
   });
 })();

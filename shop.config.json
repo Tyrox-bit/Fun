@@ -2,21 +2,21 @@
   "_hinweis": "ZENTRALE KONFIGURATION. Alle Preise in CENT (11900 = 119,00 €). Frontend UND Server lesen diese Datei – der Server rechnet Preise immer selbst, im Browser kann niemand manipulieren.",
 
   "brand": {
-    "name": "Casper",
+    "name": "Kaspar",
     "tagline": "Damaststahl für jeden Tag.",
-    "email": "hallo@casper-messer.de",
-    "siteUrl": "https://www.casper-messer.de"
+    "email": "hallo@kaspar-messer.de",
+    "siteUrl": "https://www.kaspar-messer.de"
   },
 
   "legal": {
     "_hinweis": "Wird automatisch in Impressum, AGB, Widerrufsbelehrung, Datenschutz und E-Mails eingesetzt. [Eckige Klammern] = noch ausfüllen.",
-    "company": "Casper",
+    "company": "Kaspar",
     "owner": "[Vor- und Nachname]",
     "street": "[Straße Hausnummer]",
     "zipCity": "[PLZ Ort]",
     "country": "Deutschland",
     "phone": "[Telefonnummer]",
-    "email": "hallo@casper-messer.de",
+    "email": "hallo@kaspar-messer.de",
     "vatId": "[USt-IdNr. – falls vorhanden, sonst leer lassen]",
     "kleinunternehmer": false
   },
@@ -38,7 +38,7 @@
 
   "product": {
     "name": "Damast-Duo",
-    "fullName": "Casper Damast-Duo – Kochmesser & Schälmesser",
+    "fullName": "Kaspar Damast-Duo – Kochmesser & Schälmesser",
     "short": "Kochmesser 20 cm + Schälmesser 9 cm aus Damaststahl",
     "image": "/assets/img/product.png",
     "specs": [

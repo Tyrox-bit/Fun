@@ -70,7 +70,7 @@ module.exports = async function handler(req, res) {
   if (!relevant.includes(event.type)) return send(res, 200, { received: true });
 
   const s = event.data.object;
-  if (!s.metadata || s.metadata.shop !== 'casper') return send(res, 200, { received: true });
+  if (!s.metadata || s.metadata.shop !== 'kaspar') return send(res, 200, { received: true });
   // Bei verzögerten Zahlarten (z. B. Überweisung) erst bei Zahlungseingang bestätigen.
   if (event.type === 'checkout.session.completed' && s.payment_status !== 'paid') {
     return send(res, 200, { received: true, waiting: true });
@@ -80,7 +80,7 @@ module.exports = async function handler(req, res) {
     const { orderId, customerHtml, ownerHtml } = orderMails(s);
     const tasks = [];
     if (s.customer_details && s.customer_details.email) {
-      tasks.push(sendMail({ to: s.customer_details.email, subject: `Deine Casper-Bestellung #${orderId}`, html: customerHtml }));
+      tasks.push(sendMail({ to: s.customer_details.email, subject: `Deine Kaspar-Bestellung #${orderId}`, html: customerHtml }));
     }
     if (process.env.SHOP_EMAIL) {
       tasks.push(sendMail({ to: process.env.SHOP_EMAIL, subject: `🔥 Neue Bestellung #${orderId}`, html: ownerHtml }));

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Casper Media – Hero-Video & Reels mit Untertiteln
+   Kaspar Media – Hero-Video & Reels mit Untertiteln
    Clips in shop.config.json → "media" eintragen:
      "heroVideo": { "src": "/assets/video/hero.mp4", "poster": "/assets/video/hero.jpg" }
      "reels": [{ "src": "/assets/video/tomate.mp4", "poster": "/assets/video/tomate.jpg",
@@ -9,11 +9,11 @@
    ========================================================================== */
 (function () {
   'use strict';
-  if (!window.CasperConfig) return;
+  if (!window.KasparConfig) return;
 
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var saveData = !!(navigator.connection && navigator.connection.saveData);
-  var T = function (e, d) { if (window.CasperTracking) window.CasperTracking.track(e, d); };
+  var T = function (e, d) { if (window.KasparTracking) window.KasparTracking.track(e, d); };
 
   var ICON = {
     muted: '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>',
@@ -35,7 +35,7 @@
   }
   function fmtCaption(s) { return esc(s).replace(/\*(.+?)\*/g, '<mark>$1</mark>'); }
 
-  window.CasperConfig.then(function (cfg) {
+  window.KasparConfig.then(function (cfg) {
     var media = cfg.media || {};
     heroVideo(media.heroVideo);
     reels(media.reels || [], !!cfg.showPlaceholders);

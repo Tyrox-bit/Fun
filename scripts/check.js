@@ -71,8 +71,8 @@ function call(handler, { method = 'GET', body, headers = {}, url = '/' } = {}) {
 
   // 3) Bestand: verkaufte + offene Checkouts werden abgezogen
   const t = Math.floor(Date.now() / 1000);
-  for (let i = 0; i < 18; i++) sessions.push({ id: 'cs_test_' + i, status: 'complete', created: t, metadata: { shop: 'casper', sets: '2', bundle: 'duo-2' } });
-  sessions.push({ id: 'cs_test_open', status: 'open', created: t, metadata: { shop: 'casper', sets: '3', bundle: 'duo-3' } });
+  for (let i = 0; i < 18; i++) sessions.push({ id: 'cs_test_' + i, status: 'complete', created: t, metadata: { shop: 'kaspar', sets: '2', bundle: 'duo-2' } });
+  sessions.push({ id: 'cs_test_open', status: 'open', created: t, metadata: { shop: 'kaspar', sets: '3', bundle: 'duo-3' } });
   sessions.push({ id: 'cs_other', status: 'complete', created: t, metadata: {} }); // anderer Shop – ignorieren
   shop.invalidateStock();
   r = await call(stock);
@@ -86,7 +86,7 @@ function call(handler, { method = 'GET', body, headers = {}, url = '/' } = {}) {
   assert.strictEqual(r.status, 409);
   r = await call(checkout, { method: 'POST', body: { bundleId: 'duo-1' } });
   assert.strictEqual(r.status, 200);
-  sessions.push({ id: 'cs_last', status: 'complete', created: t, metadata: { shop: 'casper', sets: '1' } });
+  sessions.push({ id: 'cs_last', status: 'complete', created: t, metadata: { shop: 'kaspar', sets: '1' } });
   r = await call(checkout, { method: 'POST', body: { bundleId: 'duo-1' } });
   assert.strictEqual(r.status, 409);
   assert.match(r.body.error, /ausverkauft/i);
@@ -98,7 +98,7 @@ function call(handler, { method = 'GET', body, headers = {}, url = '/' } = {}) {
     total_details: { amount_shipping: 0, amount_discount: 0 }, customer_details: { email: 'k@test.de', name: 'Kim Test' },
     collected_information: { shipping_details: { name: 'Kim Test', address: { line1: 'Weg 1', postal_code: '10115', city: 'Berlin' } } },
     custom_fields: [{ key: 'geschenk', text: { value: 'Frohe Weihnachten' } }],
-    metadata: { shop: 'casper', bundle: 'duo-2', sets: '2' },
+    metadata: { shop: 'kaspar', bundle: 'duo-2', sets: '2' },
   } } };
   r = await call(webhook, { method: 'POST', body: evt, headers: { 'stripe-signature': 'falsch' } });
   assert.strictEqual(r.status, 400);

@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const s = await stripe.checkout.sessions.retrieve(id);
-    if (!s.metadata || s.metadata.shop !== 'casper') return send(res, 404, { error: 'Nicht gefunden.' });
+    if (!s.metadata || s.metadata.shop !== 'kaspar') return send(res, 404, { error: 'Nicht gefunden.' });
     const bundle = shop.getBundle(s.metadata.bundle);
     const fullName = (s.customer_details && s.customer_details.name) || '';
     return send(res, 200, {

@@ -105,7 +105,7 @@ async function sendTestMail(env, cfg) {
     rl.close(); return;
   }
 
-  console.log('\n' + c.o('🔪 CASPER SHOP – EINRICHTUNG') + c.d('   (Strg+C bricht jederzeit ab, nichts geht kaputt)'));
+  console.log('\n' + c.o('🔪 KASPAR SHOP – EINRICHTUNG') + c.d('   (Strg+C bricht jederzeit ab, nichts geht kaputt)'));
   console.log(c.d('   Werte in [Klammern] = Vorschlag → einfach Enter drücken.'));
 
   // ======================================================= 1. Firmendaten
@@ -128,7 +128,7 @@ async function sendTestMail(env, cfg) {
   // ======================================================= 2. Domain
   step('2/4', 'Deine Domain');
   const curHost = (env.SITE_URL || cfg.brand.siteUrl || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const host = (await ask('Domain ohne https:// (z. B. www.casper-messer.de)', curHost)).replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const host = (await ask('Domain ohne https:// (z. B. www.kaspar-messer.de)', curHost)).replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const siteUrl = host ? 'https://' + host : '';
   if (siteUrl) { env.SITE_URL = siteUrl; cfg.brand.siteUrl = siteUrl; ok('Shop-Adresse: ' + siteUrl); }
   info('Noch keine Domain? Erst bei Vercel deployen, dann hier die ….vercel.app-Adresse eintragen.');

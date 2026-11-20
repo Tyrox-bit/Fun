@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Casper FX – Scroll-Animationen, Zähler, 3D-Neigung
+   Kaspar FX – Scroll-Animationen, Zähler, 3D-Neigung
    Respektiert „Bewegung reduzieren“ in den Systemeinstellungen.
    ========================================================================== */
 (function () {
@@ -66,5 +66,77 @@
       tilt.style.setProperty('--ry', '0deg');
       tilt.style.setProperty('--rx', '0deg');
     });
+  }
+
+  // ---------------------------------------------------------------- Orientierung
+  // Fortschrittsbalken + aktiver Abschnitt (Navigation am Desktop, Name im Header mobil)
+  var bar = document.querySelector('[data-progress]');
+  var where = document.querySelector('[data-where]');
+  var navLinks = $$('[data-nav]');
+  var header = document.querySelector('[data-header]');
+  var parallax = document.querySelector('[data-parallax]');
+  var current = null;
+
+  function sections() {
+    return $$('[data-section]').filter(function (s) { return !s.hidden; });
+  }
+  // Navigationspunkte für ausgeblendete Abschnitte (z. B. noch keine Videos) verstecken
+  function syncNav() {
+    navLinks.forEach(function (a) {
+      var target = document.getElementById(a.getAttribute('data-nav'));
+      if (!a.classList.contains('btn')) a.hidden = !target || target.hidden;
+    });
+    var vl = document.querySelector('[data-video-link]');
+    var vs = document.getElementById('videos');
+    if (vl) vl.hidden = !vs || vs.hidden;
+  }
+
+  function update() {
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - window.innerHeight;
+    if (bar) bar.style.width = (max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0) + '%';
+
+    // Aktiver Abschnitt = der, dessen Bereich die Linie knapp unter dem Header kreuzt
+    var line = (header ? header.getBoundingClientRect().bottom : 0) + window.innerHeight * 0.25;
+    var active = null;
+    sections().forEach(function (s) {
+      var r = s.getBoundingClientRect();
+      if (r.top <= line && r.bottom > line) active = s;
+    });
+    if (!active) return;
+    var id = active.id;
+    if (id === current) return;
+    current = id;
+    navLinks.forEach(function (a) { a.classList.toggle('is-active', a.getAttribute('data-nav') === id); });
+    if (where) {
+      where.textContent = active.getAttribute('data-section');
+      where.classList.remove('pop');
+      void where.offsetWidth;
+      where.classList.add('pop');
+    }
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      update();
+      // Leichter Parallax-Effekt fürs Produktbild
+      if (parallax && !reduce) {
+        var y = Math.min(window.scrollY, 700);
+        parallax.style.transform = 'translate3d(0,' + (y * 0.08).toFixed(1) + 'px,0) rotate(' + (y * -0.004).toFixed(2) + 'deg)';
+      }
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  syncNav();
+  update();
+  // Videos werden nachträglich eingeblendet → Navigation nachziehen
+  if ('MutationObserver' in window) {
+    var vs = document.getElementById('videos');
+    if (vs) new MutationObserver(function () { syncNav(); current = null; update(); }).observe(vs, { attributes: true, attributeFilter: ['hidden'] });
   }
 })();

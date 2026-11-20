@@ -72,9 +72,9 @@ function ffmpeg(args) {
       const kb = Math.round(fs.statSync(out).size / 1024);
       console.log(`   ✓ ${f} → assets/img/web/${name}.webp (${kb} KB)`);
       const url = '/assets/img/web/' + name + '.webp';
-      const alt = /koch/.test(name) ? 'Casper Kochmesser 20 cm aus Damaststahl'
-        : /scha?el|schal/.test(name) ? 'Casper Schälmesser 9 cm aus Damaststahl'
-        : 'Casper Damast-Duo';
+      const alt = /koch/.test(name) ? 'Kaspar Kochmesser 20 cm aus Damaststahl'
+        : /scha?el|schal/.test(name) ? 'Kaspar Schälmesser 9 cm aus Damaststahl'
+        : 'Kaspar Damast-Duo';
       gallery.push({ src: url, alt });
       if (/koch/.test(name) && !setImages.chef) setImages.chef = url;
       if (/scha?el|schal/.test(name) && !setImages.paring) setImages.paring = url;
@@ -168,7 +168,7 @@ function ffmpeg(args) {
       console.log(`\r\x1b[K   ✓ ${f} → assets/video/${name}.mp4 (${kb} KB)${kb > 4000 ? '  ⚠ groß – Clip kürzen' : ''}`);
       const url = '/assets/video/' + name + '.mp4';
       if (isHero) {
-        cfg.media.heroVideo = { src: url, poster: '/assets/video/' + name + '.jpg', alt: 'Casper Damast-Duo in Nahaufnahme' };
+        cfg.media.heroVideo = { src: url, poster: '/assets/video/' + name + '.jpg', alt: 'Kaspar Damast-Duo in Nahaufnahme' };
       } else {
         // Vorhandene Titel/Untertitel bleiben erhalten
         reels.push(old[url] || { src: url, poster: '/assets/video/' + name + '.jpg', title: title(name), captions: [] });

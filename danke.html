@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Danke für deine Bestellung – Casper</title>
+  <title>Danke für deine Bestellung – Kaspar</title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0a0a0b">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
@@ -13,7 +13,7 @@
 <body class="is-sale">
   <header class="header">
     <div class="wrap header__inner">
-      <a href="/" class="logo" aria-label="Casper – Startseite"><span class="logo__mark" aria-hidden="true"></span><span class="logo__text">Casper</span></a>
+      <a href="/" class="logo" aria-label="Kaspar – Startseite"><span class="logo__mark" aria-hidden="true"></span><span class="logo__text">Kaspar</span></a>
     </div>
   </header>
 
@@ -64,12 +64,12 @@
     var euro = function (c) { return (c / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }); };
 
     fetch('/shop.config.json').then(function (r) { return r.json(); }).then(function (cfg) {
-      if (window.CasperTracking) window.CasperTracking.init(cfg.tracking);
+      if (window.KasparTracking) window.KasparTracking.init(cfg.tracking);
     });
 
     $('[data-share]').addEventListener('click', function () {
       var url = location.origin + '/?utm_source=share&utm_medium=referral';
-      if (navigator.share) navigator.share({ title: 'Casper Damast-Duo', text: 'Black Friday: Damast-Messerset −50 %', url: url }).catch(function () {});
+      if (navigator.share) navigator.share({ title: 'Kaspar Damast-Duo', text: 'Black Friday: Damast-Messerset −50 %', url: url }).catch(function () {});
       else if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () {
         var t = $('[data-toast]'); t.textContent = 'Link kopiert ✓'; t.hidden = false; setTimeout(function () { t.hidden = true; }, 3000);
       });
@@ -89,11 +89,11 @@
         $('[data-card]').hidden = false;
 
         // Purchase-Event nur EINMAL pro Bestellung senden
-        var key = 'casper_purchase_' + id;
+        var key = 'kaspar_purchase_' + id;
         var done = false;
         try { done = !!localStorage.getItem(key); localStorage.setItem(key, '1'); } catch (e) {}
-        if (!done && window.CasperTracking) {
-          window.CasperTracking.track('Purchase', {
+        if (!done && window.KasparTracking) {
+          window.KasparTracking.track('Purchase', {
             value: o.amountTotal / 100, currency: 'EUR', content_ids: [o.bundleId],
             content_name: o.bundleTitle, event_id: id,
           });

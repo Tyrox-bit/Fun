@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
     for (const k of ATTR_KEYS) if (a[k]) attribution[k] = clean(a[k], 200);
 
     const metadata = {
-      shop: 'casper',
+      shop: 'kaspar',
       campaign: shop.isCampaignActive() ? config.campaign.id : 'regulaer',
       bundle: bundle.id,
       sets: String(bundle.sets),

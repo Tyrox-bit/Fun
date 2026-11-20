@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Casper Landing Page – Logik
+   Kaspar Landing Page – Logik
    Inhalte/Preise kommen aus /shop.config.json, Bestand live aus /api/stock.
    ========================================================================== */
 (function () {
@@ -7,12 +7,12 @@
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var T = function (e, d) { if (window.CasperTracking) window.CasperTracking.track(e, d); };
-  var SEL_KEY = 'casper_bundle';
+  var T = function (e, d) { if (window.KasparTracking) window.KasparTracking.track(e, d); };
+  var SEL_KEY = 'kaspar_bundle';
 
   // Config einmal laden – media.js & Co. nutzen dasselbe Promise
   var configPromise = fetch('/shop.config.json').then(function (r) { return r.json(); });
-  window.CasperConfig = configPromise;
+  window.KasparConfig = configPromise;
 
   var cfg = null;
   var stock = null;
@@ -235,13 +235,13 @@
 
   // Echte Info aus Stripe – keine erfundenen "XY hat gerade gekauft"-Popups.
   function maybeLastOrderToast() {
-    if (!stock || !stock.lastOrderAt || getLS('casper_lot') === String(stock.lastOrderAt)) return;
+    if (!stock || !stock.lastOrderAt || getLS('kaspar_lot') === String(stock.lastOrderAt)) return;
     var mins = Math.round((now() - stock.lastOrderAt) / 60000);
     if (mins < 0 || mins > 360) return;
     setTimeout(function () {
       var when = mins < 2 ? 'gerade eben' : mins < 60 ? 'vor ' + mins + ' Minuten' : 'vor ' + Math.round(mins / 60) + ' Std.';
       toast('🔥 Letzte Bestellung: ' + when);
-      setLS('casper_lot', String(stock.lastOrderAt));
+      setLS('kaspar_lot', String(stock.lastOrderAt));
     }, 7000);
   }
 
@@ -290,7 +290,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         bundleId: b.id,
-        attribution: window.CasperTracking ? window.CasperTracking.getAttribution() : {},
+        attribution: window.KasparTracking ? window.KasparTracking.getAttribution() : {},
       }),
     })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, body: j }; }); })
@@ -399,7 +399,7 @@
       initSticky();
       bindEvents();
       handleReturn();
-      if (window.CasperTracking) window.CasperTracking.init(cfg.tracking);
+      if (window.KasparTracking) window.KasparTracking.init(cfg.tracking);
       var first = cfg.bundles[0];
       T('ViewContent', { value: priceOf(first) / 100, currency: 'EUR', content_ids: [first.id], content_name: cfg.product.name });
       fetchStock(true);

@@ -1,4 +1,4 @@
-# Video-Drehplan – Casper Damast-Duo 🎬
+# Video-Drehplan – Kaspar Damast-Duo 🎬
 
 **Ziel:** Echte, ungeschönte Clips, die in 3 Sekunden zeigen, wie scharf das Messer ist.
 Kein Studio nötig, das Handy reicht. Gerade das Ungeschliffene wirkt echt und eben **nicht** nach KI.

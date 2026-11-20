@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Casper Tracking – vorbereitet für Meta- und TikTok-Pixel.
+   Kaspar Tracking – vorbereitet für Meta- und TikTok-Pixel.
    AKTIVIEREN: Pixel-ID in shop.config.json → "tracking" eintragen. Fertig.
    - Cookie-Banner erscheint dann automatisch
    - Pixel laden erst NACH Einwilligung (DSGVO/TDDDG)
@@ -10,8 +10,8 @@
    ========================================================================== */
 (function () {
   'use strict';
-  var CONSENT_KEY = 'casper_consent_v1';
-  var ATTR_KEY = 'casper_attr_v1';
+  var CONSENT_KEY = 'kaspar_consent_v1';
+  var ATTR_KEY = 'kaspar_attr_v1';
   var queue = [];
   var ready = false;
   var initialized = false;
@@ -139,7 +139,7 @@
   function track(event, data) {
     // Debug: im Browser ?debug=1 anhängen, dann siehst du alle Events in der Konsole
     if (/[?&]debug=1/.test(location.search)) console.log('[track]', event, data || {});
-    window.dispatchEvent(new CustomEvent('casper:track', { detail: { event: event, data: data } }));
+    window.dispatchEvent(new CustomEvent('kaspar:track', { detail: { event: event, data: data } }));
     if (initialized && !hasTrackers()) return;
     if (ready) send(event, data); else queue.push([event, data]);
   }
@@ -160,6 +160,6 @@
   }
 
   captureAttribution();
-  window.CasperTracking = { init: init, track: track, getAttribution: getAttribution };
+  window.KasparTracking = { init: init, track: track, getAttribution: getAttribution };
   track('PageView');
 })();

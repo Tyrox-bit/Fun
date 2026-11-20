@@ -53,7 +53,7 @@ http.createServer(async (req, res) => {
     res.end(data);
   });
 }).listen(PORT, () => {
-  console.log(`\n  Casper läuft auf http://localhost:${PORT}`);
+  console.log(`\n  Kaspar läuft auf http://localhost:${PORT}`);
   console.log(process.env.STRIPE_SECRET_KEY ? '  Stripe: verbunden ✓' : '  Stripe: DEMO-MODUS (kein STRIPE_SECRET_KEY in .env)');
   console.log('');
 });

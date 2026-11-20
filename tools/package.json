@@ -1,5 +1,5 @@
 {
-  "name": "casper-tools",
+  "name": "kaspar-tools",
   "private": true,
   "description": "Lokale Werkzeuge (Bilder/Videos aufbereiten). Werden NICHT auf Vercel hochgeladen.",
   "dependencies": {

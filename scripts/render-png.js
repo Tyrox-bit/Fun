@@ -25,7 +25,7 @@ h1 span{color:#ff7a1a}
 </style></head><body><div class="tex"></div><div class="glow"></div>
 <img class="knives" src="${fileUrl(IMG + '/hero.svg')}">
 <div class="copy"><span class="tag">BLACK FRIDAY · −50 %</span><h1>Damast<br><span>Duo</span></h1>
-<div class="price">99 € <s>199 €</s></div></div><div class="logo">CASPER</div></body></html>`;
+<div class="price">99 € <s>199 €</s></div></div><div class="logo">KASPAR</div></body></html>`;
 
 const PRODUCT = `<!doctype html><html><head><style>
 *{margin:0}body{width:1000px;height:1000px;background:radial-gradient(circle at 55% 45%,#2a241f,#0b0b0c 70%);overflow:hidden}

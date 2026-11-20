@@ -1,6 +1,6 @@
-# Casper – Black Friday Landing Page 🔥
+# Kaspar – Black Friday Landing Page 🔥
 
-Aktionsseite mit Shop für das **Casper Damast-Duo** (Kochmesser + Schälmesser).
+Aktionsseite mit Shop für das **Kaspar Damast-Duo** (Kochmesser + Schälmesser).
 Optimiert für Traffic von Instagram und TikTok: mobil zuerst, schnell, ohne Framework.
 
 **Bezahlen:** Stripe Checkout mit PayPal, Klarna, Karte, Apple Pay und Google Pay in **einer** Integration.

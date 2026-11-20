@@ -20,7 +20,7 @@ const head = (s) => console.log('\n' + c.b(s));
 const todo = (v) => !v || /^\[.*\]$/.test(String(v));
 
 (async () => {
-  console.log('\n' + c.o('🔪 CASPER – STARTPRÜFUNG'));
+  console.log('\n' + c.o('🔪 KASPAR – STARTPRÜFUNG'));
 
   // ---------------------------------------------------------------- Firmendaten
   head('Firmendaten & Impressum');
