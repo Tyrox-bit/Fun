@@ -10,6 +10,10 @@
   var T = function (e, d) { if (window.CasperTracking) window.CasperTracking.track(e, d); };
   var SEL_KEY = 'casper_bundle';
 
+  // Config einmal laden – media.js & Co. nutzen dasselbe Promise
+  var configPromise = fetch('/shop.config.json').then(function (r) { return r.json(); });
+  window.CasperConfig = configPromise;
+
   var cfg = null;
   var stock = null;
   var clockOffset = 0; // Serverzeit − Browserzeit
@@ -54,6 +58,7 @@
     setText('[data-discount]', '−' + pct(first) + ' %');
     setText('[data-vat]', cfg.pricing.vatNote);
     setText('[data-stock-total]', cfg.stock.totalSets);
+    $$('[data-stock-total][data-count]').forEach(function (el) { el.setAttribute('data-count', cfg.stock.totalSets); });
     setText('[data-carrier]', cfg.shipping.carrier);
     setText('[data-year]', new Date().getFullYear());
 
@@ -206,6 +211,7 @@
 
     $$('[data-stock]').forEach(function (el) {
       el.classList.toggle('is-low', !!stock && rem <= Math.round(total * 0.25));
+      el.classList.toggle('is-live', !!stock);
       $('[data-stock-text]', el).textContent = text;
       $('[data-stock-bar]', el).style.width = Math.max(4, (rem / total) * 100) + '%';
     });
@@ -241,6 +247,15 @@
 
   // ---------------------------------------------------------------- Countdown
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  function flipText(sel, text) {
+    $$(sel).forEach(function (el) {
+      if (el.textContent === text) return;
+      el.textContent = text;
+      el.classList.remove('flip');
+      void el.offsetWidth;
+      el.classList.add('flip');
+    });
+  }
   function tick() {
     var left = Date.parse(cfg.campaign.end) - now();
     if (saleActive && left <= 0) {
@@ -252,10 +267,10 @@
     if (!saleActive) return;
     var s = Math.floor(left / 1000);
     var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
-    setText('[data-cd="d"]', pad(d));
-    setText('[data-cd="h"]', pad(h));
-    setText('[data-cd="m"]', pad(m));
-    setText('[data-cd="s"]', pad(sec));
+    flipText('[data-cd="d"]', pad(d));
+    flipText('[data-cd="h"]', pad(h));
+    flipText('[data-cd="m"]', pad(m));
+    flipText('[data-cd="s"]', pad(sec));
     var short = (d ? d + 'T ' : '') + pad(h) + ':' + pad(m) + ':' + pad(sec);
     setText('[data-countdown]', short);
   }
@@ -371,8 +386,7 @@
   }
 
   // ---------------------------------------------------------------- Start
-  fetch('/shop.config.json')
-    .then(function (r) { return r.json(); })
+  configPromise
     .then(function (c) {
       cfg = c;
       applyCampaign();

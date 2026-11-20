@@ -27,7 +27,7 @@ function damascusLines({ x0, x1, y0, y1, spacing = 7, seed = 1, amp = 1 }) {
   return lines.join('');
 }
 
-function knife({ id, blade, edge, handle, bolster, rivets, bounds, seed }) {
+function knife({ id, blade, edge, handle, bolster, rivets, bounds, seed, glint = 0 }) {
   return `
   <defs>
     <clipPath id="${id}-clip"><path d="${blade}"/></clipPath>
@@ -37,6 +37,9 @@ function knife({ id, blade, edge, handle, bolster, rivets, bounds, seed }) {
     <linearGradient id="${id}-sheen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
       <stop offset=".7" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="${id}-glint" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="${id}-handle" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2b2520"/><stop offset=".5" stop-color="#14110f"/><stop offset="1" stop-color="#050404"/>
@@ -52,13 +55,18 @@ function knife({ id, blade, edge, handle, bolster, rivets, bounds, seed }) {
     ${damascusLines({ ...bounds, seed })}
     <path d="${edge}" fill="#f3f6f9" fill-opacity=".55"/>
     <rect x="${bounds.x0}" y="${bounds.y0 - 50}" width="${bounds.x1 - bounds.x0}" height="${bounds.y1 - bounds.y0 + 100}" fill="url(#${id}-sheen)"/>
+    ${glint ? `<g opacity=".75">
+      <rect x="-60" y="${bounds.y0 - 80}" width="70" height="${bounds.y1 - bounds.y0 + 160}" fill="url(#${id}-glint)" transform="skewX(-24)"/>
+      <animateTransform attributeName="transform" type="translate" dur="5s" begin="${glint}s" repeatCount="indefinite"
+        values="${bounds.x0 - 160} 0; ${bounds.x1 + 160} 0; ${bounds.x1 + 160} 0" keyTimes="0; .28; 1" calcMode="spline" keySplines=".6 0 .3 1; 0 0 1 1"/>
+    </g>` : ''}
   </g>
   <path d="${blade}" fill="none" stroke="#2a2f35" stroke-width="2"/>
   <path d="${bolster}" fill="url(#${id}-bolster)" stroke="#2a2f35" stroke-width="2"/>`;
 }
 
 // Kochmesser (Koordinaten im 1000×260 Raum)
-const CHEF = knife({
+const CHEF_OPTS = {
   id: 'chef',
   seed: 1.3,
   blade: 'M338,56 L760,60 C862,68 942,94 994,128 C902,190 780,214 600,217 L338,217 Z',
@@ -67,10 +75,11 @@ const CHEF = knife({
   bolster: 'M300,78 L346,72 L346,214 L300,196 Z',
   rivets: [[105, 136], [180, 136], [255, 136]],
   bounds: { x0: 330, x1: 1000, y0: 50, y1: 222 },
-});
+};
+const CHEF = knife({ ...CHEF_OPTS, glint: 1.2 });
 
 // Schälmesser
-const PARING = knife({
+const PARING_OPTS = {
   id: 'par',
   seed: 4.1,
   blade: 'M338,96 L640,99 C716,103 770,113 812,128 C750,152 672,162 560,164 L338,164 Z',
@@ -79,7 +88,8 @@ const PARING = knife({
   bolster: 'M302,92 L346,88 L346,166 L302,160 Z',
   rivets: [[165, 130], [240, 130]],
   bounds: { x0: 330, x1: 820, y0: 90, y1: 170 },
-});
+};
+const PARING = knife({ ...PARING_OPTS, glint: 1.9 });
 
 const svg = (vb, body, extra = '') =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" ${extra}>${body}</svg>\n`;

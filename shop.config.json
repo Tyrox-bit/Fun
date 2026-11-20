@@ -111,6 +111,25 @@
     "_hinweis": "ID eintragen = Pixel ist aktiv. Cookie-Banner erscheint dann automatisch, Pixel laden erst nach Einwilligung. Datenschutzerklärung ergänzen!"
   },
 
+  "media": {
+    "_hinweis": "Clips nach assets/video/ legen (npm run videos komprimiert sie automatisch). Siehe VIDEO-DREHPLAN.md. *Sternchen* in Untertiteln = orange hervorgehoben.",
+    "heroVideo": null,
+    "_heroVideo_beispiel": { "src": "/assets/video/hero.mp4", "poster": "/assets/video/hero.jpg", "alt": "Damast-Duo in Nahaufnahme" },
+    "reels": [],
+    "_reels_beispiel": [
+      {
+        "src": "/assets/video/tomate.mp4",
+        "poster": "/assets/video/tomate.jpg",
+        "title": "Tomaten-Test",
+        "captions": [
+          { "t": 0, "text": "Reife Tomate." },
+          { "t": 1.6, "text": "Kein Druck. *Einfach durch.*" },
+          { "t": 4.5, "text": "Hauchdünn." }
+        ]
+      }
+    ]
+  },
+
   "reviews": [],
   "_reviews_hinweis": "Nur ECHTE Bewertungen eintragen, z. B. { \"name\": \"Lena K.\", \"stars\": 5, \"text\": \"...\", \"verified\": true }. Leer = Sektion bleibt unsichtbar.",
 

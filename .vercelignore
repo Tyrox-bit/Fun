@@ -3,3 +3,4 @@ scripts
 dev-server.js
 .env
 .env.*
+assets/video/raw

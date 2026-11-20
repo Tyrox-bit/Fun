@@ -101,14 +101,34 @@ In Stripe siehst du das unter jeder Zahlung → *Metadaten*. Zusätzlich: Pro Cr
 
 ---
 
-## Bilder & Videos austauschen
+## Videos 🎬
 
-- Produktfotos: nach `assets/img/` legen und in `index.html` die `.svg`-Pfade ersetzen (Hero + Thumbnails + „Im Set“). Ideal: WebP/JPG, 1200 × 1200 px, < 200 KB.
+**Was du drehen sollst, steht in [`VIDEO-DREHPLAN.md`](VIDEO-DREHPLAN.md).** Das sind 5 Clips mit Einstellung, Licht und Untertiteln.
+
+1. Handy-Originale nach `assets/video/raw/` kopieren
+2. `npm run videos` → macht automatisch kleine MP4s (Reels 720×1280, Hero 1080×1080) + Vorschaubilder (braucht ffmpeg)
+3. In `shop.config.json → media` eintragen (Beispiel steht dort)
+
+Der Player kann:
+- Autoplay **nur** des sichtbaren Clips (spart mobiles Datenvolumen), Pause beim Wegscrollen
+- **Untertitel im TikTok-Stil**, sekundengenau, `*Wort*` = orange hervorgehoben
+- Ton-Button (immer nur ein Clip mit Ton), Fortschrittsbalken, Antippen = Pause
+- Lädt Videos erst kurz bevor sie sichtbar werden; im Datensparmodus kein Autoplay
+
+## Animationen
+
+Alles ohne Zusatz-Bibliothek, flüssig auch auf älteren Handys:
+Headline wird „aufgeschnitten“ · Lichtreflex wandert über die Klingen · Streichpreis wird durchgeschnitten, neuer Preis knallt rein · Zahlen zählen hoch · Laufband · Countdown-Ziffern klappen um · Messer gleiten ins Bild · Glanz auf den Kauf-Buttons · leichte 3D-Neigung am Desktop · schräge Schnittkanten zwischen Abschnitten.
+Wer in den Systemeinstellungen „Bewegung reduzieren“ aktiviert hat, bekommt automatisch eine ruhige Version.
+
+## Bilder austauschen
+
+- Produktfotos: nach `assets/img/` legen und in `index.html` die `.svg`-Pfade ersetzen (Hero + Thumbnails + „Im Set“). Ideal: WebP/JPG, 1200 × 1200 px, < 200 KB. **Echte Fotos sind der größte Hebel gegen den „KI-Look“.**
 - Stripe-Produktbild: `assets/img/product.png` ersetzen.
 - Link-Vorschau: `assets/img/og.png` (1200 × 630) ersetzen.
-- Videos: in `index.html` im Abschnitt „In Aktion“ die Platzhalter durch `<video src="…" muted loop playsinline autoplay></video>` ersetzen (9:16, < 3 MB).
 - Wenn alles echt ist: `"showPlaceholders": false` in der Config.
 - Bewertungen: nur echte in `reviews` eintragen.
+- Kennzahlen (67 Lagen, 15°, 60 HRC) stehen in `index.html` im Abschnitt „Kennzahlen“. Bitte an dein echtes Produkt anpassen.
 
 ---
 
@@ -135,6 +155,9 @@ api/session.js          Bestelldaten für die Danke-Seite
 api/stripe-webhook.js   Bestell-Mails
 api/widerruf.js         Online-Widerruf + Eingangsbestätigung
 assets/js/app.js        Countdown, Bundles, Sticky-Leiste, Checkout
+assets/js/media.js      Hero-Video & Reels-Player mit Untertiteln
+assets/js/fx.js         Scroll-Animationen, Zähler, 3D-Neigung
+assets/video/           Deine komprimierten Clips (Originale in raw/, werden nicht hochgeladen)
 assets/js/tracking.js   UTM, Consent-Banner, Meta/TikTok-Pixel (vorbereitet)
 scripts/                Bilder erzeugen, Selbsttest
 ```

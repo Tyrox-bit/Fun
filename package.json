@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node dev-server.js",
     "images": "node scripts/generate-images.js && node scripts/render-png.js",
-    "check": "node scripts/check.js"
+    "check": "node scripts/check.js",
+    "videos": "bash scripts/compress-videos.sh"
   },
   "dependencies": {
     "stripe": "^23.2.0"
