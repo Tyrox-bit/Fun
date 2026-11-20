@@ -15,6 +15,8 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Content = require(Shared.Content)
+local Updates = require(Shared.Updates)
 local Signal = require(Shared.Signal)
 local Net = require(Shared.Net)
 
@@ -67,8 +69,13 @@ local function defaultData(): { [string]: any }
 		progress = {
 			chapter = 1,
 			checkpoint = "C1_START",
-			completed = {}, -- array of chapter numbers
+			completedChapters = {}, -- [chapterId] = unix time of first completion
 		},
+		modes = {
+			survival = {}, -- [survivalMapId] = { best = shifts, runs = n }
+		},
+		seenContent = {}, -- [contentId] = true (NEW badges)
+		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
 		inventory = {}, -- [itemId] = true
 		equipped = {}, -- { set = itemId?, radioSkin = itemId? }
@@ -102,12 +109,33 @@ local function sanitizeSettings(settings: { [string]: any })
 	end
 end
 
--- Schema migrations. Add a branch for every SchemaVersion bump.
+-- Schema migrations. Rules (docs/UPDATES.md):
+--   * one function per version step, executed in order, never edited after release
+--   * only ADD or TRANSFORM data - never delete currency, inventory or progress
+--   * new fields with simple defaults need no migration: reconcile() adds them
+local MIGRATIONS: { [number]: (data: { [string]: any }) -> () } = {
+	-- v1 -> v2: chapter progress by id instead of number, survival stats, NEW badges
+	[2] = function(data)
+		data.progress = data.progress or {}
+		local completed = {}
+		for _, number in data.progress.completed or {} do
+			if type(number) == "number" then
+				completed["ch" .. number] = os.time()
+			end
+		end
+		data.progress.completedChapters = completed
+		data.progress.completed = nil
+	end,
+}
+
 local function migrate(data: { [string]: any })
-	local version = tonumber(data.version) or 0
-	-- if version < 2 then ... end
-	if version < Config.Data.SchemaVersion then
-		data.version = Config.Data.SchemaVersion
+	local version = tonumber(data.version) or 1
+	for target = version + 1, Config.Data.SchemaVersion do
+		local step = MIGRATIONS[target]
+		if step then
+			step(data)
+		end
+		data.version = target
 	end
 end
 
@@ -163,6 +191,7 @@ local function loadProfile(player: Player): Profile?
 		local maxLockAttempts = 6
 		for lockAttempt = 1, maxLockAttempts do
 			local lockedByOther = false
+			local tooNew = false
 			local ok, result = withRetries("Load " .. key, 4, function()
 				return (store :: DataStore):UpdateAsync(key, function(old)
 					lockedByOther = false
@@ -179,6 +208,12 @@ local function loadProfile(player: Player): Profile?
 						lockedByOther = true
 						return nil
 					end
+					if (tonumber(data.version) or 1) > Config.Data.SchemaVersion then
+						-- Saved by a NEWER server version (rolling update). This old server
+						-- must never write it back, or new fields could be lost.
+						tooNew = true
+						return nil
+					end
 					prepare(data)
 					data.lock = { job = game.JobId, time = os.time() }
 					data.stats.sessions += 1
@@ -187,6 +222,10 @@ local function loadProfile(player: Player): Profile?
 				end)
 			end)
 			if not ok then
+				break
+			end
+			if tooNew then
+				player:SetAttribute("FZ_DataTooNew", true)
 				break
 			end
 			if not lockedByOther and type(result) == "table" then
@@ -368,6 +407,32 @@ function DataService.Start()
 		end
 	end)
 
+	-- NEW badges: the client reports what the player has opened (validated ids only).
+	local seenLimiter = RateLimiter.new(10, 2)
+	local validIds = {}
+	for _, id in Content.AllIds() do
+		validIds[id] = true
+	end
+	Net.Event("MarkSeen").OnServerEvent:Connect(function(player: Player, id: any)
+		if type(id) ~= "string" or not seenLimiter:Allow(player) then
+			return
+		end
+		local updateId = string.match(id, "^update:(.+)$")
+		if updateId then
+			for _, update in Updates do
+				if update.id == updateId then
+					DataService.Mutate(player, function(data)
+						data.lastSeenUpdate = updateId
+					end)
+				end
+			end
+		elseif validIds[id] then
+			DataService.Mutate(player, function(data)
+				data.seenContent[id] = true
+			end)
+		end
+	end)
+
 	Net.Function("FetchProfile").OnServerInvoke = function(player: Player)
 		if not fetchLimiter:Allow(player) then
 			return nil
@@ -380,7 +445,10 @@ function DataService.Start()
 		return {
 			settings = deepCopy(data.settings),
 			signalMarks = data.signalMarks,
-			progress = { chapter = data.progress.chapter, completed = deepCopy(data.progress.completed) },
+			progress = { chapter = data.progress.chapter, completedChapters = deepCopy(data.progress.completedChapters) },
+			survival = deepCopy(data.modes.survival),
+			seenContent = deepCopy(data.seenContent),
+			lastSeenUpdate = data.lastSeenUpdate,
 			inventory = deepCopy(data.inventory),
 			equipped = deepCopy(data.equipped),
 			persistent = profile.Persistent,

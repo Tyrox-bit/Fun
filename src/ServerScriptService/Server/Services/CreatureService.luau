@@ -54,9 +54,13 @@ type Creature = {
 	lastFootprint: number,
 }
 
-local creature: Creature? = nil
+local creatures: { Creature } = {}
 local aiEnabled = true
-local running = false
+local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance }
+
+local function alive(c: Creature): boolean
+	return table.find(creatures, c) ~= nil and c.model.Parent ~= nil
+end
 
 ---------------------------------------------------------------------------
 -- Helpers
@@ -181,7 +185,7 @@ end
 
 -- Returns true when the target is reached.
 local function moveTowards(c: Creature, target: Vector3, speed: number, repathInterval: number?): boolean
-	c.humanoid.WalkSpeed = speed * soloScale()
+	c.humanoid.WalkSpeed = speed * soloScale() * difficulty.speed
 	local now = os.clock()
 	if not c.pathTarget or (c.pathTarget - target).Magnitude > 4 or (repathInterval and now >= c.nextRepath) then
 		computePath(c, target)
@@ -283,7 +287,7 @@ local function travelVent(c: Creature, destination: Vector3)
 	c.model:SetAttribute("Hidden", true)
 	c.model:PivotTo(CFrame.new(entry.Position.X, -200, entry.Position.Z))
 	task.wait(CC.VentTravelTime - CC.VentWarning)
-	if creature ~= c then
+	if not alive(c) then
 		return true
 	end
 	Net.Event("Sfx"):FireAllClients("vent_rattle", exit.Position)
@@ -294,7 +298,7 @@ local function travelVent(c: Creature, destination: Vector3)
 		end
 	end
 	task.wait(CC.VentWarning)
-	if creature ~= c then
+	if not alive(c) then
 		return true
 	end
 	local out = exit.CFrame * CFrame.new(0, 0, -4)
@@ -402,7 +406,7 @@ local function step(c: Creature)
 			c.searchCenter = c.lastSeenPosition
 			c.target = c.lastSeenPosition
 			-- Sometimes it takes the vents instead of following
-			if c.lastSeenPosition and math.random() < CC.VentChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
+			if c.lastSeenPosition and math.random() < difficulty.ventChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
 				task.spawn(travelVent, c, c.lastSeenPosition)
 				return
 			end
@@ -469,15 +473,17 @@ local function loadTracks(c: Creature)
 end
 
 function CreatureService.Despawn()
-	if creature then
-		creature.model:Destroy()
-		creature = nil
+	for _, c in creatures do
+		c.model:Destroy()
 	end
-	running = false
+	table.clear(creatures)
 end
 
-function CreatureService.Spawn(cframe: CFrame?): Model
-	CreatureService.Despawn()
+-- keepExisting = true adds another creature (survival escalation).
+function CreatureService.Spawn(cframe: CFrame?, keepExisting: boolean?): Model
+	if not keepExisting then
+		CreatureService.Despawn()
+	end
 	local spawnCFrame = cframe
 	if not spawnCFrame then
 		local marker = CollectionService:GetTagged("FZ_CreatureSpawn")[1]
@@ -518,12 +524,11 @@ function CreatureService.Spawn(cframe: CFrame?): Model
 		lastFootprint = 0,
 	}
 	loadTracks(c)
-	creature = c
+	table.insert(creatures, c)
 	setState(c, if aiEnabled then "Patrol" else "Dormant")
 
-	running = true
 	task.spawn(function()
-		while running and creature == c and model.Parent do
+		while alive(c) do
 			if aiEnabled then
 				local ok, err = pcall(step, c)
 				if not ok then
@@ -538,14 +543,25 @@ end
 
 function CreatureService.SetAIEnabled(enabled: boolean)
 	aiEnabled = enabled
-	if creature then
+	for _, c in creatures do
 		if enabled then
-			setState(creature, "Patrol")
+			setState(c, "Patrol")
 		else
-			setState(creature, "Dormant")
-			stop(creature)
+			setState(c, "Dormant")
+			stop(c)
 		end
 	end
+end
+
+-- speed / hearing multipliers and vent chance (survival difficulty curve)
+function CreatureService.SetDifficulty(values: { speed: number?, hearing: number?, ventChance: number? })
+	difficulty.speed = values.speed or 1
+	difficulty.hearing = values.hearing or 1
+	difficulty.ventChance = values.ventChance or CC.VentChance
+end
+
+function CreatureService.Count(): number
+	return #creatures
 end
 
 function CreatureService.IsAIEnabled(): boolean
@@ -553,67 +569,83 @@ function CreatureService.IsAIEnabled(): boolean
 end
 
 function CreatureService.Get(): Model?
-	return creature and creature.model
+	return creatures[1] and creatures[1].model
 end
 
--- Loud event somewhere (story): the creature comes to look.
+-- Loud event somewhere: the nearest creature that is not busy comes to look.
 function CreatureService.Alert(position: Vector3)
-	local c = creature
-	if c and aiEnabled and c.state ~= "Chase" and c.state ~= "Vent" then
-		startInvestigate(c, position)
+	local best, bestDistance = nil, math.huge
+	for _, c in creatures do
+		if c.state ~= "Chase" and c.state ~= "Vent" and c.state ~= "Dormant" then
+			local d = (c.root.Position - position).Magnitude
+			if d < bestDistance then
+				best, bestDistance = c, d
+			end
+		end
+	end
+	if best and aiEnabled then
+		startInvestigate(best, position)
 	end
 end
 
 function CreatureService.Start()
 	NoiseService.Heard:Connect(function(position, radius, _source)
-		local c = creature
-		if not c or c.model:GetAttribute("Hidden") then
-			return
-		end
-		local distance = (position - c.root.Position).Magnitude
-		if distance <= radius * CC.HearingScale then
-			local current = c.pendingNoise
-			if not current or radius > current.radius then
-				c.pendingNoise = { position = position, radius = radius }
+		for _, c in creatures do
+			if not c.model:GetAttribute("Hidden") then
+				local distance = (position - c.root.Position).Magnitude
+				if distance <= radius * CC.HearingScale * difficulty.hearing then
+					local current = c.pendingNoise
+					if not current or radius > current.radius then
+						c.pendingNoise = { position = position, radius = radius }
+					end
+				end
 			end
 		end
 	end)
 
 	-- Flashlight: the client reports a hit, the server re-validates everything.
 	local limiter = RateLimiter.new(4, 2)
-	Net.Event("FlashCreature").OnServerEvent:Connect(function(player: Player)
-		local c = creature
-		if not c or not limiter:Allow(player) or not aiEnabled then
-			return
-		end
+	local function tryBlind(player: Player, c: Creature): boolean
 		if os.clock() < c.blindReadyAt or c.state == "Vent" or c.state == "Blinded" or c.state == "Dormant" then
-			return
+			return false
 		end
 		local character = player.Character
 		local head = character and character:FindFirstChild("Head") :: BasePart?
 		local light = head and head:FindFirstChild("FZ_Flashlight") :: SpotLight?
 		if not head or not light or not light.Enabled or player:GetAttribute("FZ_Downed") then
-			return
+			return false
 		end
 		local eye = eyePosition(c)
 		local range = CC.BlindRange * (tonumber(player:GetAttribute("FZ_FlashRange")) or 1)
 		local toCreature = eye - head.Position
 		if toCreature.Magnitude > range then
-			return
+			return false
 		end
 		local facing = flat((character :: Model):GetPivot().LookVector)
 		local direction = flat(toCreature)
 		if facing.Magnitude > 0 and direction.Magnitude > 0 and facing.Unit:Dot(direction.Unit) < math.cos(math.rad(60)) then
-			return
+			return false
 		end
 		if not hasLineOfSight(c, head.Position, eye, { character :: Model }) then
-			return
+			return false
 		end
 		local cooldown = CC.BlindCooldown * (tonumber(player:GetAttribute("FZ_BlindCooldownScale")) or 1)
 		c.blindReadyAt = os.clock() + cooldown
 		setState(c, "Blinded")
 		stop(c)
 		Net.Event("Sfx"):FireAllClients("creature_static_burst", c.root)
+		return true
+	end
+
+	Net.Event("FlashCreature").OnServerEvent:Connect(function(player: Player)
+		if not limiter:Allow(player) or not aiEnabled then
+			return
+		end
+		for _, c in creatures do
+			if tryBlind(player, c) then
+				return
+			end
+		end
 	end)
 end
 

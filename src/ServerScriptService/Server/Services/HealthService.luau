@@ -52,8 +52,11 @@ function HealthService.Respawn(player: Player)
 	downedSince[player] = nil
 	player:SetAttribute("FZ_Downed", false)
 	clearRevivePrompt(player)
-	player:LoadCharacter() -- GameFlowService places the new character at the checkpoint
+	player:LoadCharacter() -- SessionService places the new character at the checkpoint
 end
+
+-- Optional override (survival: a wipe ends the run instead of a checkpoint respawn).
+HealthService.TeamWipeHandler = nil :: (() -> ())?
 
 local function checkTeamWipe()
 	local players = inGamePlayers()
@@ -64,6 +67,10 @@ local function checkTeamWipe()
 		if not HealthService.IsDowned(player) then
 			return
 		end
+	end
+	if HealthService.TeamWipeHandler then
+		task.delay(2, HealthService.TeamWipeHandler)
+		return
 	end
 	task.delay(3, function()
 		for _, player in inGamePlayers() do

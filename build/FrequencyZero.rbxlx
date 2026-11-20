@@ -261,7 +261,7 @@ return Catalog
 
 local Config = {}
 
-Config.Version = "0.1.0"
+Config.Version = "0.3.0"
 Config.MaxPartySize = 4
 
 ---------------------------------------------------------------------------
@@ -387,7 +387,7 @@ Config.Movement = {
 ---------------------------------------------------------------------------
 Config.Data = {
 	StoreName = "FZ_PlayerData_v1",
-	SchemaVersion = 1,
+	SchemaVersion = 2, -- bump + add a migration in DataService for every save change
 	AutosaveInterval = 120,
 	LockTimeout = 1800, -- a session lock older than this is considered stale
 }
@@ -459,6 +459,24 @@ Config.Health = {
 	CrawlSpeed = 2,
 }
 
+---------------------------------------------------------------------------
+-- Endless survival ("Night shift")
+---------------------------------------------------------------------------
+Config.Survival = {
+	BreakSeconds = 25, -- calm phase between shifts; extraction is open
+	TaskSoftLimit = 180, -- after this the station "overloads": the creature is sent to you
+	FirstEventShift = 2,
+	SecondCreatureShift = 6,
+	ShiftReward = 40, -- + ShiftRewardGrowth * shift, banked when a shift is completed
+	ShiftRewardGrowth = 10,
+	ExtractBonus = 0.2, -- +20 % when the team leaves on its own
+	WipeKeep = 0.5, -- 50 % of the banked marks if the team goes down
+	ExtractRadius = 28,
+	MaxSpeedScale = 1.25,
+	MaxHearingScale = 1.6,
+	SessionIdleEnd = 20, -- seconds without players in game before a session ends
+}
+
 Config.Rewards = {
 	Fuse = 60,
 	Relay = 150,
@@ -471,6 +489,106 @@ return Config
         </Properties>
       </Item>
       <Item class="ModuleScript" referent="8">
+        <Properties>
+          <string name="Name">Content</string>
+          <string name="Source"><![CDATA[-- Content registry: the single list of everything playable. New chapters, survival
+-- maps, maps and places are added HERE - menus, saves, teleports and "new" badges all
+-- read from this table, so an update never needs changes in a dozen places.
+--
+-- Rules for updates (see docs/UPDATES.md):
+--   * ids are permanent. Never rename or reuse an id (saves reference them).
+--   * status "planned" shows the entry as "in development" (not selectable).
+--   * "since" = the update that introduced it (drives the subtle NEW badge).
+
+local Content = {}
+
+Content.Modes = {
+	story = { id = "story", name = "MODE_STORY", description = "MODE_STORY_DESC" },
+	survival = { id = "survival", name = "MODE_SURVIVAL", description = "MODE_SURVIVAL_DESC" },
+}
+Content.ModeOrder = { "story", "survival" }
+
+-- Maps are built by a module in ServerScriptService/Server/Map (or loaded from your own
+-- Studio model named after `model` in ServerStorage/Maps). One map can serve several modes.
+Content.Maps = {
+	relay07 = { id = "relay07", name = "MAP_RELAY07", builder = "RelayStation07", model = "Relay07" },
+	dam03 = { id = "dam03", name = "MAP_DAM03", builder = nil, model = "Dam03" },
+	mine = { id = "mine", name = "MAP_MINE", builder = nil, model = "Mine" },
+	church = { id = "church", name = "MAP_CHURCH", builder = nil, model = "Church" },
+}
+
+Content.Chapters = {
+	{ id = "ch1", number = 1, title = "CHAPTER_01_TITLE", description = "CHAPTER_01_DESC", map = "relay07", status = "available", since = "0.2.0" },
+	{ id = "ch2", number = 2, title = "CHAPTER_02_TITLE", description = "CHAPTER_02_DESC", map = "dam03", status = "planned", requires = "ch1" },
+	{ id = "ch3", number = 3, title = "CHAPTER_03_TITLE", description = "CHAPTER_03_DESC", map = "church", status = "planned", requires = "ch2" },
+	{ id = "ch4", number = 4, title = "CHAPTER_04_TITLE", description = "CHAPTER_04_DESC", map = "mine", status = "planned", requires = "ch3" },
+}
+
+Content.SurvivalMaps = {
+	{ id = "sv_relay07", title = "SV_MAP_RELAY07", description = "SV_MAP_RELAY07_DESC", map = "relay07", status = "available", since = "0.3.0", requires = nil },
+	{ id = "sv_dam03", title = "SV_MAP_DAM03", description = "SV_MAP_DAM03_DESC", map = "dam03", status = "planned", requires = "ch2" },
+}
+
+-- Roblox places inside this experience (Creator Hub -> Places). 0 = not created yet:
+-- everything then runs in the current place (single-place mode, fully playable).
+Content.Places = {
+	hub = 0, -- start place with the menu (optional; the main place works as hub)
+	relay07 = 0, -- a dedicated place for the Relay Station 07 map
+	dam03 = 0,
+}
+
+function Content.Chapter(id: string)
+	for _, chapter in Content.Chapters do
+		if chapter.id == id then
+			return chapter
+		end
+	end
+	return nil
+end
+
+function Content.Survival(id: string)
+	for _, entry in Content.SurvivalMaps do
+		if entry.id == id then
+			return entry
+		end
+	end
+	return nil
+end
+
+function Content.Entry(mode: string, id: string)
+	if mode == "story" then
+		return Content.Chapter(id)
+	elseif mode == "survival" then
+		return Content.Survival(id)
+	end
+	return nil
+end
+
+-- Is this entry playable for a player with these completed chapter ids?
+function Content.IsUnlocked(entry, completed: { [string]: any }): boolean
+	if not entry or entry.status ~= "available" then
+		return false
+	end
+	return entry.requires == nil or completed[entry.requires] ~= nil
+end
+
+-- All ids that can show a NEW badge.
+function Content.AllIds(): { string }
+	local ids = {}
+	for _, chapter in Content.Chapters do
+		table.insert(ids, chapter.id)
+	end
+	for _, entry in Content.SurvivalMaps do
+		table.insert(ids, entry.id)
+	end
+	return ids
+end
+
+return Content
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="9">
         <Properties>
           <string name="Name">Localization</string>
           <string name="Source"><![CDATA[-- LocalizationManager
@@ -659,11 +777,11 @@ end
 return Localization
 ]]></string>
         </Properties>
-        <Item class="Folder" referent="9">
+        <Item class="Folder" referent="10">
           <Properties>
             <string name="Name">Languages</string>
           </Properties>
-          <Item class="ModuleScript" referent="10">
+          <Item class="ModuleScript" referent="11">
             <Properties>
               <string name="Name">de</string>
               <string name="Source"><![CDATA[-- Deutsch
@@ -885,11 +1003,88 @@ return {
 	ADMIN_SPEED = "Testgeschwindigkeit ×2 an / aus",
 	ADMIN_RESET = "Kreatur und Ereignisse zurücksetzen",
 	ADMIN_PUBLIC_BLOCKED = "In öffentlichen Servern nicht erlaubt.",
+
+	-- 0.3: modes, maps, survival, updates
+	PLAY_TITLE = "Wähle dein Signal",
+	MODE_STORY = "STORY",
+	MODE_STORY_DESC = "Vier Kapitel, eine Geschichte. Allein oder mit bis zu drei Freunden.",
+	MODE_SURVIVAL = "ENDLOS-ÜBERLEBEN",
+	MODE_SURVIVAL_DESC = "Haltet die Station Schicht für Schicht am Laufen. Aussteigen könnt ihr jederzeit – in einer Pause.",
+	CHAPTER_01_DESC = "Die Relaisanlage 07 sendet wieder. Finde heraus, wer.",
+	CHAPTER_02_DESC = "Unter der Staumauer wird die zweite Stimme lauter.",
+	CHAPTER_03_DESC = "In der alten Kapelle hat jemand jede Nacht protokolliert.",
+	CHAPTER_04_DESC = "Tief in der Mine beginnt das Signal.",
+	MAP_RELAY07 = "Relaisanlage 07",
+	MAP_DAM03 = "Staumauer 3",
+	MAP_MINE = "Die Mine",
+	MAP_CHURCH = "Die Kapelle",
+	SV_MAP_RELAY07 = "Relaisanlage 07 – Nachtschicht",
+	SV_MAP_RELAY07_DESC = "Jede Schicht eine neue Aufgabe. Jede Schicht hört es genauer hin.",
+	SV_MAP_DAM03 = "Staumauer 3 – Schleusentor",
+	SV_MAP_DAM03_DESC = "Kommt mit Kapitel 2.",
+	CONTENT_PLANNED = "In Entwicklung",
+	CONTENT_LOCKED = "Erst Kapitel {number} abschließen",
+	CONTENT_NEW = "NEU",
+	CONTENT_DONE = "Abgeschlossen",
+	CONTENT_DOT = "●",
+	SV_BEST = "Bestwert: Schicht {shifts}",
+	SV_LEADERBOARD = "Bestenliste",
+	LEADERBOARD_TITLE = "Bestenliste",
+	LEADERBOARD_LOADING = "Empfange …",
+	LEADERBOARD_EMPTY = "Noch keine Einträge. Sei der Erste.",
+	LEADERBOARD_ERROR = "Die Bestenliste ist gerade nicht erreichbar.",
+	LEADERBOARD_ROW = "{rank}.  {name}  –  Schicht {shifts}",
+	MENU_LEAVE = "Zum Hauptmenü",
+	MENU_UPDATES = "Neuigkeiten",
+	SESSION_BUSY = "Dein Team spielt gerade {name}. Mach mit oder warte, bis es fertig ist.",
+	SESSION_TELEPORT = "Neue Frequenz wird geöffnet …",
+	SESSION_ERROR = "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+	SESSION_LOCKED = "Noch nicht freigeschaltet.",
+	SESSION_JOIN_RUNNING = "Zu deinem Team: {name}",
+	ERROR_DATA_NEWER = "Dieser Server läuft mit einer älteren Version. Dein Fortschritt ist sicher, wird hier aber nicht gespeichert – bitte neu beitreten.",
+	UPDATES_TITLE = "Neuigkeiten",
+	UPD_030_TITLE = "Nachtschicht",
+	UPD_030_1 = "Neuer Modus: Endlos-Überleben in der Relaisanlage 07, mit Bestenlisten.",
+	UPD_030_2 = "Kapitel und Karten wählst du im neuen Spielen-Menü.",
+	UPD_030_3 = "Fortschritt, Signalmarken und Gegenstände wurden automatisch übernommen.",
+	UPD_030_4 = "Ein kleiner Punkt zeigt neue Inhalte. Keine Pop-ups.",
+	UPD_020_TITLE = "Relaisanlage 07",
+	UPD_020_1 = "Die Station, die Kreatur und Kapitel 1.",
+	UPD_020_2 = "Umgebungs-Voice und Funkgerät.",
+	UPD_020_3 = "Shop mit Ausrüstungs-Sets – nur durch Spielen verdient.",
+	SV_SHIFT = "SCHICHT {shift}",
+	SV_BREAK = "Pause. Der Ausstieg an der Antenne ist offen – oder bleibt für die nächste Schicht.",
+	SV_BREAK_TIMER = "PAUSE · NÄCHSTE SCHICHT IN {seconds} S",
+	SV_INTRO = "Macht euch bereit. Die Nachtschicht beginnt.",
+	SV_TASK_UPLINK = "Haltet die Verbindung im Zentralkern ({percent} %).",
+	SV_TASK_GENERATORS = "Startet die Generatoren in Sektor E neu ({count}/{total}).",
+	SV_TASK_STATIONS = "Kontrollrunde: Kontrollraum, Sektor A, Kern ({count}/{total}).",
+	SV_EXTRACT_NEED_TEAM = "Alle, die noch stehen, müssen an der Antenne sein.",
+	SV_START = "Erste Schicht. Macht es nicht lauter, als es sein muss.",
+	SV_SHIFT_DONE = "Schicht {shift} überstanden. Atmet durch.",
+	SV_OVERLOAD = "Ihr braucht zu lange. Die Station wird laut – es weiß, wo ihr seid.",
+	SV_SECOND_CREATURE = "Jetzt sind es zwei.",
+	SV_EV_BLACKOUT = "Ein Sektor hat gerade keinen Strom mehr. Passt im Dunkeln auf.",
+	SV_EV_STATIC = "Störsturm. Es hört besser als je zuvor.",
+	SV_EV_HUNT = "Heute Nacht wartet es nicht. Es sucht euch.",
+	SV_EV_LOCKDOWN = "Abriegelung. Einige Türen bleiben eine Weile zu.",
+	SV_EV_CALM = "Es ist ruhig. Zu ruhig.",
+	SV_EVN_BLACKOUT = "STROMAUSFALL",
+	SV_EVN_STATIC = "STÖRSTURM",
+	SV_EVN_HUNT = "JAGD",
+	SV_EVN_LOCKDOWN = "ABRIEGELUNG",
+	SV_EVN_CALM = "RUHE",
+	SV_RESULT_TITLE = "SCHICHTBERICHT",
+	SV_RESULT_EXTRACTED = "Ihr habt die Station selbst verlassen.\n\nÜberstandene Schichten: {shifts}\nSignalmarken: +{marks} (inkl. Ausstiegsbonus)",
+	SV_RESULT_LOST = "Signal verloren. Das ganze Team ist am Boden.\n\nÜberstandene Schichten: {shifts}\nSignalmarken: +{marks} (die Hälfte der gesicherten Marken)",
+	SV_NEW_BEST = "Neuer persönlicher Bestwert!",
+	INTERACT_RESTART = "Neu starten",
+	OBJECT_GENERATOR = "Generator",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="11">
+          <Item class="ModuleScript" referent="12">
             <Properties>
               <string name="Name">en</string>
               <string name="Source"><![CDATA[-- English (reference language and fallback). Every key must exist here.
@@ -1111,11 +1306,88 @@ return {
 	ADMIN_SPEED = "Test speed ×2 on / off",
 	ADMIN_RESET = "Reset creature and events",
 	ADMIN_PUBLIC_BLOCKED = "Not allowed in public servers.",
+
+	-- 0.3: modes, maps, survival, updates
+	PLAY_TITLE = "Choose your signal",
+	MODE_STORY = "STORY",
+	MODE_STORY_DESC = "Four chapters, one story. Alone or with up to three friends.",
+	MODE_SURVIVAL = "ENDLESS SURVIVAL",
+	MODE_SURVIVAL_DESC = "Keep the station running shift after shift. Leave whenever you want – during a break.",
+	CHAPTER_01_DESC = "Relay Station 07 is transmitting again. Find out who.",
+	CHAPTER_02_DESC = "Below the dam, the second voice gets louder.",
+	CHAPTER_03_DESC = "In the old chapel, someone kept a record of every night.",
+	CHAPTER_04_DESC = "Deep in the mine, the signal begins.",
+	MAP_RELAY07 = "Relay Station 07",
+	MAP_DAM03 = "Dam 3",
+	MAP_MINE = "The Mine",
+	MAP_CHURCH = "The Chapel",
+	SV_MAP_RELAY07 = "Relay Station 07 – Night shift",
+	SV_MAP_RELAY07_DESC = "Every shift a new task. Every shift it listens more closely.",
+	SV_MAP_DAM03 = "Dam 3 – Floodgate",
+	SV_MAP_DAM03_DESC = "Coming with chapter 2.",
+	CONTENT_PLANNED = "In development",
+	CONTENT_LOCKED = "Finish chapter {number} first",
+	CONTENT_NEW = "NEW",
+	CONTENT_DONE = "Completed",
+	CONTENT_DOT = "●",
+	SV_BEST = "Best: shift {shifts}",
+	SV_LEADERBOARD = "Leaderboard",
+	LEADERBOARD_TITLE = "Leaderboard",
+	LEADERBOARD_LOADING = "Receiving…",
+	LEADERBOARD_EMPTY = "No entries yet. Be the first.",
+	LEADERBOARD_ERROR = "The leaderboard cannot be reached right now.",
+	LEADERBOARD_ROW = "{rank}.  {name}  –  shift {shifts}",
+	MENU_LEAVE = "Back to main menu",
+	MENU_UPDATES = "What's new",
+	SESSION_BUSY = "Your team is playing {name}. Join them or wait until they finish.",
+	SESSION_TELEPORT = "Opening a new frequency…",
+	SESSION_ERROR = "That did not work. Please try again.",
+	SESSION_LOCKED = "Not unlocked yet.",
+	SESSION_JOIN_RUNNING = "Join your team: {name}",
+	ERROR_DATA_NEWER = "This server runs an older version. Your progress is safe, but nothing is saved here – please rejoin.",
+	UPDATES_TITLE = "What's new",
+	UPD_030_TITLE = "Night shift",
+	UPD_030_1 = "New mode: endless survival on Relay Station 07, with leaderboards.",
+	UPD_030_2 = "Choose chapters and maps in the new Play menu.",
+	UPD_030_3 = "Your progress, signal marks and items were carried over automatically.",
+	UPD_030_4 = "A small dot marks new content. No pop-ups.",
+	UPD_020_TITLE = "Relay Station 07",
+	UPD_020_1 = "The station, the creature and chapter 1.",
+	UPD_020_2 = "Proximity voice and walkie-talkie radio.",
+	UPD_020_3 = "Shop with equipment sets – earned only by playing.",
+	SV_SHIFT = "SHIFT {shift}",
+	SV_BREAK = "Break. Extraction at the antenna is open – or stay for the next shift.",
+	SV_BREAK_TIMER = "BREAK · NEXT SHIFT IN {seconds} S",
+	SV_INTRO = "Get ready. The night shift begins.",
+	SV_TASK_UPLINK = "Hold the uplink in the central core ({percent} %).",
+	SV_TASK_GENERATORS = "Restart the generators in Sector E ({count}/{total}).",
+	SV_TASK_STATIONS = "Check the stations: control room, Sector A, core ({count}/{total}).",
+	SV_EXTRACT_NEED_TEAM = "Everyone who is still standing must be at the antenna.",
+	SV_START = "Shift one. Don't make it louder than it has to be.",
+	SV_SHIFT_DONE = "Shift {shift} survived. Breathe.",
+	SV_OVERLOAD = "You are taking too long. The station is getting loud – it knows where you are.",
+	SV_SECOND_CREATURE = "There are two of them now.",
+	SV_EV_BLACKOUT = "A sector just lost power. Watch your step in the dark.",
+	SV_EV_STATIC = "Static storm. It hears better than ever.",
+	SV_EV_HUNT = "It is not waiting tonight. It is looking for you.",
+	SV_EV_LOCKDOWN = "Lockdown. Some doors won't open for a while.",
+	SV_EV_CALM = "It is quiet. Too quiet.",
+	SV_EVN_BLACKOUT = "BLACKOUT",
+	SV_EVN_STATIC = "STATIC STORM",
+	SV_EVN_HUNT = "HUNT",
+	SV_EVN_LOCKDOWN = "LOCKDOWN",
+	SV_EVN_CALM = "CALM",
+	SV_RESULT_TITLE = "SHIFT REPORT",
+	SV_RESULT_EXTRACTED = "You left the station on your own terms.\n\nShifts survived: {shifts}\nSignal marks: +{marks} (incl. extraction bonus)",
+	SV_RESULT_LOST = "Signal lost. The whole team went down.\n\nShifts survived: {shifts}\nSignal marks: +{marks} (half of the secured marks)",
+	SV_NEW_BEST = "New personal best!",
+	INTERACT_RESTART = "Restart",
+	OBJECT_GENERATOR = "Generator",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="12">
+          <Item class="ModuleScript" referent="13">
             <Properties>
               <string name="Name">es</string>
               <string name="Source"><![CDATA[-- Español (neutro latinoamericano: "tú" para el jugador, "ustedes" para el equipo)
@@ -1337,11 +1609,88 @@ return {
 	ADMIN_SPEED = "Velocidad de prueba ×2 sí / no",
 	ADMIN_RESET = "Reiniciar criatura y eventos",
 	ADMIN_PUBLIC_BLOCKED = "No permitido en servidores públicos.",
+
+	-- 0.3: modes, maps, survival, updates
+	PLAY_TITLE = "Elige tu señal",
+	MODE_STORY = "HISTORIA",
+	MODE_STORY_DESC = "Cuatro capítulos, una historia. Solo o con hasta tres amigos.",
+	MODE_SURVIVAL = "SUPERVIVENCIA SIN FIN",
+	MODE_SURVIVAL_DESC = "Mantengan la estación funcionando turno tras turno. Pueden salir cuando quieran, durante una pausa.",
+	CHAPTER_01_DESC = "La repetidora 07 vuelve a transmitir. Descubre quién.",
+	CHAPTER_02_DESC = "Bajo la presa, la segunda voz se hace más fuerte.",
+	CHAPTER_03_DESC = "En la vieja capilla, alguien registró cada noche.",
+	CHAPTER_04_DESC = "En lo profundo de la mina comienza la señal.",
+	MAP_RELAY07 = "Repetidora 07",
+	MAP_DAM03 = "Presa 3",
+	MAP_MINE = "La mina",
+	MAP_CHURCH = "La capilla",
+	SV_MAP_RELAY07 = "Repetidora 07: turno de noche",
+	SV_MAP_RELAY07_DESC = "Cada turno, una tarea nueva. Cada turno escucha con más atención.",
+	SV_MAP_DAM03 = "Presa 3: compuerta",
+	SV_MAP_DAM03_DESC = "Llega con el capítulo 2.",
+	CONTENT_PLANNED = "En desarrollo",
+	CONTENT_LOCKED = "Termina antes el capítulo {number}",
+	CONTENT_NEW = "NUEVO",
+	CONTENT_DONE = "Completado",
+	CONTENT_DOT = "●",
+	SV_BEST = "Récord: turno {shifts}",
+	SV_LEADERBOARD = "Clasificación",
+	LEADERBOARD_TITLE = "Clasificación",
+	LEADERBOARD_LOADING = "Recibiendo…",
+	LEADERBOARD_EMPTY = "Aún no hay registros. Sé el primero.",
+	LEADERBOARD_ERROR = "La clasificación no está disponible ahora.",
+	LEADERBOARD_ROW = "{rank}.  {name}  –  turno {shifts}",
+	MENU_LEAVE = "Volver al menú principal",
+	MENU_UPDATES = "Novedades",
+	SESSION_BUSY = "Tu equipo está jugando {name}. Únete o espera a que termine.",
+	SESSION_TELEPORT = "Abriendo una nueva frecuencia…",
+	SESSION_ERROR = "No funcionó. Inténtalo de nuevo.",
+	SESSION_LOCKED = "Aún no está desbloqueado.",
+	SESSION_JOIN_RUNNING = "Unirse a tu equipo: {name}",
+	ERROR_DATA_NEWER = "Este servidor usa una versión anterior. Tu progreso está a salvo, pero aquí no se guarda nada: vuelve a entrar.",
+	UPDATES_TITLE = "Novedades",
+	UPD_030_TITLE = "Turno de noche",
+	UPD_030_1 = "Nuevo modo: supervivencia sin fin en la repetidora 07, con clasificaciones.",
+	UPD_030_2 = "Elige capítulos y mapas en el nuevo menú Jugar.",
+	UPD_030_3 = "Tu progreso, marcas de señal y objetos se conservaron automáticamente.",
+	UPD_030_4 = "Un pequeño punto marca el contenido nuevo. Sin ventanas emergentes.",
+	UPD_020_TITLE = "Repetidora 07",
+	UPD_020_1 = "La estación, la criatura y el capítulo 1.",
+	UPD_020_2 = "Voz por proximidad y walkie-talkie.",
+	UPD_020_3 = "Tienda con sets de equipo, solo se consiguen jugando.",
+	SV_SHIFT = "TURNO {shift}",
+	SV_BREAK = "Pausa. La salida en la antena está abierta, o quédense para el siguiente turno.",
+	SV_BREAK_TIMER = "PAUSA · SIGUIENTE TURNO EN {seconds} S",
+	SV_INTRO = "Prepárense. Empieza el turno de noche.",
+	SV_TASK_UPLINK = "Mantengan el enlace en el núcleo central ({percent} %).",
+	SV_TASK_GENERATORS = "Reinicien los generadores del sector E ({count}/{total}).",
+	SV_TASK_STATIONS = "Revisen los puestos: sala de control, sector A, núcleo ({count}/{total}).",
+	SV_EXTRACT_NEED_TEAM = "Todos los que siguen en pie deben estar en la antena.",
+	SV_START = "Primer turno. No hagan más ruido del necesario.",
+	SV_SHIFT_DONE = "Turno {shift} superado. Respiren.",
+	SV_OVERLOAD = "Tardan demasiado. La estación hace ruido: sabe dónde están.",
+	SV_SECOND_CREATURE = "Ahora son dos.",
+	SV_EV_BLACKOUT = "Un sector se acaba de quedar sin energía. Cuidado en la oscuridad.",
+	SV_EV_STATIC = "Tormenta de estática. Oye mejor que nunca.",
+	SV_EV_HUNT = "Esta noche no espera. Los está buscando.",
+	SV_EV_LOCKDOWN = "Bloqueo. Algunas puertas no se abrirán por un rato.",
+	SV_EV_CALM = "Está tranquilo. Demasiado tranquilo.",
+	SV_EVN_BLACKOUT = "APAGÓN",
+	SV_EVN_STATIC = "TORMENTA DE ESTÁTICA",
+	SV_EVN_HUNT = "CACERÍA",
+	SV_EVN_LOCKDOWN = "BLOQUEO",
+	SV_EVN_CALM = "CALMA",
+	SV_RESULT_TITLE = "INFORME DE TURNO",
+	SV_RESULT_EXTRACTED = "Salieron de la estación por su cuenta.\n\nTurnos superados: {shifts}\nMarcas de señal: +{marks} (incl. bono de salida)",
+	SV_RESULT_LOST = "Señal perdida. Todo el equipo cayó.\n\nTurnos superados: {shifts}\nMarcas de señal: +{marks} (la mitad de las aseguradas)",
+	SV_NEW_BEST = "¡Nuevo récord personal!",
+	INTERACT_RESTART = "Reiniciar",
+	OBJECT_GENERATOR = "Generador",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="13">
+          <Item class="ModuleScript" referent="14">
             <Properties>
               <string name="Name">fr</string>
               <string name="Source"><![CDATA[-- Français
@@ -1563,11 +1912,88 @@ return {
 	ADMIN_SPEED = "Vitesse de test ×2 on / off",
 	ADMIN_RESET = "Réinitialiser créature et événements",
 	ADMIN_PUBLIC_BLOCKED = "Interdit sur les serveurs publics.",
+
+	-- 0.3: modes, maps, survival, updates
+	PLAY_TITLE = "Choisis ton signal",
+	MODE_STORY = "HISTOIRE",
+	MODE_STORY_DESC = "Quatre chapitres, une histoire. Seul ou avec jusqu'à trois amis.",
+	MODE_SURVIVAL = "SURVIE SANS FIN",
+	MODE_SURVIVAL_DESC = "Faites tourner la station, poste après poste. Vous pouvez partir quand vous voulez, pendant une pause.",
+	CHAPTER_01_DESC = "Le relais 07 émet à nouveau. Découvre qui.",
+	CHAPTER_02_DESC = "Sous le barrage, la deuxième voix se fait plus forte.",
+	CHAPTER_03_DESC = "Dans la vieille chapelle, quelqu'un a consigné chaque nuit.",
+	CHAPTER_04_DESC = "Au fond de la mine, le signal commence.",
+	MAP_RELAY07 = "Relais 07",
+	MAP_DAM03 = "Barrage 3",
+	MAP_MINE = "La mine",
+	MAP_CHURCH = "La chapelle",
+	SV_MAP_RELAY07 = "Relais 07 – Poste de nuit",
+	SV_MAP_RELAY07_DESC = "Chaque poste, une nouvelle tâche. Chaque poste, il écoute plus attentivement.",
+	SV_MAP_DAM03 = "Barrage 3 – Vanne",
+	SV_MAP_DAM03_DESC = "Arrive avec le chapitre 2.",
+	CONTENT_PLANNED = "En développement",
+	CONTENT_LOCKED = "Termine d'abord le chapitre {number}",
+	CONTENT_NEW = "NOUVEAU",
+	CONTENT_DONE = "Terminé",
+	CONTENT_DOT = "●",
+	SV_BEST = "Record : poste {shifts}",
+	SV_LEADERBOARD = "Classement",
+	LEADERBOARD_TITLE = "Classement",
+	LEADERBOARD_LOADING = "Réception…",
+	LEADERBOARD_EMPTY = "Aucune entrée pour l'instant. Sois le premier.",
+	LEADERBOARD_ERROR = "Le classement est indisponible pour le moment.",
+	LEADERBOARD_ROW = "{rank}.  {name}  –  poste {shifts}",
+	MENU_LEAVE = "Retour au menu principal",
+	MENU_UPDATES = "Nouveautés",
+	SESSION_BUSY = "Ton équipe joue à {name}. Rejoins-la ou attends qu'elle ait fini.",
+	SESSION_TELEPORT = "Ouverture d'une nouvelle fréquence…",
+	SESSION_ERROR = "Cela n'a pas fonctionné. Réessaie.",
+	SESSION_LOCKED = "Pas encore débloqué.",
+	SESSION_JOIN_RUNNING = "Rejoindre ton équipe : {name}",
+	ERROR_DATA_NEWER = "Ce serveur utilise une ancienne version. Ta progression est en sécurité, mais rien n'est enregistré ici : reconnecte-toi.",
+	UPDATES_TITLE = "Nouveautés",
+	UPD_030_TITLE = "Poste de nuit",
+	UPD_030_1 = "Nouveau mode : survie sans fin au relais 07, avec classements.",
+	UPD_030_2 = "Choisis chapitres et cartes dans le nouveau menu Jouer.",
+	UPD_030_3 = "Ta progression, tes marques de signal et tes objets ont été conservés automatiquement.",
+	UPD_030_4 = "Un petit point signale les nouveautés. Aucune fenêtre surgissante.",
+	UPD_020_TITLE = "Relais 07",
+	UPD_020_1 = "La station, la créature et le chapitre 1.",
+	UPD_020_2 = "Chat vocal de proximité et talkie-walkie.",
+	UPD_020_3 = "Boutique d'ensembles d'équipement – gagnés uniquement en jouant.",
+	SV_SHIFT = "POSTE {shift}",
+	SV_BREAK = "Pause. L'évacuation à l'antenne est ouverte – ou restez pour le poste suivant.",
+	SV_BREAK_TIMER = "PAUSE · PROCHAIN POSTE DANS {seconds} S",
+	SV_INTRO = "Préparez-vous. Le poste de nuit commence.",
+	SV_TASK_UPLINK = "Maintenez la liaison dans le noyau central ({percent} %).",
+	SV_TASK_GENERATORS = "Redémarrez les générateurs du secteur E ({count}/{total}).",
+	SV_TASK_STATIONS = "Faites la ronde : salle de contrôle, secteur A, noyau ({count}/{total}).",
+	SV_EXTRACT_NEED_TEAM = "Tous ceux qui tiennent encore debout doivent être à l'antenne.",
+	SV_START = "Premier poste. Ne faites pas plus de bruit que nécessaire.",
+	SV_SHIFT_DONE = "Poste {shift} tenu. Respirez.",
+	SV_OVERLOAD = "Vous traînez. La station devient bruyante – il sait où vous êtes.",
+	SV_SECOND_CREATURE = "Maintenant, ils sont deux.",
+	SV_EV_BLACKOUT = "Un secteur vient de perdre le courant. Attention dans le noir.",
+	SV_EV_STATIC = "Tempête de parasites. Il entend mieux que jamais.",
+	SV_EV_HUNT = "Ce soir, il n'attend pas. Il vous cherche.",
+	SV_EV_LOCKDOWN = "Confinement. Certaines portes resteront fermées un moment.",
+	SV_EV_CALM = "C'est calme. Trop calme.",
+	SV_EVN_BLACKOUT = "COUPURE",
+	SV_EVN_STATIC = "TEMPÊTE DE PARASITES",
+	SV_EVN_HUNT = "TRAQUE",
+	SV_EVN_LOCKDOWN = "CONFINEMENT",
+	SV_EVN_CALM = "CALME",
+	SV_RESULT_TITLE = "RAPPORT DE POSTE",
+	SV_RESULT_EXTRACTED = "Vous avez quitté la station de vous-mêmes.\n\nPostes tenus : {shifts}\nMarques de signal : +{marks} (bonus d'évacuation inclus)",
+	SV_RESULT_LOST = "Signal perdu. Toute l'équipe est à terre.\n\nPostes tenus : {shifts}\nMarques de signal : +{marks} (la moitié des marques sécurisées)",
+	SV_NEW_BEST = "Nouveau record personnel !",
+	INTERACT_RESTART = "Redémarrer",
+	OBJECT_GENERATOR = "Générateur",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="14">
+          <Item class="ModuleScript" referent="15">
             <Properties>
               <string name="Name">pt_br</string>
               <string name="Source"><![CDATA[-- Português (Brasil)
@@ -1789,13 +2215,90 @@ return {
 	ADMIN_SPEED = "Velocidade de teste ×2 liga / desliga",
 	ADMIN_RESET = "Reiniciar criatura e eventos",
 	ADMIN_PUBLIC_BLOCKED = "Não permitido em servidores públicos.",
+
+	-- 0.3: modes, maps, survival, updates
+	PLAY_TITLE = "Escolha seu sinal",
+	MODE_STORY = "HISTÓRIA",
+	MODE_STORY_DESC = "Quatro capítulos, uma história. Sozinho ou com até três amigos.",
+	MODE_SURVIVAL = "SOBREVIVÊNCIA SEM FIM",
+	MODE_SURVIVAL_DESC = "Mantenham a estação funcionando turno após turno. Saiam quando quiserem, durante uma pausa.",
+	CHAPTER_01_DESC = "A repetidora 07 voltou a transmitir. Descubra quem.",
+	CHAPTER_02_DESC = "Sob a represa, a segunda voz fica mais alta.",
+	CHAPTER_03_DESC = "Na velha capela, alguém registrou cada noite.",
+	CHAPTER_04_DESC = "No fundo da mina, o sinal começa.",
+	MAP_RELAY07 = "Repetidora 07",
+	MAP_DAM03 = "Represa 3",
+	MAP_MINE = "A mina",
+	MAP_CHURCH = "A capela",
+	SV_MAP_RELAY07 = "Repetidora 07 – Turno da noite",
+	SV_MAP_RELAY07_DESC = "Cada turno, uma tarefa nova. Cada turno ele escuta com mais atenção.",
+	SV_MAP_DAM03 = "Represa 3 – Comporta",
+	SV_MAP_DAM03_DESC = "Chega com o capítulo 2.",
+	CONTENT_PLANNED = "Em desenvolvimento",
+	CONTENT_LOCKED = "Termine antes o capítulo {number}",
+	CONTENT_NEW = "NOVO",
+	CONTENT_DONE = "Concluído",
+	CONTENT_DOT = "●",
+	SV_BEST = "Recorde: turno {shifts}",
+	SV_LEADERBOARD = "Classificação",
+	LEADERBOARD_TITLE = "Classificação",
+	LEADERBOARD_LOADING = "Recebendo…",
+	LEADERBOARD_EMPTY = "Ainda não há registros. Seja o primeiro.",
+	LEADERBOARD_ERROR = "A classificação não está disponível agora.",
+	LEADERBOARD_ROW = "{rank}.  {name}  –  turno {shifts}",
+	MENU_LEAVE = "Voltar ao menu principal",
+	MENU_UPDATES = "Novidades",
+	SESSION_BUSY = "Sua equipe está jogando {name}. Entre ou espere terminar.",
+	SESSION_TELEPORT = "Abrindo uma nova frequência…",
+	SESSION_ERROR = "Não deu certo. Tente de novo.",
+	SESSION_LOCKED = "Ainda não desbloqueado.",
+	SESSION_JOIN_RUNNING = "Entrar com sua equipe: {name}",
+	ERROR_DATA_NEWER = "Este servidor usa uma versão antiga. Seu progresso está seguro, mas nada é salvo aqui – entre de novo.",
+	UPDATES_TITLE = "Novidades",
+	UPD_030_TITLE = "Turno da noite",
+	UPD_030_1 = "Novo modo: sobrevivência sem fim na repetidora 07, com classificações.",
+	UPD_030_2 = "Escolha capítulos e mapas no novo menu Jogar.",
+	UPD_030_3 = "Seu progresso, marcas de sinal e itens foram mantidos automaticamente.",
+	UPD_030_4 = "Um pequeno ponto indica conteúdo novo. Sem pop-ups.",
+	UPD_020_TITLE = "Repetidora 07",
+	UPD_020_1 = "A estação, a criatura e o capítulo 1.",
+	UPD_020_2 = "Voz por proximidade e rádio comunicador.",
+	UPD_020_3 = "Loja com kits de equipamento – conquistados só jogando.",
+	SV_SHIFT = "TURNO {shift}",
+	SV_BREAK = "Pausa. A saída na antena está aberta – ou fiquem para o próximo turno.",
+	SV_BREAK_TIMER = "PAUSA · PRÓXIMO TURNO EM {seconds} S",
+	SV_INTRO = "Preparem-se. O turno da noite começa.",
+	SV_TASK_UPLINK = "Mantenham o link no núcleo central ({percent} %).",
+	SV_TASK_GENERATORS = "Reiniciem os geradores do setor E ({count}/{total}).",
+	SV_TASK_STATIONS = "Façam a ronda: sala de controle, setor A, núcleo ({count}/{total}).",
+	SV_EXTRACT_NEED_TEAM = "Todos que ainda estão de pé precisam estar na antena.",
+	SV_START = "Primeiro turno. Não façam mais barulho do que o necessário.",
+	SV_SHIFT_DONE = "Turno {shift} superado. Respirem.",
+	SV_OVERLOAD = "Vocês estão demorando. A estação está ficando barulhenta – ele sabe onde vocês estão.",
+	SV_SECOND_CREATURE = "Agora são dois.",
+	SV_EV_BLACKOUT = "Um setor acabou de perder energia. Cuidado no escuro.",
+	SV_EV_STATIC = "Tempestade de estática. Ele ouve melhor do que nunca.",
+	SV_EV_HUNT = "Esta noite ele não espera. Está procurando vocês.",
+	SV_EV_LOCKDOWN = "Bloqueio. Algumas portas não vão abrir por um tempo.",
+	SV_EV_CALM = "Está quieto. Quieto demais.",
+	SV_EVN_BLACKOUT = "APAGÃO",
+	SV_EVN_STATIC = "TEMPESTADE DE ESTÁTICA",
+	SV_EVN_HUNT = "CAÇADA",
+	SV_EVN_LOCKDOWN = "BLOQUEIO",
+	SV_EVN_CALM = "CALMA",
+	SV_RESULT_TITLE = "RELATÓRIO DE TURNO",
+	SV_RESULT_EXTRACTED = "Vocês saíram da estação por conta própria.\n\nTurnos superados: {shifts}\nMarcas de sinal: +{marks} (com bônus de saída)",
+	SV_RESULT_LOST = "Sinal perdido. A equipe toda caiu.\n\nTurnos superados: {shifts}\nMarcas de sinal: +{marks} (metade das garantidas)",
+	SV_NEW_BEST = "Novo recorde pessoal!",
+	INTERACT_RESTART = "Reiniciar",
+	OBJECT_GENERATOR = "Gerador",
 }
 ]]></string>
             </Properties>
           </Item>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="15">
+      <Item class="ModuleScript" referent="16">
         <Properties>
           <string name="Name">Net</string>
           <string name="Source"><![CDATA[-- Net: declares every remote in one place. The server creates them, clients wait for them.
@@ -1809,7 +2312,6 @@ local FOLDER_NAME = "FZ_Remotes"
 
 local EVENTS = {
 	"UpdateSetting", -- C->S (key, value)
-	"ClientReady", -- C->S () player pressed Play / Continue
 	"SetFlashlight", -- C->S (enabled)
 	"Subtitle", -- S->C (line)
 	"Document", -- S->C (document)
@@ -1821,6 +2323,7 @@ local EVENTS = {
 	"MonsterAttack", -- C->S () admin monster mode
 	"Footprint", -- S->C (position) observer set only
 	"Hurt", -- S->C (amount)
+	"MarkSeen", -- C->S (contentId | "update:<id>") NEW badges
 }
 
 local FUNCTIONS = {
@@ -1828,6 +2331,8 @@ local FUNCTIONS = {
 	"RedeemCode", -- C->S (code) -> result
 	"AdminAction", -- C->S (action, payload) -> result
 	"ShopAction", -- C->S (action, itemId) -> result
+	"Session", -- C->S (action, mode, contentId) -> result
+	"GetLeaderboard", -- C->S (survivalId) -> top entries
 }
 
 local Net = {}
@@ -1883,7 +2388,7 @@ return Net
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="16">
+      <Item class="ModuleScript" referent="17">
         <Properties>
           <string name="Name">SessionState</string>
           <string name="Source"><![CDATA[-- SessionState: session-wide story state (shared by the whole team in this server).
@@ -1943,7 +2448,7 @@ return SessionState
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">Signal</string>
           <string name="Source"><![CDATA[-- Signal: tiny, leak-safe event implementation used by client and server modules.
@@ -2012,17 +2517,38 @@ return Signal
 ]]></string>
         </Properties>
       </Item>
+      <Item class="ModuleScript" referent="19">
+        <Properties>
+          <string name="Name">Updates</string>
+          <string name="Source"><![CDATA[-- Update log shown in "What's new" (main menu, small link - never a pop-up).
+-- Newest first. Every entry's text lives in the language files (UPD_<id>_*).
+
+return {
+	{
+		id = "0.3.0",
+		title = "UPD_030_TITLE",
+		lines = { "UPD_030_1", "UPD_030_2", "UPD_030_3", "UPD_030_4" },
+	},
+	{
+		id = "0.2.0",
+		title = "UPD_020_TITLE",
+		lines = { "UPD_020_1", "UPD_020_2", "UPD_020_3" },
+	},
+}
+]]></string>
+        </Properties>
+      </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="18">
+  <Item class="ServerScriptService" referent="20">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Folder" referent="19">
+    <Item class="Folder" referent="21">
       <Properties>
         <string name="Name">Server</string>
       </Properties>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">AdminConfig</string>
           <string name="Source"><![CDATA[-- Who may use the owner/maintenance tools.
@@ -2045,11 +2571,11 @@ return {
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="21">
+      <Item class="Folder" referent="23">
         <Properties>
           <string name="Name">Chapters</string>
         </Properties>
-        <Item class="ModuleScript" referent="22">
+        <Item class="ModuleScript" referent="24">
           <Properties>
             <string name="Name">Chapter1</string>
             <string name="Source"><![CDATA[-- Chapter 1 "The Reception" - playable flow on Relay Station 07.
@@ -2079,6 +2605,9 @@ local DataService = require(Services.DataService)
 local NoiseService = require(Services.NoiseService)
 
 local Chapter1 = {}
+Chapter1.StartCheckpoint = "C1_START"
+
+local active = false
 
 local TOTAL_FUSES = 3
 local FORECAST_SECONDS = 30
@@ -2090,7 +2619,7 @@ local state = {
 	completedBy = {} :: { [Player]: boolean },
 }
 local fuseFolder: Folder? = nil
-local checkpointSetter: ((string) -> ())? = nil
+local ctx = nil -- { setCheckpoint, finish, playersInGame }
 
 local ARRIVAL = {
 	{ delay = 1.5, text = "SFX_STATIC", channel = "sfx", duration = 2 },
@@ -2208,27 +2737,38 @@ end
 ---------------------------------------------------------------------------
 -- Flow
 ---------------------------------------------------------------------------
-function Chapter1.Reset()
+local function reset()
 	state.stage = "arrival"
 	state.fuses = 0
 	state.forecast = "none"
+	table.clear(state.completedBy)
 	if fuseFolder then
 		fuseFolder:Destroy()
 		fuseFolder = nil
 	end
-	PowerService.Reset()
-	CreatureService.Despawn()
 	StoryService.ResetFlags()
 	StoryService.SetObjective(nil)
-	if checkpointSetter then
-		checkpointSetter("C1_START")
-	end
 end
 
-function Chapter1.Start(context: { setCheckpoint: (string) -> () })
-	checkpointSetter = context.setCheckpoint
+function Chapter1.Begin()
+	reset()
+	active = true
+end
+
+function Chapter1.Stop()
+	active = false
+	reset()
+end
+
+-- Registers interaction handlers once. Every handler ignores input unless chapter 1 is
+-- the running session (the same objects are used by the survival mode).
+function Chapter1.Init(context)
+	ctx = context
 
 	InteractionService.Register("c1_fax", function(player)
+		if not active then
+			return
+		end
 		StoryService.ShowDocument(player, { title = "FAX_TITLE", body = "FAX_BODY", date = os.time() + 24 * 60 * 60 })
 		if StoryService.GetFlag("C1_FaxRead") then
 			return
@@ -2246,17 +2786,23 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_terminal", function()
+		if not active then
+			return
+		end
 		if state.stage ~= "control" and state.stage ~= "arrival" then
 			return
 		end
 		state.stage = "fuses"
-		context.setCheckpoint("C1_CONTROL")
+		ctx.setCheckpoint("C1_CONTROL")
 		StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = "RADIO_C1_TERMINAL", channel = "radio", duration = 5 })
 		spawnFuses()
 		updateFuseObjective()
 	end)
 
 	InteractionService.Register("c1_fuse", function(player, fuse)
+		if not active then
+			return
+		end
 		if state.stage ~= "fuses" or not fuse.Parent then
 			return
 		end
@@ -2283,6 +2829,9 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_breaker_a", function()
+		if not active then
+			return
+		end
 		if state.forecast ~= "armed" then
 			return
 		end
@@ -2293,6 +2842,9 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_relay_b", function(_player, panel)
+		if not active then
+			return
+		end
 		if state.stage ~= "relay" then
 			return
 		end
@@ -2302,11 +2854,14 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 		NoiseService.Emit((panel :: BasePart).Position, 60, nil)
 		StoryService.Say("all", { text = "SFX_RELAY", channel = "world", duration = 3 })
 		rewardAll(Config.Rewards.Relay)
-		context.setCheckpoint("C1_CORE")
+		ctx.setCheckpoint("C1_CORE")
 		StoryService.SetObjective("OBJECTIVE_CORE")
 	end)
 
 	InteractionService.Register("c1_core", function(_player, console)
+		if not active then
+			return
+		end
 		if state.stage ~= "core" then
 			return
 		end
@@ -2331,6 +2886,9 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_antenna", function()
+		if not active then
+			return
+		end
 		if state.stage ~= "antenna" and state.stage ~= "done" then
 			return
 		end
@@ -2340,14 +2898,20 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 				{ delay = 1, speaker = "SPEAKER_UNKNOWN", text = "RADIO_C1_ANTENNA", channel = "radio", duration = 6 },
 			})
 			CreatureService.SetAIEnabled(false)
+			-- Everyone returns to the menu after the ending line; the chapter stays replayable.
+			task.delay(14, function()
+				if active and state.stage == "done" then
+					ctx.finish()
+				end
+			end)
 		end
 		for _, p in Players:GetPlayers() do
 			if p:GetAttribute("FZ_InGame") and not state.completedBy[p] then
 				state.completedBy[p] = true
 				DataService.Grant(p, Config.Rewards.ChapterComplete)
 				DataService.Mutate(p, function(data)
-					if not table.find(data.progress.completed, 1) then
-						table.insert(data.progress.completed, 1)
+					if data.progress.completedChapters.ch1 == nil then
+						data.progress.completedChapters.ch1 = os.time()
 					end
 				end)
 				DataService.SaveNow(p)
@@ -2362,7 +2926,7 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 end
 
 function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
-	if not firstTime then
+	if not firstTime or not active then
 		return
 	end
 	if state.stage == "arrival" then
@@ -2382,11 +2946,11 @@ return Chapter1
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="23">
+      <Item class="Folder" referent="25">
         <Properties>
           <string name="Name">Creature</string>
         </Properties>
-        <Item class="ModuleScript" referent="24">
+        <Item class="ModuleScript" referent="26">
           <Properties>
             <string name="Name">Rig</string>
             <string name="Source"><![CDATA[-- Creature rig factory.
@@ -2529,7 +3093,7 @@ return Rig
           </Properties>
         </Item>
       </Item>
-      <Item class="Script" referent="25">
+      <Item class="Script" referent="27">
         <Properties>
           <string name="Name">Main</string>
           <token name="RunContext">0</token>
@@ -2542,12 +3106,9 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 require(Shared.Net).Init()
 require(Shared.SessionState).Init()
 
-if not workspace:FindFirstChild("FZ_Map") then
-	require(script.Parent.Map.RelayStation07).Build()
-end
-
 local SERVICES = {
 	"DataService",
+	"MapService",
 	"SettingsService",
 	"AdminService",
 	"CodeService",
@@ -2560,7 +3121,9 @@ local SERVICES = {
 	"ShopService",
 	"CreatureService",
 	"FlashlightService",
-	"GameFlowService",
+	"LeaderboardService",
+	"PlaceService",
+	"SessionService",
 }
 
 for _, name in SERVICES do
@@ -2582,11 +3145,11 @@ print("[FZ] Server ready")
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="26">
+      <Item class="Folder" referent="28">
         <Properties>
           <string name="Name">Map</string>
         </Properties>
-        <Item class="ModuleScript" referent="27">
+        <Item class="ModuleScript" referent="29">
           <Properties>
             <string name="Name">RelayStation07</string>
             <string name="Source"><![CDATA[-- Relay Station 07 - script-built playable map following the concept floor plan:
@@ -3154,9 +3717,13 @@ local function furnish()
 
 	-- Sector E: engineering
 	local gen = generator(CFrame.new(-80, 0, 70))
-	generator(CFrame.new(-80, 0, 45))
+	local gen2 = generator(CFrame.new(-80, 0, 45))
 	gen:SetAttribute("SoundLoop", "generator_loop")
 	CollectionService:AddTag(gen, "FZ_AmbientSource")
+	-- Generators are survival objectives (restart them); chapter 1 ignores them.
+	for index, g in { gen, gen2 } do
+		interactable(g, "generator", "INTERACT_RESTART", "OBJECT_GENERATOR", { HoldDuration = 3, MaxDistance = 9, GeneratorId = index })
+	end
 	pipeRun(Vector3.new(-98, 12, 30), Vector3.new(-98, 12, 84))
 	pipeRun(Vector3.new(-60, 12.5, 30), Vector3.new(-60, 12.5, 84), 0.9)
 	ceilingLight(Vector3.new(-70, 0, 40), "E", C.Sodium)
@@ -3426,11 +3993,588 @@ return Map
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="28">
+      <Item class="Folder" referent="30">
+        <Properties>
+          <string name="Name">Modes</string>
+        </Properties>
+        <Item class="ModuleScript" referent="31">
+          <Properties>
+            <string name="Name">Survival</string>
+            <string name="Source"><![CDATA[-- Endless survival "Night shift" (works on any map that provides the tagged objects).
+--
+--   Shift n:  random task (never the same twice in a row) + from shift 2 a random event
+--             creatures get slowly faster and hear better; a second one joins at shift 6
+--   Task done -> marks are BANKED, downed teammates get up, 25 s calm break:
+--             extraction at the antenna is open (whole team must be there) or keep going
+--   Team down -> run over, 50 % of the banked marks; extraction -> 100 % + 20 % bonus
+-- No daily tasks, no timers that run while you are offline, no day/night simulation.
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local Services = script.Parent.Parent.Services
+local StoryService = require(Services.StoryService)
+local InteractionService = require(Services.InteractionService)
+local PowerService = require(Services.PowerService)
+local CreatureService = require(Services.CreatureService)
+local DataService = require(Services.DataService)
+local NoiseService = require(Services.NoiseService)
+local HealthService = require(Services.HealthService)
+local DoorService = require(Services.DoorService)
+local LeaderboardService = require(Services.LeaderboardService)
+
+local Survival = {}
+Survival.StartCheckpoint = "C1_CONTROL"
+
+local SC = Config.Survival
+local TASKS = { "fuses", "uplink", "generators", "stations" }
+local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm" }
+local EVENT_NAMES = { blackout = "SV_EVN_BLACKOUT", static = "SV_EVN_STATIC", hunt = "SV_EVN_HUNT", lockdown = "SV_EVN_LOCKDOWN", calm = "SV_EVN_CALM" }
+local STATIONS = { "c1_terminal", "c1_breaker_a", "c1_core" }
+local UPLINK_SECONDS = 40
+local UPLINK_RADIUS = 17
+
+local ctx = nil
+local active = false
+local token = 0 -- invalidates timers of an older run
+
+type Run = {
+	entry: any,
+	shift: number,
+	completed: number,
+	phase: string, -- "intro" | "task" | "break" | "ended"
+	task: string?,
+	lastTask: string?,
+	event: string?,
+	lastEvent: string?,
+	taskStarted: number,
+	banked: number,
+	participants: { [Player]: boolean },
+	progress: { [string]: any },
+	blackoutSector: string?,
+	lockedDoors: { BasePart },
+	fuses: Folder?,
+	overloadAnnounced: boolean,
+}
+local run: Run? = nil
+
+---------------------------------------------------------------------------
+-- Helpers
+---------------------------------------------------------------------------
+local function say(key: string, params: { [string]: any }?)
+	StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = key, params = params, channel = "radio", duration = 4 })
+end
+
+local function pick(list: { string }, avoid: string?): string
+	local options = {}
+	for _, value in list do
+		if value ~= avoid then
+			table.insert(options, value)
+		end
+	end
+	return options[math.random(1, #options)]
+end
+
+local function interactablePosition(id: string): Vector3?
+	for _, instance in CollectionService:GetTagged("FZ_Interactable") do
+		if instance:GetAttribute("InteractId") == id and instance:IsA("BasePart") then
+			return instance.Position
+		end
+	end
+	return nil
+end
+
+local function aliveInGame(): { Player }
+	local list = {}
+	for _, player in ctx.playersInGame() do
+		if not player:GetAttribute("FZ_Downed") then
+			table.insert(list, player)
+		end
+	end
+	return list
+end
+
+local function publish()
+	local r = run
+	SessionState.Set("SvShift", if r then r.shift else nil)
+	SessionState.Set("SvEvent", if r and r.event and r.phase == "task" then EVENT_NAMES[r.event] else nil)
+	SessionState.Set("SvPhase", if r then r.phase else nil)
+end
+
+local function objective(key: string, params: { [string]: any }?)
+	StoryService.SetObjective(key, params)
+end
+
+---------------------------------------------------------------------------
+-- Events
+---------------------------------------------------------------------------
+local function clearEvent(r: Run)
+	if r.blackoutSector then
+		PowerService.Set(r.blackoutSector, true)
+		r.blackoutSector = nil
+	end
+	for _, panel in r.lockedDoors do
+		DoorService.SetLocked(panel, false)
+	end
+	table.clear(r.lockedDoors)
+	SessionState.Set("SvStatic", nil)
+	r.event = nil
+end
+
+local function startEvent(r: Run)
+	if r.shift < SC.FirstEventShift then
+		return
+	end
+	local event = pick(EVENTS, r.lastEvent)
+	r.event = event
+	r.lastEvent = event
+	if event == "blackout" then
+		local sector = pick({ "A", "C", "D", "E" }, nil)
+		r.blackoutSector = sector
+		PowerService.Set(sector, false)
+		StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
+	elseif event == "static" then
+		SessionState.Set("SvStatic", true)
+	elseif event == "lockdown" then
+		local candidates = {}
+		for _, panel in CollectionService:GetTagged("FZ_Door") do
+			if panel:IsA("BasePart") and (panel:GetAttribute("PowerSector") or "") == "" then
+				table.insert(candidates, panel)
+			end
+		end
+		for _ = 1, math.min(2, #candidates) do
+			local panel = table.remove(candidates, math.random(1, #candidates))
+			DoorService.SetLocked(panel, true)
+			table.insert(r.lockedDoors, panel)
+		end
+		local current = token
+		task.delay(60, function()
+			if token == current and run == r then
+				for _, panel in r.lockedDoors do
+					DoorService.SetLocked(panel, false)
+				end
+				table.clear(r.lockedDoors)
+			end
+		end)
+	end
+	say("SV_EV_" .. string.upper(event))
+end
+
+---------------------------------------------------------------------------
+-- Tasks
+---------------------------------------------------------------------------
+local completeTask: (r: Run) -> ()
+
+local function spawnFuses(r: Run)
+	if r.fuses then
+		r.fuses:Destroy()
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "FZ_SurvivalFuses"
+	folder.Parent = workspace
+	r.fuses = folder
+	local spots = {}
+	for _, spot in CollectionService:GetTagged("FZ_FuseSpot") do
+		if spot:IsA("BasePart") then
+			table.insert(spots, spot)
+		end
+	end
+	for _ = 1, math.min(3, #spots) do
+		local spot = table.remove(spots, math.random(1, #spots))
+		local fuse = Instance.new("Part")
+		fuse.Name = "Fuse"
+		fuse.Size = Vector3.new(0.5, 0.5, 1.4)
+		fuse.Color = Color3.fromRGB(214, 170, 60)
+		fuse.Material = Enum.Material.Metal
+		fuse.Anchored = true
+		fuse.CanCollide = false
+		fuse.CFrame = spot.CFrame * CFrame.new(0, 0.1, 0)
+		local glow = Instance.new("PointLight")
+		glow.Range = 5
+		glow.Brightness = 0.8
+		glow.Color = Color3.fromRGB(255, 200, 90)
+		glow.Parent = fuse
+		fuse:SetAttribute("InteractId", "sv_fuse")
+		fuse:SetAttribute("ActionKey", "INTERACT_PICKUP")
+		fuse:SetAttribute("ObjectKey", "OBJECT_FUSE")
+		fuse:SetAttribute("MaxDistance", 7)
+		fuse.Parent = folder
+		CollectionService:AddTag(fuse, "FZ_Interactable")
+	end
+end
+
+local function beginTask(r: Run)
+	local taskName = pick(TASKS, r.lastTask)
+	r.task = taskName
+	r.lastTask = taskName
+	r.taskStarted = os.clock()
+	r.overloadAnnounced = false
+	r.progress = {}
+	if taskName == "fuses" then
+		r.progress.found = 0
+		spawnFuses(r)
+		objective("OBJECTIVE_FIND_FUSES", { count = 0, total = 3 })
+	elseif taskName == "uplink" then
+		r.progress.seconds = 0
+		objective("SV_TASK_UPLINK", { percent = 0 })
+	elseif taskName == "generators" then
+		r.progress.done = {}
+		objective("SV_TASK_GENERATORS", { count = 0, total = 2 })
+	elseif taskName == "stations" then
+		r.progress.done = {}
+		objective("SV_TASK_STATIONS", { count = 0, total = #STATIONS })
+	end
+end
+
+local function startShift(r: Run, shift: number)
+	if not active or run ~= r then
+		return
+	end
+	r.shift = shift
+	r.phase = "task"
+	local step = shift - 1
+	CreatureService.SetDifficulty({
+		speed = math.min(SC.MaxSpeedScale, 1 + 0.03 * step),
+		hearing = math.min(SC.MaxHearingScale, 1 + 0.06 * step),
+		ventChance = math.min(0.7, Config.Creature.VentChance + 0.04 * step),
+	})
+	CreatureService.SetAIEnabled(true)
+	if CreatureService.Count() == 0 then
+		CreatureService.Spawn()
+	end
+	if shift >= SC.SecondCreatureShift and CreatureService.Count() < 2 then
+		CreatureService.Spawn(nil, true)
+		say("SV_SECOND_CREATURE")
+	end
+	startEvent(r)
+	if r.event == "static" then
+		CreatureService.SetDifficulty({
+			speed = math.min(SC.MaxSpeedScale, 1 + 0.03 * step),
+			hearing = math.min(SC.MaxHearingScale, 1 + 0.06 * step) * 1.4,
+			ventChance = math.min(0.7, Config.Creature.VentChance + 0.04 * step),
+		})
+	end
+	beginTask(r)
+	publish()
+end
+
+completeTask = function(r: Run)
+	if r.phase ~= "task" then
+		return
+	end
+	r.completed += 1
+	r.banked += SC.ShiftReward + SC.ShiftRewardGrowth * r.shift
+	r.phase = "break"
+	r.task = nil
+	clearEvent(r)
+	if r.fuses then
+		r.fuses:Destroy()
+		r.fuses = nil
+	end
+	CreatureService.SetAIEnabled(false)
+	for _, player in ctx.playersInGame() do
+		if player:GetAttribute("FZ_Downed") then
+			HealthService.Revive(player, 50)
+		end
+	end
+	say("SV_SHIFT_DONE", { shift = r.shift })
+	objective("SV_BREAK", { seconds = SC.BreakSeconds })
+	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
+	publish()
+	local current = token
+	task.delay(SC.BreakSeconds, function()
+		if token == current and run == r and r.phase == "break" then
+			startShift(r, r.shift + 1)
+		end
+	end)
+end
+
+---------------------------------------------------------------------------
+-- Run end
+---------------------------------------------------------------------------
+local function endRun(r: Run, extracted: boolean)
+	if r.phase == "ended" then
+		return
+	end
+	r.phase = "ended"
+	publish()
+	clearEvent(r)
+	CreatureService.SetAIEnabled(false)
+	local factor = if extracted then 1 + SC.ExtractBonus else SC.WipeKeep
+	local marks = math.floor(r.banked * factor)
+	local survivalId = r.entry.id
+	for player in r.participants do
+		if player.Parent then
+			local newBest = false
+			DataService.Mutate(player, function(data)
+				local stats = data.modes.survival[survivalId] or { best = 0, runs = 0 }
+				stats.runs += 1
+				if r.completed > stats.best then
+					stats.best = r.completed
+					newBest = true
+				end
+				data.modes.survival[survivalId] = stats
+			end)
+			if marks > 0 then
+				DataService.Grant(player, marks)
+			end
+			DataService.SaveNow(player)
+			task.spawn(LeaderboardService.Submit, survivalId, player.UserId, r.completed)
+			StoryService.ShowDocument(player, {
+				title = "SV_RESULT_TITLE",
+				body = if extracted then "SV_RESULT_EXTRACTED" else "SV_RESULT_LOST",
+				params = { shifts = r.completed, marks = marks },
+			})
+			if newBest then
+				Net.Event("Notify"):FireClient(player, "SV_NEW_BEST")
+			end
+		end
+	end
+	HealthService.HealAll()
+	local current = token
+	task.delay(15, function() -- time to read the shift report
+		if token == current and run == r then
+			ctx.finish()
+		end
+	end)
+end
+
+---------------------------------------------------------------------------
+-- Mode interface
+---------------------------------------------------------------------------
+function Survival.Begin(entry)
+	token += 1
+	active = true
+	run = {
+		entry = entry,
+		shift = 0,
+		completed = 0,
+		phase = "intro",
+		task = nil,
+		lastTask = nil,
+		event = nil,
+		lastEvent = nil,
+		taskStarted = 0,
+		banked = 0,
+		participants = {},
+		progress = {},
+		blackoutSector = nil,
+		lockedDoors = {},
+		fuses = nil,
+		overloadAnnounced = false,
+	}
+	local r = run :: Run
+	PowerService.Set("B", true) -- the core is reachable in survival
+	HealthService.TeamWipeHandler = function()
+		if run == r and active then
+			endRun(r, false)
+		end
+	end
+	StoryService.ResetFlags()
+	objective("SV_INTRO")
+	publish()
+	local current = token
+	task.delay(10, function()
+		if token == current then
+			say("SV_START")
+			startShift(r, 1)
+		end
+	end)
+
+	-- 1 Hz director: uplink progress, overload, hunt event
+	task.spawn(function()
+		local nextHunt = 0
+		while token == current and active do
+			task.wait(1)
+			local rr = run
+			if not rr or rr ~= r or rr.phase ~= "task" then
+				continue
+			end
+			local now = os.clock()
+			if rr.task == "uplink" then
+				local center = interactablePosition("c1_core")
+				if center then
+					local inside = false
+					for _, player in aliveInGame() do
+						local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+						if root and (root.Position - center).Magnitude <= UPLINK_RADIUS then
+							inside = true
+						end
+					end
+					if inside then
+						rr.progress.seconds += 1
+						if rr.progress.seconds % 6 == 0 then
+							NoiseService.Emit(center, 80, nil) -- the uplink is loud
+						end
+						objective("SV_TASK_UPLINK", { percent = math.floor(rr.progress.seconds / UPLINK_SECONDS * 100) })
+						if rr.progress.seconds >= UPLINK_SECONDS then
+							completeTask(rr)
+							continue
+						end
+					end
+				end
+			end
+			if now - rr.taskStarted > SC.TaskSoftLimit then
+				if not rr.overloadAnnounced then
+					rr.overloadAnnounced = true
+					say("SV_OVERLOAD")
+				end
+				if now >= nextHunt then
+					nextHunt = now + 20
+					local targets = aliveInGame()
+					local target = targets[math.random(1, math.max(1, #targets))]
+					local root = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+					if root then
+						CreatureService.Alert(root.Position)
+					end
+				end
+			elseif rr.event == "hunt" and now >= nextHunt then
+				nextHunt = now + 15
+				local targets = aliveInGame()
+				local target = targets[math.random(1, math.max(1, #targets))]
+				local root = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					CreatureService.Alert(root.Position)
+				end
+			end
+		end
+	end)
+end
+
+function Survival.Stop()
+	token += 1
+	active = false
+	local r = run
+	if r then
+		clearEvent(r)
+		if r.fuses then
+			r.fuses:Destroy()
+		end
+	end
+	run = nil
+	HealthService.TeamWipeHandler = nil
+	SessionState.Set("SvShift", nil)
+	SessionState.Set("SvEvent", nil)
+	SessionState.Set("SvPhase", nil)
+	SessionState.Set("SvStatic", nil)
+	SessionState.Set("SvBreakEnds", nil)
+end
+
+function Survival.OnPlayerEntered(player: Player, _firstTime: boolean)
+	local r = run
+	if r and active then
+		r.participants[player] = true
+	end
+end
+
+function Survival.Init(context)
+	ctx = context
+
+	InteractionService.Register("sv_fuse", function(_player, fuse)
+		local r = run
+		if not active or not r or r.task ~= "fuses" or not fuse.Parent then
+			return
+		end
+		Net.Event("Sfx"):FireAllClients("fuse_pickup", (fuse :: BasePart).Position)
+		fuse:Destroy()
+		r.progress.found += 1
+		if r.progress.found >= 3 then
+			objective("OBJECTIVE_RELAY_B")
+		else
+			objective("OBJECTIVE_FIND_FUSES", { count = r.progress.found, total = 3 })
+		end
+	end)
+
+	InteractionService.Register("c1_relay_b", function(_player, panel)
+		local r = run
+		if not active or not r or r.task ~= "fuses" or (r.progress.found or 0) < 3 then
+			return
+		end
+		Net.Event("Sfx"):FireAllClients("relay_activate", (panel :: BasePart).Position)
+		completeTask(r)
+	end)
+
+	InteractionService.Register("generator", function(_player, generator)
+		local r = run
+		if not active or not r or r.task ~= "generators" then
+			return
+		end
+		local id = generator:GetAttribute("GeneratorId") or generator
+		if r.progress.done[id] then
+			return
+		end
+		r.progress.done[id] = true
+		Net.Event("Sfx"):FireAllClients("relay_activate", (generator :: BasePart).Position)
+		NoiseService.Emit((generator :: BasePart).Position, 40, nil)
+		local count = 0
+		for _ in r.progress.done do
+			count += 1
+		end
+		objective("SV_TASK_GENERATORS", { count = count, total = 2 })
+		if count >= 2 then
+			completeTask(r)
+		end
+	end)
+
+	for _, stationId in STATIONS do
+		InteractionService.Register(stationId, function(_player, station)
+			local r = run
+			if not active or not r or r.task ~= "stations" or r.progress.done[stationId] then
+				return
+			end
+			r.progress.done[stationId] = true
+			Net.Event("Sfx"):FireAllClients("radio_channel_beep", (station :: BasePart).Position)
+			local count = 0
+			for _ in r.progress.done do
+				count += 1
+			end
+			objective("SV_TASK_STATIONS", { count = count, total = #STATIONS })
+			if count >= #STATIONS then
+				completeTask(r)
+			end
+		end)
+	end
+
+	-- Voluntary extraction during a break: the whole (standing) team must be there.
+	InteractionService.Register("c1_antenna", function(player, cabinet)
+		local r = run
+		if not active or not r or r.phase ~= "break" then
+			return
+		end
+		local center = (cabinet :: BasePart).Position
+		for _, other in aliveInGame() do
+			local root = other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if not root or (root.Position - center).Magnitude > SC.ExtractRadius then
+				Net.Event("Notify"):FireClient(player, "SV_EXTRACT_NEED_TEAM")
+				return
+			end
+		end
+		endRun(r, true)
+	end)
+
+	Players.PlayerRemoving:Connect(function(player)
+		if run then
+			run.participants[player] = nil
+		end
+	end)
+end
+
+return Survival
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="Folder" referent="32">
         <Properties>
           <string name="Name">Services</string>
         </Properties>
-        <Item class="ModuleScript" referent="29">
+        <Item class="ModuleScript" referent="33">
           <Properties>
             <string name="Name">AdminService</string>
             <string name="Source"><![CDATA[-- AdminService: server-side authorization and audit log for maintenance tools.
@@ -3610,7 +4754,7 @@ ACTIONS.toggle_speed = function(player: Player)
 end
 
 ACTIONS.reset = function()
-	lazy("GameFlowService").ResetChapter()
+	lazy("SessionService").ResetActive()
 	lazy("HealthService").HealAll()
 	lazy("DoorService").CloseAll()
 	return { ok = true }
@@ -3682,7 +4826,7 @@ return AdminService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="30">
+        <Item class="ModuleScript" referent="34">
           <Properties>
             <string name="Name">CodeService</string>
             <string name="Source"><![CDATA[-- CodeService: redeemable codes hidden inside the game world.
@@ -3766,7 +4910,7 @@ return CodeService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="31">
+        <Item class="ModuleScript" referent="35">
           <Properties>
             <string name="Name">CreatureService</string>
             <string name="Source"><![CDATA[-- CreatureService: server-authoritative AI for "Der Lauscher".
@@ -3825,9 +4969,13 @@ type Creature = {
 	lastFootprint: number,
 }
 
-local creature: Creature? = nil
+local creatures: { Creature } = {}
 local aiEnabled = true
-local running = false
+local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance }
+
+local function alive(c: Creature): boolean
+	return table.find(creatures, c) ~= nil and c.model.Parent ~= nil
+end
 
 ---------------------------------------------------------------------------
 -- Helpers
@@ -3952,7 +5100,7 @@ end
 
 -- Returns true when the target is reached.
 local function moveTowards(c: Creature, target: Vector3, speed: number, repathInterval: number?): boolean
-	c.humanoid.WalkSpeed = speed * soloScale()
+	c.humanoid.WalkSpeed = speed * soloScale() * difficulty.speed
 	local now = os.clock()
 	if not c.pathTarget or (c.pathTarget - target).Magnitude > 4 or (repathInterval and now >= c.nextRepath) then
 		computePath(c, target)
@@ -4054,7 +5202,7 @@ local function travelVent(c: Creature, destination: Vector3)
 	c.model:SetAttribute("Hidden", true)
 	c.model:PivotTo(CFrame.new(entry.Position.X, -200, entry.Position.Z))
 	task.wait(CC.VentTravelTime - CC.VentWarning)
-	if creature ~= c then
+	if not alive(c) then
 		return true
 	end
 	Net.Event("Sfx"):FireAllClients("vent_rattle", exit.Position)
@@ -4065,7 +5213,7 @@ local function travelVent(c: Creature, destination: Vector3)
 		end
 	end
 	task.wait(CC.VentWarning)
-	if creature ~= c then
+	if not alive(c) then
 		return true
 	end
 	local out = exit.CFrame * CFrame.new(0, 0, -4)
@@ -4173,7 +5321,7 @@ local function step(c: Creature)
 			c.searchCenter = c.lastSeenPosition
 			c.target = c.lastSeenPosition
 			-- Sometimes it takes the vents instead of following
-			if c.lastSeenPosition and math.random() < CC.VentChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
+			if c.lastSeenPosition and math.random() < difficulty.ventChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
 				task.spawn(travelVent, c, c.lastSeenPosition)
 				return
 			end
@@ -4240,15 +5388,17 @@ local function loadTracks(c: Creature)
 end
 
 function CreatureService.Despawn()
-	if creature then
-		creature.model:Destroy()
-		creature = nil
+	for _, c in creatures do
+		c.model:Destroy()
 	end
-	running = false
+	table.clear(creatures)
 end
 
-function CreatureService.Spawn(cframe: CFrame?): Model
-	CreatureService.Despawn()
+-- keepExisting = true adds another creature (survival escalation).
+function CreatureService.Spawn(cframe: CFrame?, keepExisting: boolean?): Model
+	if not keepExisting then
+		CreatureService.Despawn()
+	end
 	local spawnCFrame = cframe
 	if not spawnCFrame then
 		local marker = CollectionService:GetTagged("FZ_CreatureSpawn")[1]
@@ -4289,12 +5439,11 @@ function CreatureService.Spawn(cframe: CFrame?): Model
 		lastFootprint = 0,
 	}
 	loadTracks(c)
-	creature = c
+	table.insert(creatures, c)
 	setState(c, if aiEnabled then "Patrol" else "Dormant")
 
-	running = true
 	task.spawn(function()
-		while running and creature == c and model.Parent do
+		while alive(c) do
 			if aiEnabled then
 				local ok, err = pcall(step, c)
 				if not ok then
@@ -4309,14 +5458,25 @@ end
 
 function CreatureService.SetAIEnabled(enabled: boolean)
 	aiEnabled = enabled
-	if creature then
+	for _, c in creatures do
 		if enabled then
-			setState(creature, "Patrol")
+			setState(c, "Patrol")
 		else
-			setState(creature, "Dormant")
-			stop(creature)
+			setState(c, "Dormant")
+			stop(c)
 		end
 	end
+end
+
+-- speed / hearing multipliers and vent chance (survival difficulty curve)
+function CreatureService.SetDifficulty(values: { speed: number?, hearing: number?, ventChance: number? })
+	difficulty.speed = values.speed or 1
+	difficulty.hearing = values.hearing or 1
+	difficulty.ventChance = values.ventChance or CC.VentChance
+end
+
+function CreatureService.Count(): number
+	return #creatures
 end
 
 function CreatureService.IsAIEnabled(): boolean
@@ -4324,67 +5484,83 @@ function CreatureService.IsAIEnabled(): boolean
 end
 
 function CreatureService.Get(): Model?
-	return creature and creature.model
+	return creatures[1] and creatures[1].model
 end
 
--- Loud event somewhere (story): the creature comes to look.
+-- Loud event somewhere: the nearest creature that is not busy comes to look.
 function CreatureService.Alert(position: Vector3)
-	local c = creature
-	if c and aiEnabled and c.state ~= "Chase" and c.state ~= "Vent" then
-		startInvestigate(c, position)
+	local best, bestDistance = nil, math.huge
+	for _, c in creatures do
+		if c.state ~= "Chase" and c.state ~= "Vent" and c.state ~= "Dormant" then
+			local d = (c.root.Position - position).Magnitude
+			if d < bestDistance then
+				best, bestDistance = c, d
+			end
+		end
+	end
+	if best and aiEnabled then
+		startInvestigate(best, position)
 	end
 end
 
 function CreatureService.Start()
 	NoiseService.Heard:Connect(function(position, radius, _source)
-		local c = creature
-		if not c or c.model:GetAttribute("Hidden") then
-			return
-		end
-		local distance = (position - c.root.Position).Magnitude
-		if distance <= radius * CC.HearingScale then
-			local current = c.pendingNoise
-			if not current or radius > current.radius then
-				c.pendingNoise = { position = position, radius = radius }
+		for _, c in creatures do
+			if not c.model:GetAttribute("Hidden") then
+				local distance = (position - c.root.Position).Magnitude
+				if distance <= radius * CC.HearingScale * difficulty.hearing then
+					local current = c.pendingNoise
+					if not current or radius > current.radius then
+						c.pendingNoise = { position = position, radius = radius }
+					end
+				end
 			end
 		end
 	end)
 
 	-- Flashlight: the client reports a hit, the server re-validates everything.
 	local limiter = RateLimiter.new(4, 2)
-	Net.Event("FlashCreature").OnServerEvent:Connect(function(player: Player)
-		local c = creature
-		if not c or not limiter:Allow(player) or not aiEnabled then
-			return
-		end
+	local function tryBlind(player: Player, c: Creature): boolean
 		if os.clock() < c.blindReadyAt or c.state == "Vent" or c.state == "Blinded" or c.state == "Dormant" then
-			return
+			return false
 		end
 		local character = player.Character
 		local head = character and character:FindFirstChild("Head") :: BasePart?
 		local light = head and head:FindFirstChild("FZ_Flashlight") :: SpotLight?
 		if not head or not light or not light.Enabled or player:GetAttribute("FZ_Downed") then
-			return
+			return false
 		end
 		local eye = eyePosition(c)
 		local range = CC.BlindRange * (tonumber(player:GetAttribute("FZ_FlashRange")) or 1)
 		local toCreature = eye - head.Position
 		if toCreature.Magnitude > range then
-			return
+			return false
 		end
 		local facing = flat((character :: Model):GetPivot().LookVector)
 		local direction = flat(toCreature)
 		if facing.Magnitude > 0 and direction.Magnitude > 0 and facing.Unit:Dot(direction.Unit) < math.cos(math.rad(60)) then
-			return
+			return false
 		end
 		if not hasLineOfSight(c, head.Position, eye, { character :: Model }) then
-			return
+			return false
 		end
 		local cooldown = CC.BlindCooldown * (tonumber(player:GetAttribute("FZ_BlindCooldownScale")) or 1)
 		c.blindReadyAt = os.clock() + cooldown
 		setState(c, "Blinded")
 		stop(c)
 		Net.Event("Sfx"):FireAllClients("creature_static_burst", c.root)
+		return true
+	end
+
+	Net.Event("FlashCreature").OnServerEvent:Connect(function(player: Player)
+		if not limiter:Allow(player) or not aiEnabled then
+			return
+		end
+		for _, c in creatures do
+			if tryBlind(player, c) then
+				return
+			end
+		end
 	end)
 end
 
@@ -4392,7 +5568,7 @@ return CreatureService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="32">
+        <Item class="ModuleScript" referent="36">
           <Properties>
             <string name="Name">DataService</string>
             <string name="Source"><![CDATA[-- DataService: persistent player data with session locking.
@@ -4412,6 +5588,8 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Content = require(Shared.Content)
+local Updates = require(Shared.Updates)
 local Signal = require(Shared.Signal)
 local Net = require(Shared.Net)
 
@@ -4464,8 +5642,13 @@ local function defaultData(): { [string]: any }
 		progress = {
 			chapter = 1,
 			checkpoint = "C1_START",
-			completed = {}, -- array of chapter numbers
+			completedChapters = {}, -- [chapterId] = unix time of first completion
 		},
+		modes = {
+			survival = {}, -- [survivalMapId] = { best = shifts, runs = n }
+		},
+		seenContent = {}, -- [contentId] = true (NEW badges)
+		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
 		inventory = {}, -- [itemId] = true
 		equipped = {}, -- { set = itemId?, radioSkin = itemId? }
@@ -4499,12 +5682,33 @@ local function sanitizeSettings(settings: { [string]: any })
 	end
 end
 
--- Schema migrations. Add a branch for every SchemaVersion bump.
+-- Schema migrations. Rules (docs/UPDATES.md):
+--   * one function per version step, executed in order, never edited after release
+--   * only ADD or TRANSFORM data - never delete currency, inventory or progress
+--   * new fields with simple defaults need no migration: reconcile() adds them
+local MIGRATIONS: { [number]: (data: { [string]: any }) -> () } = {
+	-- v1 -> v2: chapter progress by id instead of number, survival stats, NEW badges
+	[2] = function(data)
+		data.progress = data.progress or {}
+		local completed = {}
+		for _, number in data.progress.completed or {} do
+			if type(number) == "number" then
+				completed["ch" .. number] = os.time()
+			end
+		end
+		data.progress.completedChapters = completed
+		data.progress.completed = nil
+	end,
+}
+
 local function migrate(data: { [string]: any })
-	local version = tonumber(data.version) or 0
-	-- if version < 2 then ... end
-	if version < Config.Data.SchemaVersion then
-		data.version = Config.Data.SchemaVersion
+	local version = tonumber(data.version) or 1
+	for target = version + 1, Config.Data.SchemaVersion do
+		local step = MIGRATIONS[target]
+		if step then
+			step(data)
+		end
+		data.version = target
 	end
 end
 
@@ -4560,6 +5764,7 @@ local function loadProfile(player: Player): Profile?
 		local maxLockAttempts = 6
 		for lockAttempt = 1, maxLockAttempts do
 			local lockedByOther = false
+			local tooNew = false
 			local ok, result = withRetries("Load " .. key, 4, function()
 				return (store :: DataStore):UpdateAsync(key, function(old)
 					lockedByOther = false
@@ -4576,6 +5781,12 @@ local function loadProfile(player: Player): Profile?
 						lockedByOther = true
 						return nil
 					end
+					if (tonumber(data.version) or 1) > Config.Data.SchemaVersion then
+						-- Saved by a NEWER server version (rolling update). This old server
+						-- must never write it back, or new fields could be lost.
+						tooNew = true
+						return nil
+					end
 					prepare(data)
 					data.lock = { job = game.JobId, time = os.time() }
 					data.stats.sessions += 1
@@ -4584,6 +5795,10 @@ local function loadProfile(player: Player): Profile?
 				end)
 			end)
 			if not ok then
+				break
+			end
+			if tooNew then
+				player:SetAttribute("FZ_DataTooNew", true)
 				break
 			end
 			if not lockedByOther and type(result) == "table" then
@@ -4765,6 +5980,32 @@ function DataService.Start()
 		end
 	end)
 
+	-- NEW badges: the client reports what the player has opened (validated ids only).
+	local seenLimiter = RateLimiter.new(10, 2)
+	local validIds = {}
+	for _, id in Content.AllIds() do
+		validIds[id] = true
+	end
+	Net.Event("MarkSeen").OnServerEvent:Connect(function(player: Player, id: any)
+		if type(id) ~= "string" or not seenLimiter:Allow(player) then
+			return
+		end
+		local updateId = string.match(id, "^update:(.+)$")
+		if updateId then
+			for _, update in Updates do
+				if update.id == updateId then
+					DataService.Mutate(player, function(data)
+						data.lastSeenUpdate = updateId
+					end)
+				end
+			end
+		elseif validIds[id] then
+			DataService.Mutate(player, function(data)
+				data.seenContent[id] = true
+			end)
+		end
+	end)
+
 	Net.Function("FetchProfile").OnServerInvoke = function(player: Player)
 		if not fetchLimiter:Allow(player) then
 			return nil
@@ -4777,7 +6018,10 @@ function DataService.Start()
 		return {
 			settings = deepCopy(data.settings),
 			signalMarks = data.signalMarks,
-			progress = { chapter = data.progress.chapter, completed = deepCopy(data.progress.completed) },
+			progress = { chapter = data.progress.chapter, completedChapters = deepCopy(data.progress.completedChapters) },
+			survival = deepCopy(data.modes.survival),
+			seenContent = deepCopy(data.seenContent),
+			lastSeenUpdate = data.lastSeenUpdate,
 			inventory = deepCopy(data.inventory),
 			equipped = deepCopy(data.equipped),
 			persistent = profile.Persistent,
@@ -4790,7 +6034,7 @@ return DataService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="33">
+        <Item class="ModuleScript" referent="37">
           <Properties>
             <string name="Name">DoorService</string>
             <string name="Source"><![CDATA[-- DoorService: sliding doors (tag FZ_Door). Opening makes noise; locked doors buzz.
@@ -4875,7 +6119,7 @@ return DoorService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="34">
+        <Item class="ModuleScript" referent="38">
           <Properties>
             <string name="Name">FlashlightService</string>
             <string name="Source"><![CDATA[-- FlashlightService: replicated flashlight so teammates see each other's light.
@@ -4938,129 +6182,7 @@ return FlashlightService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="35">
-          <Properties>
-            <string name="Name">GameFlowService</string>
-            <string name="Source"><![CDATA[-- GameFlowService: session flow (menu -> in game), checkpoints and chapter hooks.
---
--- Party model: one Roblox server = one team (max 4, set "Max Players" to 4 in Game
--- Settings). Story progress is shared per server through SessionState. Nobody waits for
--- anyone: a player who presses Play enters immediately; friends who join later are
--- placed at the team's current checkpoint.
-
-local CollectionService = game:GetService("CollectionService")
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Shared = ReplicatedStorage:WaitForChild("Shared")
-local Net = require(Shared.Net)
-local SessionState = require(Shared.SessionState)
-
-local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
-
-local CHECKPOINT_TAG = "FZ_Checkpoint"
-
-local GameFlowService = {}
-
-local chapters = {
-	[1] = require(script.Parent.Parent.Chapters.Chapter1),
-}
-
-local inGame: { [Player]: boolean } = {}
-local entered: { [Player]: boolean } = {} -- entered at least once this session
-
-local function findCheckpoint(id: string): BasePart?
-	for _, part in CollectionService:GetTagged(CHECKPOINT_TAG) do
-		if part:IsA("BasePart") and part:GetAttribute("CheckpointId") == id then
-			return part
-		end
-	end
-	return nil
-end
-
-local function placeAtCheckpoint(player: Player)
-	local character = player.Character
-	if not character or player:GetAttribute("FZ_MonsterMode") then
-		return
-	end
-	local checkpoint = findCheckpoint(SessionState.Get("Checkpoint") or "C1_START")
-	if not checkpoint then
-		return -- fall back to the default SpawnLocation
-	end
-	-- Spread the team a little so nobody spawns inside a teammate.
-	local index = table.find(Players:GetPlayers(), player) or 1
-	local offset = Vector3.new(((index - 1) % 2) * 3 - 1.5, 3, math.floor((index - 1) / 2) * 3)
-	local target = checkpoint.CFrame * CFrame.new(offset)
-	pcall(function()
-		player:RequestStreamAroundAsync(target.Position, 5)
-	end)
-	if player.Character == character then
-		character:PivotTo(target)
-	end
-end
-
-function GameFlowService.SetCheckpoint(id: string)
-	SessionState.Set("Checkpoint", id)
-end
-
-function GameFlowService.PlaceAtCheckpoint(player: Player)
-	placeAtCheckpoint(player)
-end
-
-function GameFlowService.ResetChapter()
-	local chapter = chapters[SessionState.Get("Chapter") or 1]
-	if chapter and chapter.Reset then
-		chapter.Reset()
-	end
-end
-
-function GameFlowService.Start()
-	SessionState.Set("Chapter", 1)
-	SessionState.Set("Checkpoint", "C1_START")
-
-	local context = { setCheckpoint = GameFlowService.SetCheckpoint }
-	for _, chapter in chapters do
-		chapter.Start(context)
-	end
-
-	local limiter = RateLimiter.new(2, 0.5)
-	Net.Event("ClientReady").OnServerEvent:Connect(function(player: Player)
-		if not limiter:Allow(player) or inGame[player] then
-			return
-		end
-		inGame[player] = true
-		player:SetAttribute("FZ_InGame", true)
-		placeAtCheckpoint(player)
-		local firstTime = not entered[player]
-		entered[player] = true
-		local chapter = chapters[SessionState.Get("Chapter") or 1]
-		if chapter and chapter.OnPlayerEntered then
-			chapter.OnPlayerEntered(player, firstTime)
-		end
-	end)
-
-	local function onPlayer(player: Player)
-		player.CharacterAdded:Connect(function()
-			if inGame[player] then
-				task.defer(placeAtCheckpoint, player)
-			end
-		end)
-	end
-	Players.PlayerAdded:Connect(onPlayer)
-	for _, player in Players:GetPlayers() do
-		onPlayer(player)
-	end
-	Players.PlayerRemoving:Connect(function(player)
-		inGame[player] = nil
-		entered[player] = nil
-	end)
-end
-
-return GameFlowService
-]]></string>
-          </Properties>
-        </Item>
-        <Item class="ModuleScript" referent="36">
+        <Item class="ModuleScript" referent="39">
           <Properties>
             <string name="Name">HealthService</string>
             <string name="Source"><![CDATA[-- HealthService: damage, downed state and revive. Nobody dies instantly:
@@ -5117,8 +6239,11 @@ function HealthService.Respawn(player: Player)
 	downedSince[player] = nil
 	player:SetAttribute("FZ_Downed", false)
 	clearRevivePrompt(player)
-	player:LoadCharacter() -- GameFlowService places the new character at the checkpoint
+	player:LoadCharacter() -- SessionService places the new character at the checkpoint
 end
+
+-- Optional override (survival: a wipe ends the run instead of a checkpoint respawn).
+HealthService.TeamWipeHandler = nil :: (() -> ())?
 
 local function checkTeamWipe()
 	local players = inGamePlayers()
@@ -5129,6 +6254,10 @@ local function checkTeamWipe()
 		if not HealthService.IsDowned(player) then
 			return
 		end
+	end
+	if HealthService.TeamWipeHandler then
+		task.delay(2, HealthService.TeamWipeHandler)
+		return
 	end
 	task.delay(3, function()
 		for _, player in inGamePlayers() do
@@ -5269,7 +6398,7 @@ return HealthService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="37">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">InteractionService</string>
             <string name="Source"><![CDATA[-- InteractionService: one interaction system for every platform.
@@ -5298,12 +6427,14 @@ local DISTANCE_TOLERANCE = 6
 local InteractionService = {}
 
 type Handler = (player: Player, instance: Instance, prompt: ProximityPrompt) -> ()
-local handlers: { [string]: Handler } = {}
+local handlers: { [string]: { Handler } } = {}
 local limiter = RateLimiter.new(6, 3)
 
+-- Several modes may handle the same object (e.g. the relay panel is used by chapter 1
+-- and by survival). Every handler checks itself whether its mode is active.
 function InteractionService.Register(id: string, handler: Handler)
-	assert(handlers[id] == nil, "[FZ-Interact] Duplicate handler id: " .. id)
-	handlers[id] = handler
+	handlers[id] = handlers[id] or {}
+	table.insert(handlers[id], handler)
 end
 
 local function worldPosition(instance: Instance): Vector3?
@@ -5332,14 +6463,16 @@ local function onTriggered(player: Player, instance: Instance, prompt: Proximity
 		return
 	end
 	local id = instance:GetAttribute("InteractId")
-	local handler = if type(id) == "string" then handlers[id] else nil
-	if not handler then
+	local list = if type(id) == "string" then handlers[id] else nil
+	if not list then
 		warn("[FZ-Interact] No handler for InteractId " .. tostring(id) .. " on " .. instance:GetFullName())
 		return
 	end
-	local ok, err = pcall(handler, player, instance, prompt)
-	if not ok then
-		warn("[FZ-Interact] Handler " .. id .. " failed: " .. tostring(err))
+	for _, handler in list do
+		local ok, err = pcall(handler, player, instance, prompt)
+		if not ok then
+			warn("[FZ-Interact] Handler " .. id .. " failed: " .. tostring(err))
+		end
 	end
 end
 
@@ -5381,7 +6514,181 @@ return InteractionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="41">
+          <Properties>
+            <string name="Name">LeaderboardService</string>
+            <string name="Source"><![CDATA[-- LeaderboardService: global best shifts per survival map (OrderedDataStore).
+-- Names are resolved and cached on the server. Reads are cached for 60 s.
+
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Content = require(Shared.Content)
+local Net = require(Shared.Net)
+
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local LeaderboardService = {}
+
+local stores: { [string]: OrderedDataStore } = {}
+local cache: { [string]: { time: number, entries: { any } } } = {}
+local names: { [number]: string } = {}
+
+local function store(survivalId: string): OrderedDataStore?
+	if stores[survivalId] then
+		return stores[survivalId]
+	end
+	local ok, result = pcall(DataStoreService.GetOrderedDataStore, DataStoreService, "FZ_Survival_" .. survivalId .. "_v1")
+	if ok then
+		stores[survivalId] = result
+		return result
+	end
+	return nil
+end
+
+local function nameOf(userId: number): string
+	if names[userId] then
+		return names[userId]
+	end
+	local ok, name = pcall(Players.GetNameFromUserIdAsync, Players, userId)
+	names[userId] = if ok then name else "?"
+	return names[userId]
+end
+
+function LeaderboardService.Submit(survivalId: string, userId: number, shifts: number)
+	local s = store(survivalId)
+	if not s or shifts <= 0 then
+		return
+	end
+	pcall(function()
+		s:UpdateAsync(tostring(userId), function(old)
+			if type(old) == "number" and old >= shifts then
+				return nil -- keep the better score, no write
+			end
+			return math.floor(shifts)
+		end)
+	end)
+	cache[survivalId] = nil
+end
+
+function LeaderboardService.Top(survivalId: string): { any }?
+	local cached = cache[survivalId]
+	if cached and os.clock() - cached.time < 60 then
+		return cached.entries
+	end
+	local s = store(survivalId)
+	if not s then
+		return nil
+	end
+	local ok, pages = pcall(s.GetSortedAsync, s, false, 10)
+	if not ok then
+		return nil
+	end
+	local entries = {}
+	for rank, item in pages:GetCurrentPage() do
+		local userId = tonumber(item.key) or 0
+		table.insert(entries, { rank = rank, name = nameOf(userId), shifts = item.value })
+	end
+	cache[survivalId] = { time = os.clock(), entries = entries }
+	return entries
+end
+
+function LeaderboardService.Start()
+	local limiter = RateLimiter.new(3, 0.2)
+	Net.Function("GetLeaderboard").OnServerInvoke = function(player: Player, survivalId: any)
+		if not limiter:Allow(player) or type(survivalId) ~= "string" or not Content.Survival(survivalId) then
+			return { ok = false }
+		end
+		local entries = LeaderboardService.Top(survivalId)
+		return { ok = entries ~= nil, entries = entries or {} }
+	end
+end
+
+return LeaderboardService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="42">
+          <Properties>
+            <string name="Name">MapService</string>
+            <string name="Source"><![CDATA[-- MapService: exactly one map is loaded per server. Sources, in this order:
+--   1. Workspace.FZ_Map (your own hand-built map for relay07, never destroyed)
+--   2. ServerStorage.Maps.<model> (your own map models for any map id)
+--   3. A script builder in ServerScriptService/Server/Map (relay07 today)
+-- Switching maps only happens when no session is running.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+
+local Content = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Content"))
+
+local MapService = {}
+
+local current: { id: string, model: Instance?, owned: boolean }? = nil
+
+function MapService.CurrentId(): string?
+	return current and current.id
+end
+
+function MapService.IsAvailable(mapId: string): boolean
+	local map = Content.Maps[mapId]
+	if not map then
+		return false
+	end
+	if mapId == "relay07" and workspace:FindFirstChild("FZ_Map") then
+		return true
+	end
+	local maps = ServerStorage:FindFirstChild("Maps")
+	if maps and map.model and maps:FindFirstChild(map.model) then
+		return true
+	end
+	return map.builder ~= nil and script.Parent.Parent.Map:FindFirstChild(map.builder) ~= nil
+end
+
+function MapService.Load(mapId: string): boolean
+	if current and current.id == mapId then
+		return true
+	end
+	local map = Content.Maps[mapId]
+	if not map or not MapService.IsAvailable(mapId) then
+		warn("[FZ-Map] Map not available: " .. tostring(mapId))
+		return false
+	end
+	if current and current.model and not current.owned then
+		current.model:Destroy()
+		workspace.Terrain:Clear()
+	end
+	local model: Instance? = nil
+	local owned = false
+	if mapId == "relay07" and workspace:FindFirstChild("FZ_Map") then
+		model = workspace:FindFirstChild("FZ_Map")
+		owned = true
+	else
+		local maps = ServerStorage:FindFirstChild("Maps")
+		local source = maps and map.model and maps:FindFirstChild(map.model)
+		if source then
+			model = source:Clone()
+			;(model :: Instance).Parent = workspace
+		else
+			model = require(script.Parent.Parent.Map:FindFirstChild(map.builder) :: ModuleScript).Build()
+		end
+	end
+	current = { id = mapId, model = model, owned = owned }
+	return true
+end
+
+-- Loads the default map at boot so the menu has a live scene behind it.
+function MapService.Start()
+	MapService.Load("relay07")
+end
+
+return MapService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="43">
           <Properties>
             <string name="Name">NoiseService</string>
             <string name="Source"><![CDATA[-- NoiseService: everything the creature can hear goes through here.
@@ -5428,7 +6735,85 @@ return NoiseService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="44">
+          <Properties>
+            <string name="Name">PlaceService</string>
+            <string name="Source"><![CDATA[-- PlaceService: server-side teleports between places of this experience.
+-- Only used when Content.Places has real place ids. Teams travel together into a
+-- reserved server; the destination reads the (validated) selection from TeleportData.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Content = require(Shared.Content)
+local Net = require(Shared.Net)
+
+local PlaceService = {}
+
+function PlaceService.PlaceFor(mapId: string): number
+	return Content.Places[mapId] or 0
+end
+
+function PlaceService.CanTeleport(mapId: string): boolean
+	local placeId = PlaceService.PlaceFor(mapId)
+	return placeId > 0 and placeId ~= game.PlaceId
+end
+
+-- Teleports players to a fresh reserved server of the map's place. Returns success.
+function PlaceService.Teleport(players: { Player }, mapId: string, data: { mode: string, contentId: string }): boolean
+	local placeId = PlaceService.PlaceFor(mapId)
+	if placeId <= 0 then
+		return false
+	end
+	local ok, accessCode = pcall(function()
+		return (TeleportService:ReserveServer(placeId))
+	end)
+	if not ok or type(accessCode) ~= "string" then
+		warn("[FZ-Place] ReserveServer failed: " .. tostring(accessCode))
+		return false
+	end
+	local options = Instance.new("TeleportOptions")
+	options.ReservedServerAccessCode = accessCode
+	options:SetTeleportData({ mode = data.mode, contentId = data.contentId })
+	for attempt = 1, 3 do
+		local success, err = pcall(function()
+			TeleportService:TeleportAsync(placeId, players, options)
+		end)
+		if success then
+			return true
+		end
+		warn(string.format("[FZ-Place] Teleport attempt %d failed: %s", attempt, tostring(err)))
+		task.wait(attempt * 2)
+	end
+	return false
+end
+
+-- Selection a player arrived with (validated against the registry, never trusted blindly).
+function PlaceService.ArrivalSelection(player: Player): (string?, string?)
+	local ok, joinData = pcall(player.GetJoinData, player)
+	local data = ok and type(joinData) == "table" and joinData.TeleportData
+	if type(data) ~= "table" or type(data.mode) ~= "string" or type(data.contentId) ~= "string" then
+		return nil, nil
+	end
+	if not Content.Entry(data.mode, data.contentId) then
+		return nil, nil
+	end
+	return data.mode, data.contentId
+end
+
+function PlaceService.Start()
+	TeleportService.TeleportInitFailed:Connect(function(player, result, message)
+		warn(string.format("[FZ-Place] Teleport of %s failed (%s): %s", player.Name, tostring(result), tostring(message)))
+		Net.Event("Notify"):FireClient(player, "SESSION_ERROR")
+	end)
+end
+
+return PlaceService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">PowerService</string>
             <string name="Source"><![CDATA[-- PowerService: sector power. Switches tagged lights (FZ_SectorLight) and unlocks/locks
@@ -5503,7 +6888,309 @@ return PowerService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="46">
+          <Properties>
+            <string name="Name">SessionService</string>
+            <string name="Source"><![CDATA[-- SessionService: what the team in this server is currently playing.
+--
+--   One Roblox server = one team = at most one running session:
+--     { mode = "story" | "survival", contentId = "ch1" | "sv_relay07" | ..., mapId }
+--   * The first player who picks something starts it; teammates join it with one tap.
+--   * Picking something else while teammates are playing: if that content has its own
+--     place, the player is teleported to a fresh reserved server; otherwise "busy".
+--   * Nobody in game for a while -> the session ends and the map is free again.
+--   * Players who arrive by teleport with a valid selection start/join automatically.
+-- Mode modules (Chapters/*, Modes/*) implement: Init(context), Begin(entry), Stop(),
+-- OnPlayerEntered(player, firstTime), StartCheckpoint.
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Content = require(Shared.Content)
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local DataService = require(script.Parent.DataService)
+local MapService = require(script.Parent.MapService)
+local PlaceService = require(script.Parent.PlaceService)
+local CreatureService = require(script.Parent.CreatureService)
+local HealthService = require(script.Parent.HealthService)
+local PowerService = require(script.Parent.PowerService)
+local DoorService = require(script.Parent.DoorService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local SessionService = {}
+
+local MODULES = {
+	story = {
+		ch1 = require(script.Parent.Parent.Chapters.Chapter1),
+	},
+	survival = {
+		sv_relay07 = require(script.Parent.Parent.Modes.Survival),
+	},
+}
+
+type Session = { mode: string, contentId: string, mapId: string, module: any, idleSince: number? }
+local session: Session? = nil
+local inGame: { [Player]: boolean } = {}
+local entered: { [Player]: boolean } = {}
+
+---------------------------------------------------------------------------
+-- Checkpoints
+---------------------------------------------------------------------------
+local function findCheckpoint(id: string): BasePart?
+	for _, part in CollectionService:GetTagged("FZ_Checkpoint") do
+		if part:IsA("BasePart") and part:GetAttribute("CheckpointId") == id then
+			return part
+		end
+	end
+	return nil
+end
+
+local function placeAtCheckpoint(player: Player)
+	local character = player.Character
+	if not character or player:GetAttribute("FZ_MonsterMode") then
+		return
+	end
+	local checkpoint = findCheckpoint(SessionState.Get("Checkpoint") or "C1_START")
+	if not checkpoint then
+		return
+	end
+	local index = table.find(Players:GetPlayers(), player) or 1
+	local offset = Vector3.new(((index - 1) % 2) * 3 - 1.5, 3, math.floor((index - 1) / 2) * 3)
+	local target = checkpoint.CFrame * CFrame.new(offset)
+	pcall(function()
+		player:RequestStreamAroundAsync(target.Position, 5)
+	end)
+	if player.Character == character then
+		character:PivotTo(target)
+	end
+end
+
+function SessionService.SetCheckpoint(id: string)
+	SessionState.Set("Checkpoint", id)
+end
+
+---------------------------------------------------------------------------
+-- Lifecycle
+---------------------------------------------------------------------------
+function SessionService.Get(): Session?
+	return session
+end
+
+function SessionService.IsActive(mode: string, contentId: string?): boolean
+	return session ~= nil and session.mode == mode and (contentId == nil or session.contentId == contentId)
+end
+
+function SessionService.PlayersInGame(): { Player }
+	local list = {}
+	for player in inGame do
+		table.insert(list, player)
+	end
+	return list
+end
+
+local function cleanWorld()
+	CreatureService.Despawn()
+	CreatureService.SetAIEnabled(true)
+	CreatureService.SetDifficulty({})
+	HealthService.TeamWipeHandler = nil
+	PowerService.Reset()
+	DoorService.CloseAll()
+	HealthService.HealAll()
+end
+
+local function start(mode: string, contentId: string): boolean
+	local entry = Content.Entry(mode, contentId)
+	local module = MODULES[mode] and MODULES[mode][contentId]
+	if not entry or not module or entry.status ~= "available" then
+		return false
+	end
+	if not MapService.Load(entry.map) then
+		return false
+	end
+	cleanWorld()
+	session = { mode = mode, contentId = contentId, mapId = entry.map, module = module, idleSince = nil }
+	table.clear(entered)
+	SessionService.SetCheckpoint(module.StartCheckpoint or "C1_START")
+	SessionState.Set("Mode", mode)
+	SessionState.Set("ContentId", contentId)
+	module.Begin(entry)
+	return true
+end
+
+local function leave(player: Player, respawn: boolean)
+	if not inGame[player] then
+		return
+	end
+	inGame[player] = nil
+	player:SetAttribute("FZ_InGame", false)
+	player:SetAttribute("FZ_Downed", false)
+	if respawn and player.Parent and not player:GetAttribute("FZ_MonsterMode") then
+		player:LoadCharacter() -- back to the menu spawn, out of the station
+	end
+end
+
+-- Ends the session for everyone (mode finished, or idle). Players return to the menu.
+function SessionService.Finish()
+	local current = session
+	if not current then
+		return
+	end
+	session = nil
+	pcall(current.module.Stop)
+	for player in table.clone(inGame) do
+		leave(player, true)
+	end
+	cleanWorld()
+	SessionState.Set("Mode", nil)
+	SessionState.Set("ContentId", nil)
+	SessionState.Set("Objective", nil)
+	SessionState.Set("ObjectiveParams", nil)
+end
+
+local function join(player: Player)
+	local current = session
+	if not current then
+		return false
+	end
+	inGame[player] = true
+	current.idleSince = nil
+	player:SetAttribute("FZ_InGame", true)
+	player:SetAttribute("FZ_AutoJoin", nil)
+	placeAtCheckpoint(player)
+	local firstTime = not entered[player]
+	entered[player] = true
+	if current.module.OnPlayerEntered then
+		task.spawn(current.module.OnPlayerEntered, player, firstTime)
+	end
+	return true
+end
+
+local function completedChapters(player: Player): { [string]: any }
+	local profile = DataService.Get(player)
+	return if profile then profile.Data.progress.completedChapters else {}
+end
+
+local function request(player: Player, action: string, mode: any, contentId: any)
+	if action == "leave" then
+		leave(player, true)
+		return { status = "ok" }
+	elseif action == "join" then
+		return { status = if join(player) then "ok" else "none" }
+	elseif action ~= "start" then
+		return { status = "error" }
+	end
+	if type(mode) ~= "string" or type(contentId) ~= "string" then
+		return { status = "error" }
+	end
+	local entry = Content.Entry(mode, contentId)
+	if not entry or not Content.IsUnlocked(entry, completedChapters(player)) then
+		return { status = "locked" }
+	end
+	if session and session.mode == mode and session.contentId == contentId then
+		join(player)
+		return { status = "ok" }
+	end
+	if session and #SessionService.PlayersInGame() > 0 then
+		if PlaceService.CanTeleport(entry.map) then
+			task.spawn(PlaceService.Teleport, { player }, entry.map, { mode = mode, contentId = contentId })
+			return { status = "teleport" }
+		end
+		return { status = "busy", mode = session.mode, contentId = session.contentId }
+	end
+	if session then
+		SessionService.Finish()
+	end
+	if not start(mode, contentId) then
+		return { status = "error" }
+	end
+	join(player)
+	return { status = "ok" }
+end
+
+function SessionService.ResetActive()
+	local current = session
+	if current then
+		local mode, contentId = current.mode, current.contentId
+		local players = SessionService.PlayersInGame()
+		SessionService.Finish()
+		start(mode, contentId)
+		for _, player in players do
+			join(player)
+		end
+	end
+end
+
+function SessionService.Start()
+	local context = { setCheckpoint = SessionService.SetCheckpoint, finish = SessionService.Finish, playersInGame = SessionService.PlayersInGame }
+	for _, modules in MODULES do
+		for _, module in modules do
+			module.Init(context)
+		end
+	end
+
+	local limiter = RateLimiter.new(4, 0.5)
+	Net.Function("Session").OnServerInvoke = function(player: Player, action: any, mode: any, contentId: any)
+		if not limiter:Allow(player) or type(action) ~= "string" then
+			return { status = "error" }
+		end
+		return request(player, action, mode, contentId)
+	end
+
+	local function onPlayer(player: Player)
+		player.CharacterAdded:Connect(function()
+			if inGame[player] then
+				task.defer(placeAtCheckpoint, player)
+			end
+		end)
+		-- Arrived by teleport with a selection? Start or join it automatically.
+		local mode, contentId = PlaceService.ArrivalSelection(player)
+		if mode and contentId then
+			if not session then
+				start(mode :: string, contentId :: string)
+			end
+			if session and session.mode == mode and session.contentId == contentId then
+				player:SetAttribute("FZ_AutoJoin", true)
+			end
+		end
+	end
+	Players.PlayerAdded:Connect(onPlayer)
+	for _, player in Players:GetPlayers() do
+		onPlayer(player)
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		inGame[player] = nil
+		entered[player] = nil
+	end)
+
+	-- End idle sessions so the next team can pick something else.
+	task.spawn(function()
+		while true do
+			task.wait(2)
+			local current = session
+			if current then
+				if next(inGame) == nil then
+					current.idleSince = current.idleSince or os.clock()
+					if os.clock() - current.idleSince > Config.Survival.SessionIdleEnd then
+						SessionService.Finish()
+					end
+				else
+					current.idleSince = nil
+				end
+			end
+		end
+	end)
+end
+
+return SessionService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">SettingsService</string>
             <string name="Source"><![CDATA[-- SettingsService: persists player settings (language, subtitles, accessibility, graphics).
@@ -5541,7 +7228,7 @@ return SettingsService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">ShopService</string>
             <string name="Source"><![CDATA[-- ShopService: unlock and equip items with earned Signal Marks (server-authoritative).
@@ -5706,7 +7393,7 @@ return ShopService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">StoryService</string>
             <string name="Source"><![CDATA[-- StoryService: sends story content (subtitles, documents, objectives) to clients.
@@ -5795,7 +7482,7 @@ return StoryService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">VoiceService</string>
             <string name="Source"><![CDATA[-- VoiceService: proximity voice + walkie-talkie radio on top of the Roblox Audio API.
@@ -5945,11 +7632,11 @@ return VoiceService
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="44">
+      <Item class="Folder" referent="51">
         <Properties>
           <string name="Name">Util</string>
         </Properties>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">RateLimiter</string>
             <string name="Source"><![CDATA[-- Token-bucket rate limiter per player. Every client->server remote uses one.
@@ -6002,15 +7689,15 @@ return RateLimiter
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="46">
+  <Item class="ServerStorage" referent="53">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="Folder" referent="47">
+    <Item class="Folder" referent="54">
       <Properties>
         <string name="Name">Secrets</string>
       </Properties>
-      <Item class="ModuleScript" referent="48">
+      <Item class="ModuleScript" referent="55">
         <Properties>
           <string name="Name">Codes</string>
           <string name="Source"><![CDATA[-- Redeemable codes. Lives in ServerStorage: never replicated to clients.
@@ -6029,18 +7716,18 @@ return {
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="49">
+  <Item class="StarterPlayer" referent="56">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <token name="CameraMode">1</token>
       <float name="CharacterWalkSpeed">10</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterCharacterScripts" referent="50">
+    <Item class="StarterCharacterScripts" referent="57">
       <Properties>
         <string name="Name">StarterCharacterScripts</string>
       </Properties>
-      <Item class="Script" referent="51">
+      <Item class="Script" referent="58">
         <Properties>
           <string name="Name">Health</string>
           <token name="RunContext">0</token>
@@ -6050,19 +7737,19 @@ return {
         </Properties>
       </Item>
     </Item>
-    <Item class="StarterPlayerScripts" referent="52">
+    <Item class="StarterPlayerScripts" referent="59">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="53">
+      <Item class="Folder" referent="60">
         <Properties>
           <string name="Name">Client</string>
         </Properties>
-        <Item class="Folder" referent="54">
+        <Item class="Folder" referent="61">
           <Properties>
             <string name="Name">Controllers</string>
           </Properties>
-          <Item class="ModuleScript" referent="55">
+          <Item class="ModuleScript" referent="62">
             <Properties>
               <string name="Name">AudioController</string>
               <string name="Source"><![CDATA[-- AudioController: every non-voice sound on the client.
@@ -6271,7 +7958,7 @@ return AudioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="56">
+          <Item class="ModuleScript" referent="63">
             <Properties>
               <string name="Name">CreatureVisualsController</string>
               <string name="Source"><![CDATA[-- CreatureVisualsController: everything the player SEES and HEARS of the creature.
@@ -6457,7 +8144,7 @@ return CreatureVisualsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="57">
+          <Item class="ModuleScript" referent="64">
             <Properties>
               <string name="Name">EquipmentController</string>
               <string name="Source"><![CDATA[-- EquipmentController: client side of shop equipment.
@@ -6575,7 +8262,7 @@ return EquipmentController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="58">
+          <Item class="ModuleScript" referent="65">
             <Properties>
               <string name="Name">FlashlightController</string>
               <string name="Source"><![CDATA[-- FlashlightController: precise camera-aligned light for the local player, plus the
@@ -6722,7 +8409,7 @@ return FlashlightController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="59">
+          <Item class="ModuleScript" referent="66">
             <Properties>
               <string name="Name">GraphicsController</string>
               <string name="Source"><![CDATA[-- GraphicsController: quality profiles for the parts an experience may control itself.
@@ -6857,7 +8544,7 @@ return GraphicsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="60">
+          <Item class="ModuleScript" referent="67">
             <Properties>
               <string name="Name">HealthController</string>
               <string name="Source"><![CDATA[-- HealthController: health HUD (only visible when hurt), damage vignette, downed overlay.
@@ -6958,7 +8645,7 @@ return HealthController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="61">
+          <Item class="ModuleScript" referent="68">
             <Properties>
               <string name="Name">InputController</string>
               <string name="Source"><![CDATA[-- InputController: one logical action layer for keyboard/mouse, gamepad and touch.
@@ -7290,7 +8977,7 @@ return InputController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="62">
+          <Item class="ModuleScript" referent="69">
             <Properties>
               <string name="Name">MovementController</string>
               <string name="Source"><![CDATA[-- MovementController: slow walk, short limited sprint with stamina.
@@ -7420,7 +9107,7 @@ return MovementController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="63">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">RadioController</string>
               <string name="Source"><![CDATA[-- RadioController: the walkie-talkie in your hand.
@@ -7667,7 +9354,7 @@ return RadioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="64">
+          <Item class="ModuleScript" referent="71">
             <Properties>
               <string name="Name">SettingsController</string>
               <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
@@ -7758,7 +9445,7 @@ return SettingsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="65">
+          <Item class="ModuleScript" referent="72">
             <Properties>
               <string name="Name">VoiceController</string>
               <string name="Source"><![CDATA[-- VoiceController: hearing voices on this client.
@@ -7990,7 +9677,7 @@ return VoiceController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="66">
+          <Item class="ModuleScript" referent="73">
             <Properties>
               <string name="Name">WorldTextController</string>
               <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
@@ -8075,7 +9762,7 @@ return WorldTextController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="67">
+        <Item class="LocalScript" referent="74">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- FREQUENCY ZERO - client bootstrap.
@@ -8100,6 +9787,8 @@ local player = Players.LocalPlayer
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Content = require(Shared.Content)
+local Updates = require(Shared.Updates)
 local Localization = require(Shared.Localization)
 local Net = require(Shared.Net)
 local SessionState = require(Shared.SessionState)
@@ -8176,7 +9865,7 @@ if waitForAttribute("FZ_DataReady", 25) then
 	end
 end
 profile = profile
-	or { settings = {}, signalMarks = 0, progress = { chapter = 1, completed = {} }, persistent = false, isNew = true }
+	or { settings = {}, signalMarks = 0, progress = { chapter = 1, completedChapters = {} }, survival = {}, seenContent = {}, lastSeenUpdate = "", persistent = false, isNew = true }
 
 SettingsController.Load(profile.settings)
 
@@ -8343,8 +10032,9 @@ end)
 ---------------------------------------------------------------------------
 -- 4. App flow
 ---------------------------------------------------------------------------
-local readyRemote = Net.Event("ClientReady")
+local sessionRemote = Net.Function("Session")
 local pauseOpenedAt = 0
+local leaving = false
 
 local app = {
 	Settings = SettingsController,
@@ -8361,22 +10051,132 @@ function app.HasProgress(): boolean
 	return profile.isNew == false
 end
 
-function app.Play(_chapter: number?)
-	if state == "menu" then
+function app.HasNewContent(): boolean
+	local seen = profile.seenContent or {}
+	for _, entry in Content.Chapters do
+		if entry.since and entry.status == "available" and not seen[entry.id] then
+			return true
+		end
+	end
+	for _, entry in Content.SurvivalMaps do
+		if entry.since and entry.status == "available" and not seen[entry.id] then
+			return true
+		end
+	end
+	return false
+end
+
+function app.HasNewUpdate(): boolean
+	local newest = Updates[1]
+	return newest ~= nil and profile.lastSeenUpdate ~= newest.id
+end
+
+local function enterGame()
+	state = "playing"
+	router:Clear()
+	backdrop.Visible = false
+	setMenuCamera(false)
+	setGameplay(true)
+	showObjective(false)
+end
+
+local function showMainMenu()
+	state = "menu"
+	setGameplay(false)
+	backdrop.Visible = true
+	setMenuCamera(true)
+	Hud.SetStatus(nil)
+	router:Replace(MainMenu, { mode = "main" })
+end
+
+local function callSession(action: string, mode: string?, contentId: string?)
+	local ok, result = pcall(function()
+		return sessionRemote:InvokeServer(action, mode, contentId)
+	end)
+	return if ok and type(result) == "table" then result else { status = "error" }
+end
+
+local SESSION_MESSAGES = { teleport = "SESSION_TELEPORT", locked = "SESSION_LOCKED", error = "SESSION_ERROR" }
+
+-- Start (or join) a chapter / survival map chosen in the Play screen.
+function app.Start(mode: string, contentId: string)
+	local result = callSession("start", mode, contentId)
+	if result.status == "ok" then
+		enterGame()
+	elseif result.status == "busy" then
+		local entry = Content.Entry(result.mode, result.contentId)
+		Hud.Notify("SESSION_BUSY", { name = if entry then Localization.T(entry.title) else "?" })
+	else
+		Hud.Notify(SESSION_MESSAGES[result.status] or "SESSION_ERROR")
+	end
+end
+
+-- Join whatever the team in this server is playing.
+function app.Join()
+	local result = callSession("join")
+	if result.status == "ok" then
+		enterGame()
+	else
+		router:Push(require(UI.Screens.Play))
+	end
+end
+
+-- Close the menu (pause) or, for owner tests, walk around without a session.
+function app.Resume()
+	if state == "paused" or state == "menu" then
 		state = "playing"
 		router:Clear()
 		backdrop.Visible = false
 		setMenuCamera(false)
 		setGameplay(true)
-		readyRemote:FireServer()
-		showObjective(false)
-	elseif state == "paused" then
-		state = "playing"
-		router:Clear()
-		backdrop.Visible = false
-		setGameplay(true)
 	end
 end
+
+function app.Leave()
+	leaving = true
+	callSession("leave")
+	leaving = false
+	showMainMenu()
+end
+
+-- The server ended the session (chapter finished, run over, idle): back to the menu.
+player:GetAttributeChangedSignal("FZ_InGame"):Connect(function()
+	if player:GetAttribute("FZ_InGame") ~= true and not leaving and (state == "playing" or state == "paused") then
+		if not player:GetAttribute("FZ_MonsterMode") then
+			Hud.CloseDocument()
+			task.delay(0.5, showMainMenu)
+		end
+	end
+end)
+
+-- Survival status line
+local function updateStatus()
+	local shift = SessionState.Get("SvShift")
+	if type(shift) ~= "number" or shift <= 0 then
+		Hud.SetStatus(nil)
+		return
+	end
+	if SessionState.Get("SvPhase") == "break" then
+		local ends = SessionState.Get("SvBreakEnds")
+		local seconds = if type(ends) == "number" then math.max(0, math.ceil(ends - workspace:GetServerTimeNow())) else 0
+		Hud.SetStatus("SV_BREAK_TIMER", { seconds = seconds })
+	else
+		local event = SessionState.Get("SvEvent")
+		Hud.SetStatus("SV_SHIFT", { shift = shift }, if type(event) == "string" then event else nil)
+	end
+end
+for _, key in { "SvShift", "SvEvent", "SvPhase", "SvBreakEnds" } do
+	SessionState.Observe(key, updateStatus)
+end
+task.spawn(function()
+	while true do
+		task.wait(1)
+		if SessionState.Get("SvPhase") == "break" then
+			updateStatus()
+		end
+	end
+end)
+Localization.Changed:Connect(updateStatus)
 
 local function openPause()
 	if state ~= "playing" or Hud.IsDocumentOpen() then
@@ -8402,15 +10202,15 @@ UserInputService.InputBegan:Connect(function(input)
 	end
 	local key = input.KeyCode
 	if key == Enum.KeyCode.ButtonSelect or (key == Enum.KeyCode.P and not UserInputService:GetFocusedTextBox()) then
-		app.Play()
+		app.Resume()
 	end
 end)
 
-local function showMainMenu()
-	state = "menu"
-	backdrop.Visible = true
-	setMenuCamera(true)
-	router:Replace(MainMenu, { mode = "main" })
+local function afterMenu()
+	-- Arrived by teleport with a selection: straight into the session.
+	if player:GetAttribute("FZ_AutoJoin") then
+		app.Join()
+	end
 end
 
 setGameplay(false)
@@ -8423,13 +10223,17 @@ if savedLanguage == nil then
 		onChosen = function(code: string)
 			SettingsController.Set("language", code)
 			showMainMenu()
+			afterMenu()
 		end,
 	})
 else
 	showMainMenu()
+	afterMenu()
 end
 
-if player:GetAttribute("FZ_DataPersistent") == false then
+if player:GetAttribute("FZ_DataTooNew") then
+	Hud.Notify("ERROR_DATA_NEWER")
+elseif player:GetAttribute("FZ_DataPersistent") == false then
 	Hud.Notify("ERROR_DATA")
 end
 
@@ -8459,11 +10263,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="68">
+        <Item class="Folder" referent="75">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="69">
+          <Item class="ModuleScript" referent="76">
             <Properties>
               <string name="Name">Components</string>
               <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
@@ -8798,7 +10602,7 @@ return Components
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="70">
+          <Item class="ModuleScript" referent="77">
             <Properties>
               <string name="Name">DebugOverlay</string>
               <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
@@ -8878,7 +10682,7 @@ return DebugOverlay
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="71">
+          <Item class="ModuleScript" referent="78">
             <Properties>
               <string name="Name">Hud</string>
               <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
@@ -9114,9 +10918,10 @@ function Hud.ShowDocument(document: { [string]: any })
 	Components.Padding(panel, 28, 24)
 	Components.List(panel, 12)
 
-	local params = nil
+	local params = if type(document.params) == "table" then table.clone(document.params) else nil
 	if type(document.date) == "number" then
-		params = { date = formatDate(document.date) }
+		params = params or {}
+		params.date = formatDate(document.date)
 	end
 	local title = Components.Text({ Key = document.title, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = panel })
 	title.ZIndex = 22
@@ -9136,6 +10941,22 @@ function Hud.ShowDocument(document: { [string]: any })
 	if input.GetDevice() == "gamepad" then
 		GuiService.SelectedObject = close.Instance
 	end
+end
+
+-- Survival status line (top centre): "SHIFT 3 · BLACKOUT" or the break countdown.
+local statusLine: TextLabel? = nil
+function Hud.SetStatus(key: string?, params: { [string]: any }?, suffixKey: string?)
+	local label = statusLine :: TextLabel
+	if not key then
+		label.Visible = false
+		return
+	end
+	local text = Localization.T(key, params)
+	if suffixKey then
+		text ..= "  ·  " .. Localization.T(suffixKey)
+	end
+	label.Text = text
+	label.Visible = true
 end
 
 function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callbacks: { onOpen: () -> (), onClose: () -> () })
@@ -9168,6 +10989,10 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 
 	notifyLabel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.8, 0, 0, 28), Position = UDim2.new(0.5, 0, 0, 20), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
 	notifyLabel.Visible = false
+
+	statusLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Radio, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.6, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 52), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
+	;(statusLine :: TextLabel).TextStrokeTransparency = 0.5
+	;(statusLine :: TextLabel).Visible = false
 
 	staminaTrack = Instance.new("Frame")
 	staminaTrack.Name = "Stamina"
@@ -9214,7 +11039,7 @@ return Hud
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="72">
+          <Item class="ModuleScript" referent="79">
             <Properties>
               <string name="Name">Router</string>
               <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
@@ -9378,11 +11203,11 @@ return Router
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="73">
+          <Item class="Folder" referent="80">
             <Properties>
               <string name="Name">Screens</string>
             </Properties>
-            <Item class="ModuleScript" referent="74">
+            <Item class="ModuleScript" referent="81">
               <Properties>
                 <string name="Name">Admin</string>
                 <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
@@ -9438,7 +11263,7 @@ function Admin.new(router)
 			local reason = ok and type(response) == "table" and response.reason
 			Localization.Bind(status, if success then "ADMIN_DONE" elseif reason == "public" then "ADMIN_PUBLIC_BLOCKED" else "ADMIN_DENIED")
 			if success and (actionName == "play_creature" or actionName == "play_human" or actionName == "tp_core") then
-				app.Play()
+				app.Resume()
 			end
 		end })
 	end
@@ -9461,61 +11286,7 @@ return Admin
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="75">
-              <Properties>
-                <string name="Name">Chapters</string>
-                <string name="Source"><![CDATA[-- Chapter overview. Locked chapters are visible (they create anticipation) but cannot be
--- started; nothing is ever locked behind Robux.
-
-local Components = require(script.Parent.Parent.Components)
-local Theme = require(script.Parent.Parent.Theme)
-
-local Chapters = {}
-
-local AVAILABLE_IN_BUILD = 1 -- chapters that exist in this build
-
-function Chapters.new(router)
-	local app = router.App
-	local root, column = Components.ScreenRoot("Chapters")
-	local layout = Components.List(column, Theme.Sizes.Gap)
-	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-
-	Components.Heading(column, "MENU_CHAPTERS", 1)
-	Components.Spacer(column, 10, 2)
-
-	local completed = app.Profile.progress and app.Profile.progress.completed or {}
-	local focus = nil
-	for number = 1, 4 do
-		local unlocked = number <= AVAILABLE_IN_BUILD and (number == 1 or table.find(completed, number - 1) ~= nil)
-		local button = Components.Button({
-			Key = string.format("CHAPTER_%02d_TITLE", number),
-			TagKey = if unlocked then "CHAPTER_LABEL" else "CHAPTER_LOCKED",
-			TagParams = if unlocked then { number = number } else nil,
-			Disabled = not unlocked,
-			LayoutOrder = 10 + number,
-			Parent = column,
-			OnActivated = function()
-				app.Play(number)
-			end,
-		})
-		if unlocked and not focus then
-			focus = button.Instance
-		end
-	end
-
-	Components.Spacer(column, 10, 20)
-	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 21, Parent = column, OnActivated = function()
-		router:Pop()
-	end })
-
-	return { Root = root, Focus = focus or back.Instance }
-end
-
-return Chapters
-]]></string>
-              </Properties>
-            </Item>
-            <Item class="ModuleScript" referent="76">
+            <Item class="ModuleScript" referent="82">
               <Properties>
                 <string name="Name">Extras</string>
                 <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
@@ -9661,7 +11432,7 @@ return Extras
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="77">
+            <Item class="ModuleScript" referent="83">
               <Properties>
                 <string name="Name">LanguageSelect</string>
                 <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
@@ -9763,7 +11534,76 @@ return LanguageSelect
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="78">
+            <Item class="ModuleScript" referent="84">
+              <Properties>
+                <string name="Name">Leaderboard</string>
+                <string name="Source"><![CDATA[-- Global best shifts for one survival map (top 10) + your own best.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local Leaderboard = {}
+
+function Leaderboard.new(router, args)
+	local app = router.App
+	local entry = args.entry
+	local root, column = Components.ScreenRoot("Leaderboard")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	Components.Heading(column, "LEADERBOARD_TITLE", 1)
+	Components.Text({ Key = entry.title, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 2, Parent = column })
+	local stats = app.Profile.survival and app.Profile.survival[entry.id]
+	Components.Text({ Key = "SV_BEST", Params = { shifts = stats and stats.best or 0 }, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Radio, LayoutOrder = 3, Parent = column })
+
+	local list = Instance.new("Frame")
+	list.BackgroundTransparency = 1
+	list.Size = UDim2.fromScale(1, 0)
+	list.AutomaticSize = Enum.AutomaticSize.Y
+	list.LayoutOrder = 4
+	list.Parent = column
+	Components.List(list, 2)
+	local status = Components.Text({ Key = "LEADERBOARD_LOADING", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, Parent = list })
+
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 10, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+
+	task.spawn(function()
+		local ok, result = pcall(function()
+			return Net.Function("GetLeaderboard"):InvokeServer(entry.id)
+		end)
+		if not list.Parent then
+			return
+		end
+		if not ok or type(result) ~= "table" or not result.ok then
+			Localization.Bind(status, "LEADERBOARD_ERROR")
+			return
+		end
+		if #result.entries == 0 then
+			Localization.Bind(status, "LEADERBOARD_EMPTY")
+			return
+		end
+		status:Destroy()
+		for index, row in result.entries do
+			Components.Text({ Key = "LEADERBOARD_ROW", Params = { rank = row.rank, name = row.name, shifts = row.shifts }, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextBody, Color = if index == 1 then Theme.Colors.Radio else Theme.Colors.Text, LayoutOrder = index, Parent = list })
+		end
+	end)
+
+	return { Root = root, Focus = back.Instance }
+end
+
+return Leaderboard
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="85">
               <Properties>
                 <string name="Name">Lobby</string>
                 <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
@@ -9878,7 +11718,7 @@ return Lobby
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="79">
+            <Item class="ModuleScript" referent="86">
               <Properties>
                 <string name="Name">MainMenu</string>
                 <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
@@ -9888,6 +11728,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+local SessionState = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SessionState"))
 
 local Components = require(script.Parent.Parent.Components)
 local Theme = require(script.Parent.Parent.Theme)
@@ -9911,28 +11752,38 @@ function MainMenu.new(router, args)
 	Components.Spacer(column, 18, 3)
 
 	local Lobby = require(script.Parent.Lobby)
-	local Chapters = require(script.Parent.Chapters)
 	local Settings = require(script.Parent.Settings)
 	local Extras = require(script.Parent.Extras)
 	local Shop = require(script.Parent.Shop)
+	local Play = require(script.Parent.Play)
+	local UpdatesScreen = require(script.Parent.Updates)
 
-	local primaryKey = if pause then "MENU_RESUME" elseif app.HasProgress() then "MENU_CONTINUE" else "MENU_PLAY"
-	local primary = Components.Button({ Key = primaryKey, LayoutOrder = 10, Parent = column, OnActivated = function()
-		app.Play()
-	end })
+	local primary
+	if pause then
+		primary = Components.Button({ Key = "MENU_RESUME", LayoutOrder = 10, Parent = column, OnActivated = function()
+			app.Resume()
+		end })
+	else
+		-- "Continue" only when the team in this server is already playing something.
+		if type(SessionState.Get("Mode")) == "string" then
+			primary = Components.Button({ Key = "MENU_CONTINUE", LayoutOrder = 9, Parent = column, OnActivated = function()
+				app.Join()
+			end })
+		end
+		local play = Components.Button({ Key = "MENU_PLAY", TagKey = if app.HasNewContent() then "CONTENT_NEW" else nil, LayoutOrder = 10, Parent = column, OnActivated = function()
+			router:Push(Play)
+		end })
+		play.Tag.TextColor3 = Theme.Colors.Accent
+		primary = primary or play
+	end
 	Components.Button({ Key = "MENU_LOBBY", LayoutOrder = 11, Parent = column, OnActivated = function()
 		router:Push(Lobby)
 	end })
-	if not pause then
-		Components.Button({ Key = "MENU_CHAPTERS", LayoutOrder = 12, Parent = column, OnActivated = function()
-			router:Push(Chapters)
-		end })
-	end
-	Components.Button({ Key = "MENU_SETTINGS", LayoutOrder = 13, Parent = column, OnActivated = function()
-		router:Push(Settings)
-	end })
-	Components.Button({ Key = "MENU_SHOP", LayoutOrder = 14, Parent = column, OnActivated = function()
+	Components.Button({ Key = "MENU_SHOP", LayoutOrder = 13, Parent = column, OnActivated = function()
 		router:Push(Shop)
+	end })
+	Components.Button({ Key = "MENU_SETTINGS", LayoutOrder = 14, Parent = column, OnActivated = function()
+		router:Push(Settings)
 	end })
 	Components.Button({ Key = "MENU_EXTRAS", LayoutOrder = 15, Parent = column, OnActivated = function()
 		router:Push(Extras)
@@ -9943,6 +11794,17 @@ function MainMenu.new(router, args)
 			app.Radio.ToggleMute()
 			Localization.Bind(mic.Label, if app.Radio.IsMuted() then "MIC_UNMUTE" else "MIC_MUTE")
 		end)
+		Components.Button({ Key = "MENU_LEAVE", LayoutOrder = 17, Parent = column, OnActivated = function()
+			app.Leave()
+		end })
+	else
+		-- Quiet "What's new" link with a small dot when there is an unseen update.
+		local updates = Components.Button({ Key = "MENU_UPDATES", TagKey = if app.HasNewUpdate() then "CONTENT_DOT" else nil, Height = 36, LayoutOrder = 20, Parent = column, OnActivated = function()
+			router:Push(UpdatesScreen)
+		end })
+		updates.Label.TextSize = Theme.Sizes.TextSmall
+		updates.Label.TextColor3 = Theme.Colors.TextDim
+		updates.Tag.TextColor3 = Theme.Colors.Accent
 	end
 
 	Components.Text({
@@ -9961,7 +11823,7 @@ function MainMenu.new(router, args)
 		Focus = primary.Instance,
 		OnBack = function()
 			if pause then
-				app.Play()
+				app.Resume()
 			end
 			return true
 		end,
@@ -9972,7 +11834,137 @@ return MainMenu
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="80">
+            <Item class="ModuleScript" referent="87">
+              <Properties>
+                <string name="Name">Play</string>
+                <string name="Source"><![CDATA[-- Play: choose a story chapter or a survival map. Everything comes from Shared/Content,
+-- so new chapters and maps appear here automatically after an update.
+-- Card tags: In development / Locked / NEW / Completed / Best shift.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Content = require(Shared.Content)
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local Play = {}
+
+local function chapterNumber(id: string?): number?
+	local chapter = id and Content.Chapter(id)
+	return chapter and chapter.number
+end
+
+function Play.new(router)
+	local app = router.App
+	local profile = app.Profile
+	local completed = (profile.progress and profile.progress.completedChapters) or {}
+	local seen = profile.seenContent or {}
+	local survivalStats = profile.survival or {}
+
+	local root, column = Components.ScreenRoot("Play")
+	column.Size = UDim2.new(0, Theme.Sizes.ContentWidth + 80, 1, -48)
+	local scroll = Components.ScrollColumn(column, UDim2.fromScale(1, 1))
+	local order = 0
+	local function nextOrder(): number
+		order += 1
+		return order
+	end
+	local focus = nil
+
+	Components.Heading(scroll, "PLAY_TITLE", nextOrder())
+
+	-- A session is already running in this server: offer to join it first.
+	local runningMode, runningId = SessionState.Get("Mode"), SessionState.Get("ContentId")
+	if type(runningMode) == "string" and type(runningId) == "string" then
+		local entry = Content.Entry(runningMode, runningId)
+		if entry then
+			local join = Components.Button({ Key = "SESSION_JOIN_RUNNING", Params = { name = Localization.T(entry.title) }, LayoutOrder = nextOrder(), Parent = scroll, OnActivated = function()
+				app.Join()
+			end })
+			join.Label.TextColor3 = Theme.Colors.Relay
+			focus = join.Instance
+		end
+	end
+
+	local function tagFor(mode: string, entry): (string, { [string]: any }?)
+		if entry.status ~= "available" then
+			return "CONTENT_PLANNED", nil
+		end
+		if not Content.IsUnlocked(entry, completed) then
+			return "CONTENT_LOCKED", { number = chapterNumber(entry.requires) or "?" }
+		end
+		if entry.since and not seen[entry.id] then
+			return "CONTENT_NEW", nil
+		end
+		if mode == "story" then
+			if completed[entry.id] then
+				return "CONTENT_DONE", nil
+			end
+			return "CHAPTER_LABEL", { number = entry.number }
+		end
+		local stats = survivalStats[entry.id]
+		if stats and stats.best and stats.best > 0 then
+			return "SV_BEST", { shifts = stats.best }
+		end
+		return "MODE_SURVIVAL", nil
+	end
+
+	for _, modeId in Content.ModeOrder do
+		local mode = Content.Modes[modeId]
+		Components.Spacer(scroll, 8, nextOrder())
+		Components.Text({ Key = mode.name, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = nextOrder(), Parent = scroll })
+		Components.Text({ Key = mode.description, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = nextOrder(), Parent = scroll })
+		local entries = if modeId == "story" then Content.Chapters else Content.SurvivalMaps
+		for _, entry in entries do
+			local tagKey, tagParams = tagFor(modeId, entry)
+			local playable = Content.IsUnlocked(entry, completed)
+			local card = Components.Button({
+				Key = entry.title,
+				TagKey = tagKey,
+				TagParams = tagParams,
+				Disabled = not playable,
+				LayoutOrder = nextOrder(),
+				Parent = scroll,
+				OnActivated = function()
+					if not seen[entry.id] then
+						seen[entry.id] = true
+						Net.Event("MarkSeen"):FireServer(entry.id)
+					end
+					app.Start(modeId, entry.id)
+				end,
+			})
+			if tagKey == "CONTENT_NEW" then
+				card.Tag.TextColor3 = Theme.Colors.Accent
+			end
+			if playable and not focus then
+				focus = card.Instance
+			end
+			if modeId == "survival" and playable then
+				Components.Button({ Key = "SV_LEADERBOARD", Height = 34, LayoutOrder = nextOrder(), Parent = scroll, OnActivated = function()
+					router:Push(require(script.Parent.Leaderboard), { entry = entry })
+				end }).Label.TextSize = Theme.Sizes.TextSmall
+			end
+		end
+	end
+
+	Components.Spacer(scroll, 10, nextOrder())
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = nextOrder(), Parent = scroll, OnActivated = function()
+		router:Pop()
+	end })
+
+	return { Root = root, Focus = focus or back.Instance }
+end
+
+return Play
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="88">
               <Properties>
                 <string name="Name">Settings</string>
                 <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
@@ -10161,7 +12153,7 @@ return Settings
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="81">
+            <Item class="ModuleScript" referent="89">
               <Properties>
                 <string name="Name">Shop</string>
                 <string name="Source"><![CDATA[-- Shop: tabs (Equipment / Upgrades / Cosmetics) with large cards, Signal Mark balance,
@@ -10410,8 +12402,61 @@ return Shop
 ]]></string>
               </Properties>
             </Item>
+            <Item class="ModuleScript" referent="90">
+              <Properties>
+                <string name="Name">Updates</string>
+                <string name="Source"><![CDATA[-- "What's new": optional, opened by the player from the main menu. Never a pop-up.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+local Updates = require(Shared.Updates)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local UpdatesScreen = {}
+
+function UpdatesScreen.new(router)
+	local app = router.App
+	local root, column = Components.ScreenRoot("Updates")
+	local scroll = Components.ScrollColumn(column, UDim2.fromScale(1, 1))
+	Components.Heading(scroll, "UPDATES_TITLE", 1)
+	local order = 1
+	for _, update in Updates do
+		order += 1
+		Components.Spacer(scroll, 10, order)
+		order += 1
+		Components.Text({ Key = update.title, Font = Theme.Fonts.Bold, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, LayoutOrder = order, Parent = scroll })
+		order += 1
+		Components.Text({ Text = "v" .. update.id, Font = Theme.Fonts.Mono, TextSize = 13, Color = Theme.Colors.TextFaint, LayoutOrder = order, Parent = scroll })
+		for _, line in update.lines do
+			order += 1
+			Components.Text({ Key = line, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Text, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = order, Parent = scroll })
+		end
+	end
+	order += 1
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = order + 1, Parent = scroll, OnActivated = function()
+		router:Pop()
+	end })
+
+	-- Opening the overview marks the newest update as seen (removes the small dot).
+	local newest = Updates[1]
+	if newest and app.Profile.lastSeenUpdate ~= newest.id then
+		app.Profile.lastSeenUpdate = newest.id
+		Net.Event("MarkSeen"):FireServer("update:" .. newest.id)
+	end
+
+	return { Root = root, Focus = back.Instance }
+end
+
+return UpdatesScreen
+]]></string>
+              </Properties>
+            </Item>
           </Item>
-          <Item class="ModuleScript" referent="82">
+          <Item class="ModuleScript" referent="91">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
@@ -10469,7 +12514,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="VoiceChatService" referent="83">
+  <Item class="VoiceChatService" referent="92">
     <Properties>
       <string name="Name">VoiceChatService</string>
       <bool name="EnableDefaultVoice">false</bool>

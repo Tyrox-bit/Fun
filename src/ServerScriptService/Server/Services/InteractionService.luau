@@ -24,12 +24,14 @@ local DISTANCE_TOLERANCE = 6
 local InteractionService = {}
 
 type Handler = (player: Player, instance: Instance, prompt: ProximityPrompt) -> ()
-local handlers: { [string]: Handler } = {}
+local handlers: { [string]: { Handler } } = {}
 local limiter = RateLimiter.new(6, 3)
 
+-- Several modes may handle the same object (e.g. the relay panel is used by chapter 1
+-- and by survival). Every handler checks itself whether its mode is active.
 function InteractionService.Register(id: string, handler: Handler)
-	assert(handlers[id] == nil, "[FZ-Interact] Duplicate handler id: " .. id)
-	handlers[id] = handler
+	handlers[id] = handlers[id] or {}
+	table.insert(handlers[id], handler)
 end
 
 local function worldPosition(instance: Instance): Vector3?
@@ -58,14 +60,16 @@ local function onTriggered(player: Player, instance: Instance, prompt: Proximity
 		return
 	end
 	local id = instance:GetAttribute("InteractId")
-	local handler = if type(id) == "string" then handlers[id] else nil
-	if not handler then
+	local list = if type(id) == "string" then handlers[id] else nil
+	if not list then
 		warn("[FZ-Interact] No handler for InteractId " .. tostring(id) .. " on " .. instance:GetFullName())
 		return
 	end
-	local ok, err = pcall(handler, player, instance, prompt)
-	if not ok then
-		warn("[FZ-Interact] Handler " .. id .. " failed: " .. tostring(err))
+	for _, handler in list do
+		local ok, err = pcall(handler, player, instance, prompt)
+		if not ok then
+			warn("[FZ-Interact] Handler " .. id .. " failed: " .. tostring(err))
+		end
 	end
 end
 

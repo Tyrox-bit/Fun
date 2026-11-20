@@ -175,7 +175,7 @@ ACTIONS.toggle_speed = function(player: Player)
 end
 
 ACTIONS.reset = function()
-	lazy("GameFlowService").ResetChapter()
+	lazy("SessionService").ResetActive()
 	lazy("HealthService").HealAll()
 	lazy("DoorService").CloseAll()
 	return { ok = true }

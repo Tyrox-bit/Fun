@@ -9,7 +9,6 @@ local FOLDER_NAME = "FZ_Remotes"
 
 local EVENTS = {
 	"UpdateSetting", -- C->S (key, value)
-	"ClientReady", -- C->S () player pressed Play / Continue
 	"SetFlashlight", -- C->S (enabled)
 	"Subtitle", -- S->C (line)
 	"Document", -- S->C (document)
@@ -21,6 +20,7 @@ local EVENTS = {
 	"MonsterAttack", -- C->S () admin monster mode
 	"Footprint", -- S->C (position) observer set only
 	"Hurt", -- S->C (amount)
+	"MarkSeen", -- C->S (contentId | "update:<id>") NEW badges
 }
 
 local FUNCTIONS = {
@@ -28,6 +28,8 @@ local FUNCTIONS = {
 	"RedeemCode", -- C->S (code) -> result
 	"AdminAction", -- C->S (action, payload) -> result
 	"ShopAction", -- C->S (action, itemId) -> result
+	"Session", -- C->S (action, mode, contentId) -> result
+	"GetLeaderboard", -- C->S (survivalId) -> top entries
 }
 
 local Net = {}

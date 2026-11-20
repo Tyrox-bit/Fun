@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+local SessionState = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SessionState"))
 
 local Components = require(script.Parent.Parent.Components)
 local Theme = require(script.Parent.Parent.Theme)
@@ -28,28 +29,38 @@ function MainMenu.new(router, args)
 	Components.Spacer(column, 18, 3)
 
 	local Lobby = require(script.Parent.Lobby)
-	local Chapters = require(script.Parent.Chapters)
 	local Settings = require(script.Parent.Settings)
 	local Extras = require(script.Parent.Extras)
 	local Shop = require(script.Parent.Shop)
+	local Play = require(script.Parent.Play)
+	local UpdatesScreen = require(script.Parent.Updates)
 
-	local primaryKey = if pause then "MENU_RESUME" elseif app.HasProgress() then "MENU_CONTINUE" else "MENU_PLAY"
-	local primary = Components.Button({ Key = primaryKey, LayoutOrder = 10, Parent = column, OnActivated = function()
-		app.Play()
-	end })
+	local primary
+	if pause then
+		primary = Components.Button({ Key = "MENU_RESUME", LayoutOrder = 10, Parent = column, OnActivated = function()
+			app.Resume()
+		end })
+	else
+		-- "Continue" only when the team in this server is already playing something.
+		if type(SessionState.Get("Mode")) == "string" then
+			primary = Components.Button({ Key = "MENU_CONTINUE", LayoutOrder = 9, Parent = column, OnActivated = function()
+				app.Join()
+			end })
+		end
+		local play = Components.Button({ Key = "MENU_PLAY", TagKey = if app.HasNewContent() then "CONTENT_NEW" else nil, LayoutOrder = 10, Parent = column, OnActivated = function()
+			router:Push(Play)
+		end })
+		play.Tag.TextColor3 = Theme.Colors.Accent
+		primary = primary or play
+	end
 	Components.Button({ Key = "MENU_LOBBY", LayoutOrder = 11, Parent = column, OnActivated = function()
 		router:Push(Lobby)
 	end })
-	if not pause then
-		Components.Button({ Key = "MENU_CHAPTERS", LayoutOrder = 12, Parent = column, OnActivated = function()
-			router:Push(Chapters)
-		end })
-	end
-	Components.Button({ Key = "MENU_SETTINGS", LayoutOrder = 13, Parent = column, OnActivated = function()
-		router:Push(Settings)
-	end })
-	Components.Button({ Key = "MENU_SHOP", LayoutOrder = 14, Parent = column, OnActivated = function()
+	Components.Button({ Key = "MENU_SHOP", LayoutOrder = 13, Parent = column, OnActivated = function()
 		router:Push(Shop)
+	end })
+	Components.Button({ Key = "MENU_SETTINGS", LayoutOrder = 14, Parent = column, OnActivated = function()
+		router:Push(Settings)
 	end })
 	Components.Button({ Key = "MENU_EXTRAS", LayoutOrder = 15, Parent = column, OnActivated = function()
 		router:Push(Extras)
@@ -60,6 +71,17 @@ function MainMenu.new(router, args)
 			app.Radio.ToggleMute()
 			Localization.Bind(mic.Label, if app.Radio.IsMuted() then "MIC_UNMUTE" else "MIC_MUTE")
 		end)
+		Components.Button({ Key = "MENU_LEAVE", LayoutOrder = 17, Parent = column, OnActivated = function()
+			app.Leave()
+		end })
+	else
+		-- Quiet "What's new" link with a small dot when there is an unseen update.
+		local updates = Components.Button({ Key = "MENU_UPDATES", TagKey = if app.HasNewUpdate() then "CONTENT_DOT" else nil, Height = 36, LayoutOrder = 20, Parent = column, OnActivated = function()
+			router:Push(UpdatesScreen)
+		end })
+		updates.Label.TextSize = Theme.Sizes.TextSmall
+		updates.Label.TextColor3 = Theme.Colors.TextDim
+		updates.Tag.TextColor3 = Theme.Colors.Accent
 	end
 
 	Components.Text({
@@ -78,7 +100,7 @@ function MainMenu.new(router, args)
 		Focus = primary.Instance,
 		OnBack = function()
 			if pause then
-				app.Play()
+				app.Resume()
 			end
 			return true
 		end,

@@ -209,6 +209,22 @@ Laufwege: keiner länger als ~25 s ohne Ereignis, Interaktion oder Sichtachse au
 | Sounds (28 eigene, synthetisiert) | `assets/audio`, `AudioController` | erzeugt; Upload + IDs nötig |
 | Funkgerät-Peilmechanik (Kanäle orten), HorrorDirector | – | nächste Phase |
 
+### Spielmodi (v0.3)
+- **Story:** 4 Kapitel auf eigenen Karten (Relaisanlage 07 → Staumauer 3 → Kapelle → Mine). Abgeschlossene Kapitel sind jederzeit wiederholbar.
+- **Endlos-Überleben „Nachtschicht“:** Jede Schicht bringt eine zufällige Aufgabe (nie zweimal hintereinander dieselbe):
+  - Sicherungen zum Relais bringen
+  - Verbindung im Kern halten (laut!)
+  - Generatoren neu starten
+  - Kontrollrunde
+
+  Ab Schicht 2 kommt ein Ereignis dazu: Stromausfall, Störsturm, Jagd, Abriegelung oder (als Kontrast) Ruhe. Die Kreaturen werden jede Schicht etwas schneller und hören besser. Ab Schicht 6 kommt eine zweite dazu.
+
+  In der Pause von 25 s steht der Ausstieg an der Antenne offen. Dafür muss das ganze Team dort sein. Belohnungen:
+  - Ausstieg: 100 % der gesicherten Marken + 20 % Bonus
+  - Ganzes Team am Boden: 50 %
+
+  Bestenliste pro Karte. Keine Tagesaufgaben, keine Tag/Nacht-Simulation.
+
 ### Monetarisierung (Planung, Umsetzung erst nach dem Vertical Slice)
 - **Signalmarken** (verdient: Kapitel, Geheimnisse, gebrochene Prognosen, Codes) → Funkgeräte-Designs, Taschenlampen-Gehäuse, Lobby-Kosmetik, Abzeichen.
 - **Ausrüstungs-Sets (v0.2, aus der Konzeptgrafik):** Techniker-Set 1800 (40 % schnelleres Bedienen), Observer-Set 2400 (Nachtsicht mit Akku, Spuren der Kreatur), Sanitäter-Set 1600 (doppelt so schnell aufhelfen, mehr Gesundheit, mehr Regeneration), Taschenlampen-Upgrade 900. **Nur mit erspielten Signalmarken.** Der „+“-Button aus der Grafik (Signalmarken für Robux) wird bewusst *nicht* umgesetzt. Sonst wären spielverändernde Sets kaufbar, also Pay-to-Win.

@@ -563,9 +563,13 @@ local function furnish()
 
 	-- Sector E: engineering
 	local gen = generator(CFrame.new(-80, 0, 70))
-	generator(CFrame.new(-80, 0, 45))
+	local gen2 = generator(CFrame.new(-80, 0, 45))
 	gen:SetAttribute("SoundLoop", "generator_loop")
 	CollectionService:AddTag(gen, "FZ_AmbientSource")
+	-- Generators are survival objectives (restart them); chapter 1 ignores them.
+	for index, g in { gen, gen2 } do
+		interactable(g, "generator", "INTERACT_RESTART", "OBJECT_GENERATOR", { HoldDuration = 3, MaxDistance = 9, GeneratorId = index })
+	end
 	pipeRun(Vector3.new(-98, 12, 30), Vector3.new(-98, 12, 84))
 	pipeRun(Vector3.new(-60, 12.5, 30), Vector3.new(-60, 12.5, 84), 0.9)
 	ceilingLight(Vector3.new(-70, 0, 40), "E", C.Sodium)

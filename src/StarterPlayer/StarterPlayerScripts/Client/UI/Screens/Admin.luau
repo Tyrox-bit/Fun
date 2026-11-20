@@ -51,7 +51,7 @@ function Admin.new(router)
 			local reason = ok and type(response) == "table" and response.reason
 			Localization.Bind(status, if success then "ADMIN_DONE" elseif reason == "public" then "ADMIN_PUBLIC_BLOCKED" else "ADMIN_DENIED")
 			if success and (actionName == "play_creature" or actionName == "play_human" or actionName == "tp_core") then
-				app.Play()
+				app.Resume()
 			end
 		end })
 	end

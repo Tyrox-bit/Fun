@@ -20,6 +20,8 @@ local player = Players.LocalPlayer
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local Content = require(Shared.Content)
+local Updates = require(Shared.Updates)
 local Localization = require(Shared.Localization)
 local Net = require(Shared.Net)
 local SessionState = require(Shared.SessionState)
@@ -96,7 +98,7 @@ if waitForAttribute("FZ_DataReady", 25) then
 	end
 end
 profile = profile
-	or { settings = {}, signalMarks = 0, progress = { chapter = 1, completed = {} }, persistent = false, isNew = true }
+	or { settings = {}, signalMarks = 0, progress = { chapter = 1, completedChapters = {} }, survival = {}, seenContent = {}, lastSeenUpdate = "", persistent = false, isNew = true }
 
 SettingsController.Load(profile.settings)
 
@@ -263,8 +265,9 @@ end)
 ---------------------------------------------------------------------------
 -- 4. App flow
 ---------------------------------------------------------------------------
-local readyRemote = Net.Event("ClientReady")
+local sessionRemote = Net.Function("Session")
 local pauseOpenedAt = 0
+local leaving = false
 
 local app = {
 	Settings = SettingsController,
@@ -281,22 +284,132 @@ function app.HasProgress(): boolean
 	return profile.isNew == false
 end
 
-function app.Play(_chapter: number?)
-	if state == "menu" then
+function app.HasNewContent(): boolean
+	local seen = profile.seenContent or {}
+	for _, entry in Content.Chapters do
+		if entry.since and entry.status == "available" and not seen[entry.id] then
+			return true
+		end
+	end
+	for _, entry in Content.SurvivalMaps do
+		if entry.since and entry.status == "available" and not seen[entry.id] then
+			return true
+		end
+	end
+	return false
+end
+
+function app.HasNewUpdate(): boolean
+	local newest = Updates[1]
+	return newest ~= nil and profile.lastSeenUpdate ~= newest.id
+end
+
+local function enterGame()
+	state = "playing"
+	router:Clear()
+	backdrop.Visible = false
+	setMenuCamera(false)
+	setGameplay(true)
+	showObjective(false)
+end
+
+local function showMainMenu()
+	state = "menu"
+	setGameplay(false)
+	backdrop.Visible = true
+	setMenuCamera(true)
+	Hud.SetStatus(nil)
+	router:Replace(MainMenu, { mode = "main" })
+end
+
+local function callSession(action: string, mode: string?, contentId: string?)
+	local ok, result = pcall(function()
+		return sessionRemote:InvokeServer(action, mode, contentId)
+	end)
+	return if ok and type(result) == "table" then result else { status = "error" }
+end
+
+local SESSION_MESSAGES = { teleport = "SESSION_TELEPORT", locked = "SESSION_LOCKED", error = "SESSION_ERROR" }
+
+-- Start (or join) a chapter / survival map chosen in the Play screen.
+function app.Start(mode: string, contentId: string)
+	local result = callSession("start", mode, contentId)
+	if result.status == "ok" then
+		enterGame()
+	elseif result.status == "busy" then
+		local entry = Content.Entry(result.mode, result.contentId)
+		Hud.Notify("SESSION_BUSY", { name = if entry then Localization.T(entry.title) else "?" })
+	else
+		Hud.Notify(SESSION_MESSAGES[result.status] or "SESSION_ERROR")
+	end
+end
+
+-- Join whatever the team in this server is playing.
+function app.Join()
+	local result = callSession("join")
+	if result.status == "ok" then
+		enterGame()
+	else
+		router:Push(require(UI.Screens.Play))
+	end
+end
+
+-- Close the menu (pause) or, for owner tests, walk around without a session.
+function app.Resume()
+	if state == "paused" or state == "menu" then
 		state = "playing"
 		router:Clear()
 		backdrop.Visible = false
 		setMenuCamera(false)
 		setGameplay(true)
-		readyRemote:FireServer()
-		showObjective(false)
-	elseif state == "paused" then
-		state = "playing"
-		router:Clear()
-		backdrop.Visible = false
-		setGameplay(true)
 	end
 end
+
+function app.Leave()
+	leaving = true
+	callSession("leave")
+	leaving = false
+	showMainMenu()
+end
+
+-- The server ended the session (chapter finished, run over, idle): back to the menu.
+player:GetAttributeChangedSignal("FZ_InGame"):Connect(function()
+	if player:GetAttribute("FZ_InGame") ~= true and not leaving and (state == "playing" or state == "paused") then
+		if not player:GetAttribute("FZ_MonsterMode") then
+			Hud.CloseDocument()
+			task.delay(0.5, showMainMenu)
+		end
+	end
+end)
+
+-- Survival status line
+local function updateStatus()
+	local shift = SessionState.Get("SvShift")
+	if type(shift) ~= "number" or shift <= 0 then
+		Hud.SetStatus(nil)
+		return
+	end
+	if SessionState.Get("SvPhase") == "break" then
+		local ends = SessionState.Get("SvBreakEnds")
+		local seconds = if type(ends) == "number" then math.max(0, math.ceil(ends - workspace:GetServerTimeNow())) else 0
+		Hud.SetStatus("SV_BREAK_TIMER", { seconds = seconds })
+	else
+		local event = SessionState.Get("SvEvent")
+		Hud.SetStatus("SV_SHIFT", { shift = shift }, if type(event) == "string" then event else nil)
+	end
+end
+for _, key in { "SvShift", "SvEvent", "SvPhase", "SvBreakEnds" } do
+	SessionState.Observe(key, updateStatus)
+end
+task.spawn(function()
+	while true do
+		task.wait(1)
+		if SessionState.Get("SvPhase") == "break" then
+			updateStatus()
+		end
+	end
+end)
+Localization.Changed:Connect(updateStatus)
 
 local function openPause()
 	if state ~= "playing" or Hud.IsDocumentOpen() then
@@ -322,15 +435,15 @@ UserInputService.InputBegan:Connect(function(input)
 	end
 	local key = input.KeyCode
 	if key == Enum.KeyCode.ButtonSelect or (key == Enum.KeyCode.P and not UserInputService:GetFocusedTextBox()) then
-		app.Play()
+		app.Resume()
 	end
 end)
 
-local function showMainMenu()
-	state = "menu"
-	backdrop.Visible = true
-	setMenuCamera(true)
-	router:Replace(MainMenu, { mode = "main" })
+local function afterMenu()
+	-- Arrived by teleport with a selection: straight into the session.
+	if player:GetAttribute("FZ_AutoJoin") then
+		app.Join()
+	end
 end
 
 setGameplay(false)
@@ -343,13 +456,17 @@ if savedLanguage == nil then
 		onChosen = function(code: string)
 			SettingsController.Set("language", code)
 			showMainMenu()
+			afterMenu()
 		end,
 	})
 else
 	showMainMenu()
+	afterMenu()
 end
 
-if player:GetAttribute("FZ_DataPersistent") == false then
+if player:GetAttribute("FZ_DataTooNew") then
+	Hud.Notify("ERROR_DATA_NEWER")
+elseif player:GetAttribute("FZ_DataPersistent") == false then
 	Hud.Notify("ERROR_DATA")
 end
 

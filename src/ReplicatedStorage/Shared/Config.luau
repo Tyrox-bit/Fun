@@ -3,7 +3,7 @@
 
 local Config = {}
 
-Config.Version = "0.1.0"
+Config.Version = "0.3.0"
 Config.MaxPartySize = 4
 
 ---------------------------------------------------------------------------
@@ -129,7 +129,7 @@ Config.Movement = {
 ---------------------------------------------------------------------------
 Config.Data = {
 	StoreName = "FZ_PlayerData_v1",
-	SchemaVersion = 1,
+	SchemaVersion = 2, -- bump + add a migration in DataService for every save change
 	AutosaveInterval = 120,
 	LockTimeout = 1800, -- a session lock older than this is considered stale
 }
@@ -199,6 +199,24 @@ Config.Health = {
 	ReviveHold = 3,
 	ReviveHealth = 35,
 	CrawlSpeed = 2,
+}
+
+---------------------------------------------------------------------------
+-- Endless survival ("Night shift")
+---------------------------------------------------------------------------
+Config.Survival = {
+	BreakSeconds = 25, -- calm phase between shifts; extraction is open
+	TaskSoftLimit = 180, -- after this the station "overloads": the creature is sent to you
+	FirstEventShift = 2,
+	SecondCreatureShift = 6,
+	ShiftReward = 40, -- + ShiftRewardGrowth * shift, banked when a shift is completed
+	ShiftRewardGrowth = 10,
+	ExtractBonus = 0.2, -- +20 % when the team leaves on its own
+	WipeKeep = 0.5, -- 50 % of the banked marks if the team goes down
+	ExtractRadius = 28,
+	MaxSpeedScale = 1.25,
+	MaxHearingScale = 1.6,
+	SessionIdleEnd = 20, -- seconds without players in game before a session ends
 }
 
 Config.Rewards = {

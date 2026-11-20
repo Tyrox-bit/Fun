@@ -25,6 +25,9 @@ local DataService = require(Services.DataService)
 local NoiseService = require(Services.NoiseService)
 
 local Chapter1 = {}
+Chapter1.StartCheckpoint = "C1_START"
+
+local active = false
 
 local TOTAL_FUSES = 3
 local FORECAST_SECONDS = 30
@@ -36,7 +39,7 @@ local state = {
 	completedBy = {} :: { [Player]: boolean },
 }
 local fuseFolder: Folder? = nil
-local checkpointSetter: ((string) -> ())? = nil
+local ctx = nil -- { setCheckpoint, finish, playersInGame }
 
 local ARRIVAL = {
 	{ delay = 1.5, text = "SFX_STATIC", channel = "sfx", duration = 2 },
@@ -154,27 +157,38 @@ end
 ---------------------------------------------------------------------------
 -- Flow
 ---------------------------------------------------------------------------
-function Chapter1.Reset()
+local function reset()
 	state.stage = "arrival"
 	state.fuses = 0
 	state.forecast = "none"
+	table.clear(state.completedBy)
 	if fuseFolder then
 		fuseFolder:Destroy()
 		fuseFolder = nil
 	end
-	PowerService.Reset()
-	CreatureService.Despawn()
 	StoryService.ResetFlags()
 	StoryService.SetObjective(nil)
-	if checkpointSetter then
-		checkpointSetter("C1_START")
-	end
 end
 
-function Chapter1.Start(context: { setCheckpoint: (string) -> () })
-	checkpointSetter = context.setCheckpoint
+function Chapter1.Begin()
+	reset()
+	active = true
+end
+
+function Chapter1.Stop()
+	active = false
+	reset()
+end
+
+-- Registers interaction handlers once. Every handler ignores input unless chapter 1 is
+-- the running session (the same objects are used by the survival mode).
+function Chapter1.Init(context)
+	ctx = context
 
 	InteractionService.Register("c1_fax", function(player)
+		if not active then
+			return
+		end
 		StoryService.ShowDocument(player, { title = "FAX_TITLE", body = "FAX_BODY", date = os.time() + 24 * 60 * 60 })
 		if StoryService.GetFlag("C1_FaxRead") then
 			return
@@ -192,17 +206,23 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_terminal", function()
+		if not active then
+			return
+		end
 		if state.stage ~= "control" and state.stage ~= "arrival" then
 			return
 		end
 		state.stage = "fuses"
-		context.setCheckpoint("C1_CONTROL")
+		ctx.setCheckpoint("C1_CONTROL")
 		StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = "RADIO_C1_TERMINAL", channel = "radio", duration = 5 })
 		spawnFuses()
 		updateFuseObjective()
 	end)
 
 	InteractionService.Register("c1_fuse", function(player, fuse)
+		if not active then
+			return
+		end
 		if state.stage ~= "fuses" or not fuse.Parent then
 			return
 		end
@@ -229,6 +249,9 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_breaker_a", function()
+		if not active then
+			return
+		end
 		if state.forecast ~= "armed" then
 			return
 		end
@@ -239,6 +262,9 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_relay_b", function(_player, panel)
+		if not active then
+			return
+		end
 		if state.stage ~= "relay" then
 			return
 		end
@@ -248,11 +274,14 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 		NoiseService.Emit((panel :: BasePart).Position, 60, nil)
 		StoryService.Say("all", { text = "SFX_RELAY", channel = "world", duration = 3 })
 		rewardAll(Config.Rewards.Relay)
-		context.setCheckpoint("C1_CORE")
+		ctx.setCheckpoint("C1_CORE")
 		StoryService.SetObjective("OBJECTIVE_CORE")
 	end)
 
 	InteractionService.Register("c1_core", function(_player, console)
+		if not active then
+			return
+		end
 		if state.stage ~= "core" then
 			return
 		end
@@ -277,6 +306,9 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 	end)
 
 	InteractionService.Register("c1_antenna", function()
+		if not active then
+			return
+		end
 		if state.stage ~= "antenna" and state.stage ~= "done" then
 			return
 		end
@@ -286,14 +318,20 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 				{ delay = 1, speaker = "SPEAKER_UNKNOWN", text = "RADIO_C1_ANTENNA", channel = "radio", duration = 6 },
 			})
 			CreatureService.SetAIEnabled(false)
+			-- Everyone returns to the menu after the ending line; the chapter stays replayable.
+			task.delay(14, function()
+				if active and state.stage == "done" then
+					ctx.finish()
+				end
+			end)
 		end
 		for _, p in Players:GetPlayers() do
 			if p:GetAttribute("FZ_InGame") and not state.completedBy[p] then
 				state.completedBy[p] = true
 				DataService.Grant(p, Config.Rewards.ChapterComplete)
 				DataService.Mutate(p, function(data)
-					if not table.find(data.progress.completed, 1) then
-						table.insert(data.progress.completed, 1)
+					if data.progress.completedChapters.ch1 == nil then
+						data.progress.completedChapters.ch1 = os.time()
 					end
 				end)
 				DataService.SaveNow(p)
@@ -308,7 +346,7 @@ function Chapter1.Start(context: { setCheckpoint: (string) -> () })
 end
 
 function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
-	if not firstTime then
+	if not firstTime or not active then
 		return
 	end
 	if state.stage == "arrival" then

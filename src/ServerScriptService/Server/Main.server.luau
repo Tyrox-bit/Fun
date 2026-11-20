@@ -7,12 +7,9 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 require(Shared.Net).Init()
 require(Shared.SessionState).Init()
 
-if not workspace:FindFirstChild("FZ_Map") then
-	require(script.Parent.Map.RelayStation07).Build()
-end
-
 local SERVICES = {
 	"DataService",
+	"MapService",
 	"SettingsService",
 	"AdminService",
 	"CodeService",
@@ -25,7 +22,9 @@ local SERVICES = {
 	"ShopService",
 	"CreatureService",
 	"FlashlightService",
-	"GameFlowService",
+	"LeaderboardService",
+	"PlaceService",
+	"SessionService",
 }
 
 for _, name in SERVICES do

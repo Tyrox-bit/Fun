@@ -19,7 +19,7 @@ REFERENCE = "en"
 ENTRY = re.compile(r'^\s*([A-Z][A-Z0-9_]*)\s*=\s*"((?:[^"\\]|\\.)*)"\s*,\s*$')
 PLACEHOLDER = re.compile(r"{([A-Za-z0-9_]+)}")
 # Keys referenced from code: string literals that look like our key format.
-KEY_USE = re.compile(r'"((?:MENU|LANG|LOBBY|CHAPTER|SETTINGS|VALUE|EXTRAS|CODE|ADMIN|TOUCH|INTERACT|OBJECT|OBJECTIVE|SPEAKER|SFX|RADIO|FAX|DOC|SIGN|NOTE|ERROR|PAUSE|DATE|ITEM|HUD|SHOP|MIC|VOICE|DOOR|REWARD)_[A-Z0-9_]+)"')
+KEY_USE = re.compile(r'"((?:MENU|LANG|LOBBY|CHAPTER|SETTINGS|VALUE|EXTRAS|CODE|ADMIN|TOUCH|INTERACT|OBJECT|OBJECTIVE|SPEAKER|SFX|RADIO|FAX|DOC|SIGN|NOTE|ERROR|PAUSE|DATE|ITEM|HUD|SHOP|MIC|VOICE|DOOR|REWARD|MODE|PLAY|MAP|SV|CONTENT|LEADERBOARD|SESSION|UPDATES|UPD)_[A-Z0-9_]+)"')
 
 
 def load(path: Path) -> dict:
@@ -64,7 +64,7 @@ def main() -> int:
             continue
         for key in KEY_USE.findall(path.read_text(encoding="utf-8")):
             used.add((key, path.relative_to(ROOT)))
-    dynamic_prefixes = ("CHAPTER_0",)  # built at runtime, checked below
+    dynamic_prefixes = ("CHAPTER_0", "SV_EV_")  # built at runtime
     for key, path in sorted(used):
         if key not in reference and not key.startswith(dynamic_prefixes):
             problems.append(f"{path}: uses unknown key {key}")

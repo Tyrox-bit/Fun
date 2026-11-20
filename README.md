@@ -62,7 +62,12 @@ StarterPlayer               CameraMode = LockFirstPerson, WalkSpeed 10
 |---|---|
 | Projektstruktur: 84 Objekte, alle Scripts/LocalScripts/ModuleScripts in den richtigen Services | ✅ in der Place-Datei |
 | **Karte „Relaisanlage 07“** nach deinem Grundriss (Sektoren A–E, Zentralkern + Radom, Kontrollraum, Hof, Antenne, Zaun, Pförtnerloge, Wald) | ✅ wird beim Start gebaut |
-| **Kapitel-1-Ablauf**: Fax → Kontrollraum → 3 Sicherungen (zufällig verteilt) → Prognose brechen → Relais B → Zentralkern → Antenne | ✅ |
+| **Kapitel-1-Ablauf**: Fax → Kontrollraum → 3 Sicherungen (zufällig verteilt) → Prognose brechen → Relais B → Zentralkern → Antenne; wiederholbar | ✅ |
+| **Endlos-Überleben „Nachtschicht“**: wechselnde Aufgaben, Ereignisse, steigende Schwierigkeit, 2. Kreatur ab Schicht 6, freiwilliger Ausstieg, Signalmarken, globale Bestenliste | ✅ |
+| **Spielen-Menü** (Story-Kapitel + Überlebenskarten aus `Shared/Content.luau`), „Neuigkeiten“-Übersicht, dezente NEU-Markierungen | ✅ |
+| **Spielstand-Versionen + Migration** (v1 → v2 automatisch, Schutz vor alten Servern) | ✅ – siehe `docs/UPDATES.md` |
+| Mehrere Places + Teleports | ✅ vorbereitet – aktiv, sobald Place-IDs in `Content.Places` stehen |
+| Kapitel 2–4, Überlebenskarte „Staumauer 3“ | ⏳ im Menü als „In Entwicklung“ sichtbar |
 | **Kreatur-KI** (hört, sieht, sucht, jagt, Lüftungsschächte, Licht blendet) mit Platzhalter-Monster und prozeduraler Animation | ✅ – dein Monster: siehe `docs/CREATURE.md` |
 | **Proximity-Voice + Funkgerät** (Push-to-talk, Mikro stumm/frei, Teammitglieder stummschalten, leiser + mehr Rauschen mit Entfernung) | ✅ – braucht Voice-Chat-berechtigte Konten |
 | Gesundheit, am Boden liegen, Aufhelfen, Checkpoints | ✅ |

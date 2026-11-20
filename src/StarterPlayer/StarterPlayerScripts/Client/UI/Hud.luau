@@ -231,9 +231,10 @@ function Hud.ShowDocument(document: { [string]: any })
 	Components.Padding(panel, 28, 24)
 	Components.List(panel, 12)
 
-	local params = nil
+	local params = if type(document.params) == "table" then table.clone(document.params) else nil
 	if type(document.date) == "number" then
-		params = { date = formatDate(document.date) }
+		params = params or {}
+		params.date = formatDate(document.date)
 	end
 	local title = Components.Text({ Key = document.title, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = panel })
 	title.ZIndex = 22
@@ -253,6 +254,22 @@ function Hud.ShowDocument(document: { [string]: any })
 	if input.GetDevice() == "gamepad" then
 		GuiService.SelectedObject = close.Instance
 	end
+end
+
+-- Survival status line (top centre): "SHIFT 3 · BLACKOUT" or the break countdown.
+local statusLine: TextLabel? = nil
+function Hud.SetStatus(key: string?, params: { [string]: any }?, suffixKey: string?)
+	local label = statusLine :: TextLabel
+	if not key then
+		label.Visible = false
+		return
+	end
+	local text = Localization.T(key, params)
+	if suffixKey then
+		text ..= "  ·  " .. Localization.T(suffixKey)
+	end
+	label.Text = text
+	label.Visible = true
 end
 
 function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callbacks: { onOpen: () -> (), onClose: () -> () })
@@ -285,6 +302,10 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 
 	notifyLabel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.8, 0, 0, 28), Position = UDim2.new(0.5, 0, 0, 20), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
 	notifyLabel.Visible = false
+
+	statusLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Radio, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.6, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 52), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
+	;(statusLine :: TextLabel).TextStrokeTransparency = 0.5
+	;(statusLine :: TextLabel).Visible = false
 
 	staminaTrack = Instance.new("Frame")
 	staminaTrack.Name = "Stamina"
