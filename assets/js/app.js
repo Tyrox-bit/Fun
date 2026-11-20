@@ -76,11 +76,7 @@
     renderPayMethods();
     renderReviews();
 
-    if (cfg.showPlaceholders) {
-      document.body.classList.add('show-placeholders');
-      var v = $('[data-video-section]');
-      if (v) v.hidden = false;
-    }
+    if (cfg.showPlaceholders) document.body.classList.add('show-placeholders');
   }
 
   function addBusinessDays(date, days) {
@@ -404,7 +400,6 @@
       T('ViewContent', { value: priceOf(first) / 100, currency: 'EUR', content_ids: [first.id], content_name: cfg.product.name });
       fetchStock(true);
       setInterval(fetchStock, 60000);
-      if (saleActive) $$('[data-checkout]')[0].classList.add('pulse');
     })
     .catch(function (e) {
       console.error('Konfiguration konnte nicht geladen werden', e);

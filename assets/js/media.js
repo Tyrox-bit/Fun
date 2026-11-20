@@ -68,18 +68,8 @@
     if (!wrap) return;
     var real = list.filter(function (r) { return r && r.src; });
 
+    // Ohne echte Clips bleibt der Video-Bereich unsichtbar (Sales Page, kein Platzhalter-Kino)
     if (!real.length) {
-      if (!placeholders) return;
-      wrap.innerHTML = TODO.map(function (r) {
-        return '<figure class="reel reel--todo" data-reveal>' +
-          '<figcaption class="reel__label"><i></i>' + esc(r.title) + '</figcaption>' +
-          '<div class="reel__todo"><b>Platzhalter – hier dein Clip</b>' + esc(r.hint) + '</div>' +
-          '<div class="reel__shade"></div>' +
-          '<p class="reel__caption">' + fmtCaption(r.caption) + '</p>' +
-          '</figure>';
-      }).join('');
-      section.hidden = false;
-      revealNow(wrap);
       return;
     }
 

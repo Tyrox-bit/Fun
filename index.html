@@ -17,7 +17,6 @@
 
   <link rel="preload" href="/assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <script>document.documentElement.classList.add('js')</script>
   <link rel="stylesheet" href="/assets/css/style.css">
   <script src="/assets/js/tracking.js" defer></script>
   <script src="/assets/js/app.js" defer></script>
@@ -30,7 +29,6 @@
   <!-- ===== Aktionsleiste ===== -->
   <div class="topbar" data-sale-only>
     <div class="wrap topbar__inner">
-      <span aria-hidden="true">🔥</span>
       <strong>BLACK FRIDAY</strong>
       <span class="topbar__sep" aria-hidden="true">·</span>
       <span><span data-discount>−50 %</span><span class="hide-sm"> aufs Damast-Duo</span></span>
@@ -45,9 +43,9 @@
       <a href="#produkt" class="logo" aria-label="Kaspar – nach oben"><span class="logo__mark" aria-hidden="true"></span><span class="logo__text">Kaspar</span></a>
       <nav class="nav" aria-label="Abschnitte">
         <a href="#produkt" data-nav="produkt">Produkt</a>
-        <a href="#videos" data-nav="videos">Videos</a>
         <a href="#im-set" data-nav="im-set">Im Set</a>
-        <a href="#damast" data-nav="damast">Warum Damast</a>
+        <a href="#vorteile" data-nav="vorteile">Vorteile</a>
+        <a href="#videos" data-nav="videos">Videos</a>
         <a href="#vergleich" data-nav="vergleich">Vergleich</a>
         <a href="#faq" data-nav="faq">FAQ</a>
       </nav>
@@ -58,14 +56,13 @@
   </header>
 
   <main id="main">
-    <!-- ===== 1 · PRODUKT (Hero) ===== -->
+    <!-- ===== 1 · ANGEBOT OBEN (Hero) ===== -->
     <section class="hero dark" id="produkt" data-section="Produkt">
-      <div class="hero__bg" aria-hidden="true"></div>
       <div class="wrap hero__grid">
-        <div class="hero__media" data-parallax>
+        <div class="hero__media">
           <!-- GALERIE:START – wird von „npm run medien“ automatisch erzeugt -->
           <div class="gallery" data-gallery>
-            <div class="gallery__main" data-tilt>
+            <div class="gallery__main">
               <span class="badge badge--sale hero__badge" data-sale-only><span data-discount>−50 %</span></span>
               <img src="/assets/img/hero.svg" alt="Kaspar Damast-Duo: Kochmesser und Schälmesser" width="1000" height="1000" fetchpriority="high" data-gallery-main>
               <span class="placeholder-tag" data-placeholder>Platzhalter – echtes Produktfoto einsetzen</span>
@@ -82,12 +79,17 @@
 
         <div class="hero__copy">
           <p class="eyebrow"><span data-sale-only>Black Friday ·</span> Limitiert auf <span data-stock-total>40</span> Sets</p>
-          <h1 class="display slice"><span class="slice__line" style="--i:0">Zwei Messer.</span><span class="slice__line accent" style="--i:1">Mehr brauchst du nicht.</span></h1>
-          <p class="lead">Kochmesser&nbsp;20&nbsp;cm + Schälmesser&nbsp;9&nbsp;cm aus 67&nbsp;Lagen Damaststahl. Scharf, ausbalanciert und schön genug für die offene Küche.</p>
+          <h1 class="display">Zwei Messer.<br><span class="accent">Mehr brauchst du nicht.</span></h1>
 
           <div class="rating" data-rating hidden></div>
 
-          <div class="price" data-fx="price">
+          <ul class="checks">
+            <li><b>Kochmesser 20 cm + Schälmesser 9 cm</b> – deckt 80 % deiner Küchenarbeit ab</li>
+            <li><b>67 Lagen Damaststahl</b> mit hartem Kern – bleibt lange scharf</li>
+            <li><b>In Geschenkbox</b> – perfekt für Weihnachten</li>
+          </ul>
+
+          <div class="price">
             <span class="price__now" data-price-now>99 €</span>
             <span class="price__old" data-sale-only><s data-price-old>199 €</s></span>
             <span class="badge badge--sale" data-sale-only>Du sparst <span data-saving>100 €</span></span>
@@ -106,8 +108,8 @@
             <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
           <div class="hero__meta">
-            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg> Lieferung <span data-delivery>in 2–4 Werktagen</span></span>
-            <a href="#videos" class="hero__video-link" data-video-link><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> So schneidet es</a>
+            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg> <span>Lieferung <span data-delivery>in 2–4 Werktagen</span></span></span>
+            <span><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> PayPal, Klarna, Karte</span>
           </div>
         </div>
       </div>
@@ -125,37 +127,30 @@
       </div>
     </div>
 
-    <!-- ===== Laufband ===== -->
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee__band">
-        <div class="marquee__track">
-          <span>67 Lagen Damast <i>✦</i> 15° Schliff <i>✦</i> Black Friday −50 % <i>✦</i> Geschenkbox inklusive <i>✦</i> Versand aus Deutschland <i>✦</i></span>
-          <span>67 Lagen Damast <i>✦</i> 15° Schliff <i>✦</i> Black Friday −50 % <i>✦</i> Geschenkbox inklusive <i>✦</i> Versand aus Deutschland <i>✦</i></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== 2 · VIDEOS – Clips in shop.config.json → media.reels ===== -->
-    <section class="section" id="videos" data-section="Videos" data-video-section hidden>
-      <div class="wrap">
-        <header class="section__head" data-reveal>
-          <p class="eyebrow">In Aktion</p>
-          <h2 class="h2">Kein Gerede. Einfach schneiden.</h2>
-          <p class="section__lead">Echte Clips, ungeschnitten. Ton an für das Geräusch der Klinge.</p>
+    <!-- ===== 2 · DAS PROBLEM ===== -->
+    <section class="section" id="problem" data-section="Kennst du das?">
+      <div class="wrap wrap--narrow">
+        <header class="section__head">
+          <p class="eyebrow">Kennst du das?</p>
+          <h2 class="h2">Stumpfe Messer machen Kochen zur Qual</h2>
         </header>
-        <div class="reels" data-reels></div>
+        <ul class="pains">
+          <li><span aria-hidden="true">✕</span><div><b>Die Tomate wird gequetscht</b> statt geschnitten – und der Saft läuft übers Brett.</div></li>
+          <li><span aria-hidden="true">✕</span><div><b>Ein Messerblock voller Messer</b> – benutzt werden davon zwei.</div></li>
+          <li><span aria-hidden="true">✕</span><div><b>Nach ein paar Wochen stumpf</b> – und du drückst mit Kraft, statt zu schneiden.</div></li>
+        </ul>
+        <p class="solution">Das <b>Kaspar Damast-Duo</b> ist die Lösung: zwei Messer, die wirklich schneiden – und es lange bleiben.</p>
       </div>
     </section>
 
-    <!-- ===== 3 · IM SET ===== -->
+    <!-- ===== 3 · IM SET (die Lösung) ===== -->
     <section class="section section--band" id="im-set" data-section="Im Set">
       <div class="wrap">
-        <header class="section__head" data-reveal>
-          <p class="eyebrow">Im Set</p>
+        <header class="section__head">
+          <p class="eyebrow">Das bekommst du</p>
           <h2 class="h2">Das Arbeitstier und der Feinmechaniker</h2>
-          <p class="section__lead">Zwei Messer decken 80 % deiner Küchenarbeit ab. Kein Messerblock voller Messer, die nie benutzt werden.</p>
         </header>
-        <div class="duo" data-stagger>
+        <div class="duo">
           <article class="duo__card">
             <div class="duo__img"><img src="/assets/img/knife-chef.svg" alt="Kochmesser 20 cm" width="1020" height="260" loading="lazy" data-set-img="chef"></div>
             <div class="duo__body">
@@ -173,89 +168,63 @@
             </div>
           </article>
         </div>
-        <details class="specs-box" data-reveal>
+        <p class="in-box"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M2 9h20M12 9v12M12 9C10 4 6 4 6.5 6.5S12 9 12 9s5-.5 5.5-2.5S14 4 12 9"/></svg> Beide Messer kommen zusammen in einer Geschenkbox.</p>
+        <details class="specs-box">
           <summary>Technische Daten</summary>
           <dl class="specs" data-specs></dl>
         </details>
+        <div class="inline-cta">
+          <a href="#angebot" class="btn btn--primary btn--xl">Jetzt für <span data-price-now>99 €</span> sichern</a>
+        </div>
       </div>
     </section>
 
-    <!-- ===== 4 · WARUM DAMAST – erklärende Animationen ===== -->
-    <section class="section" id="damast" data-section="Damast">
+    <!-- ===== 4 · VORTEILE ===== -->
+    <section class="section" id="vorteile" data-section="Vorteile">
       <div class="wrap">
-        <header class="section__head" data-reveal>
-          <p class="eyebrow">Warum Damast</p>
+        <header class="section__head">
+          <p class="eyebrow">Warum Kaspar</p>
           <h2 class="h2">Drei Gründe, warum es so gut schneidet</h2>
-          <p class="section__lead">Kurz erklärt, ohne Fachchinesisch.</p>
         </header>
-        <div class="explain" data-stagger>
-          <!-- Lagen -->
-          <article class="explain__card" data-fx="layers">
-            <svg class="explain__art" viewBox="0 0 300 150" aria-hidden="true">
-              <defs><clipPath id="ex-blade"><path d="M10 30 H250 C275 40 290 60 296 75 C270 110 230 128 170 132 H10 Z"/></clipPath></defs>
-              <path d="M10 30 H250 C275 40 290 60 296 75 C270 110 230 128 170 132 H10 Z" class="ex-blade"/>
-              <g clip-path="url(#ex-blade)" class="ex-layers">
-                <path style="--n:0" d="M0 34 C40 26 70 44 110 36 S180 26 220 36 300 30 300 30"/>
-                <path style="--n:1" d="M0 44 C40 36 70 54 110 46 S180 36 220 46 300 40 300 40"/>
-                <path style="--n:2" d="M0 54 C40 46 70 64 110 56 S180 46 220 56 300 50 300 50"/>
-                <path style="--n:3" d="M0 64 C40 56 70 74 110 66 S180 56 220 66 300 60 300 60"/>
-                <path style="--n:4" d="M0 74 C40 66 70 84 110 76 S180 66 220 76 300 70 300 70"/>
-                <path style="--n:5" d="M0 84 C40 76 70 94 110 86 S180 76 220 86 300 80 300 80"/>
-                <path style="--n:6" d="M0 94 C40 86 70 104 110 96 S180 86 220 96 300 90 300 90"/>
-                <path style="--n:7" d="M0 104 C40 96 70 114 110 106 S180 96 220 106 300 100 300 100"/>
-                <path style="--n:8" d="M0 114 C40 106 70 124 110 116 S180 106 220 116 300 110 300 110"/>
-                <path style="--n:9" d="M0 124 C40 116 70 134 110 126 S180 116 220 126 300 120 300 120"/>
-              </g>
-            </svg>
-            <p class="explain__num"><span class="n"><b data-count="67">67</b></span><small>Lagen Stahl</small></p>
+        <div class="benefits">
+          <article class="benefit">
+            <p class="benefit__num">67<small>Lagen</small></p>
             <h3>Hart und flexibel zugleich</h3>
-            <p>Harte und weichere Stahllagen werden gefaltet und geschmiedet. Der harte Kern hält die Schärfe, die Lagen drumherum machen die Klinge zäh. Das Wellenmuster ist der sichtbare Beweis.</p>
+            <p>Harte und weichere Stahllagen, gefaltet und geschmiedet. Der Kern hält die Schärfe, die Lagen machen die Klinge zäh – das Wellenmuster ist der Beweis.</p>
           </article>
-          <!-- Schliff -->
-          <article class="explain__card" data-fx="angle">
-            <svg class="explain__art" viewBox="0 0 300 150" aria-hidden="true">
-              <g transform="translate(150 140)">
-                <path class="ex-ghost" d="M0 0 L-22 -125 L22 -125 Z"/>
-                <path class="ex-wedge" d="M0 0 L-16.5 -125 L16.5 -125 Z"/>
-                <path class="ex-arc" d="M-10.4 -79.3 A80 80 0 0 1 10.4 -79.3"/>
-              </g>
-              <text x="190" y="40" class="ex-label ex-label--muted">Standard ~20°</text>
-              <text x="190" y="62" class="ex-label ex-label--accent">Kaspar 15°</text>
-            </svg>
-            <p class="explain__num"><span class="n"><b data-count="15">15</b>°</span><small>Schliffwinkel</small></p>
-            <h3>Schmalere Schneide</h3>
-            <p>Je spitzer der Winkel, desto weniger Widerstand. Die Klinge gleitet durch die Tomate, statt sie zu quetschen. Du brauchst weniger Kraft und hast mehr Kontrolle.</p>
+          <article class="benefit">
+            <p class="benefit__num">15°<small>Schliff</small></p>
+            <h3>Gleitet durch, statt zu quetschen</h3>
+            <p>Normale Messer haben rund 20°. Der schmalere Winkel braucht weniger Kraft – Tomaten, Zwiebeln und Kräuter schneidest du sauber.</p>
           </article>
-          <!-- Härte -->
-          <article class="explain__card" data-fx="gauge">
-            <svg class="explain__art" viewBox="0 0 300 150" aria-hidden="true">
-              <g transform="translate(150 132)">
-                <path class="ex-track" d="M-110 0 A110 110 0 0 1 110 0"/>
-                <path class="ex-zone" d="M-57.2 -112.3 A126 126 0 0 1 19.7 -124.4"/>
-                <path class="ex-fill" d="M-110 0 A110 110 0 0 1 77.8 -77.8"/>
-              </g>
-              <g class="ex-needle"><path d="M150 132 L150 36"/><circle cx="150" cy="132" r="7"/></g>
-              <text x="40" y="146" class="ex-label ex-label--muted">45</text>
-              <text x="246" y="146" class="ex-label ex-label--muted">65</text>
-              <text x="4" y="24" class="ex-label ex-label--muted">typisch 52–56</text>
-              <text x="236" y="52" class="ex-label ex-label--accent">60</text>
-            </svg>
-            <p class="explain__num"><span class="n"><b data-count="60">60</b></span><small>HRC Härte</small></p>
-            <h3>Bleibt länger scharf</h3>
-            <p>Härterer Stahl stumpft langsamer ab. Mit rund 60 HRC liegt die Klinge deutlich über typischen Haushaltsmessern. Nachschärfen nur alle paar Monate.</p>
+          <article class="benefit">
+            <p class="benefit__num">60<small>HRC</small></p>
+            <h3>Bleibt monatelang scharf</h3>
+            <p>Härterer Stahl stumpft langsamer ab. Typische Haushaltsmesser liegen bei 52–56 HRC – du schärfst nur alle paar Monate nach.</p>
           </article>
         </div>
+      </div>
+    </section>
+
+    <!-- ===== VIDEOS – erscheint nur mit echten Clips (shop.config.json → media.reels) ===== -->
+    <section class="section dark" id="videos" data-section="Videos" data-video-section hidden>
+      <div class="wrap">
+        <header class="section__head">
+          <p class="eyebrow">In Aktion</p>
+          <h2 class="h2">So schneidet das Duo</h2>
+        </header>
+        <div class="reels" data-reels></div>
       </div>
     </section>
 
     <!-- ===== 5 · VERGLEICH ===== -->
     <section class="section section--band" id="vergleich" data-section="Vergleich">
       <div class="wrap wrap--narrow">
-        <header class="section__head" data-reveal>
+        <header class="section__head">
           <p class="eyebrow">Der ehrliche Vergleich</p>
           <h2 class="h2">Warum nicht einfach ein Messerblock?</h2>
         </header>
-        <div class="compare-scroll" data-reveal>
+        <div class="compare-scroll">
           <div class="compare" role="table" aria-label="Vergleich">
             <div class="compare__row compare__head" role="row">
               <span role="columnheader"></span>
@@ -269,16 +238,18 @@
             <div class="compare__row" role="row"><span role="rowheader">Preis</span><span class="is-us" role="cell"><strong data-price-now>99 €</strong></span><span role="cell">günstig</span><span role="cell">deutlich teurer</span></div>
           </div>
         </div>
+        <div class="inline-cta">
+          <a href="#angebot" class="btn btn--primary btn--xl">Zum Angebot</a>
+        </div>
       </div>
     </section>
 
     <!-- ===== 6 · ANGEBOT / SHOP ===== -->
     <section class="section offer dark" id="angebot" data-section="Angebot">
-      <div class="offer__bg" aria-hidden="true"></div>
       <div class="wrap offer__inner">
-        <header class="section__head" data-reveal>
+        <header class="section__head">
           <p class="eyebrow" data-sale-only>Black Friday · nur solange Vorrat reicht</p>
-          <h2 class="h2">Sichere dir dein Duo</h2>
+          <h2 class="h2">Wähle dein Paket</h2>
         </header>
 
         <div class="countdown" data-sale-only aria-label="Verbleibende Zeit der Aktion">
@@ -317,7 +288,7 @@
     <!-- ===== Bewertungen (erscheint nur mit echten Bewertungen) ===== -->
     <section class="section section--band" data-reviews-section hidden>
       <div class="wrap">
-        <header class="section__head" data-reveal>
+        <header class="section__head">
           <p class="eyebrow">Kundenstimmen</p>
           <h2 class="h2">Was Käufer sagen</h2>
         </header>
@@ -328,18 +299,14 @@
     <!-- ===== 7 · FAQ ===== -->
     <section class="section" id="faq" data-section="FAQ">
       <div class="wrap wrap--narrow">
-        <header class="section__head" data-reveal>
-          <p class="eyebrow">Fragen?</p>
+        <header class="section__head">
+          <p class="eyebrow">Noch Fragen?</p>
           <h2 class="h2">Häufige Fragen</h2>
         </header>
-        <div class="faq" data-stagger>
+        <div class="faq">
           <details>
             <summary>Ist das echter Damaststahl?</summary>
             <p>Ja. Die Klinge besteht aus 67 Lagen Stahl, die um einen harten Kern geschmiedet sind. Das Muster entsteht durch die Lagen selbst – es ist nicht aufgedruckt oder gelasert.</p>
-          </details>
-          <details>
-            <summary>Dürfen die Messer in die Spülmaschine?</summary>
-            <p>Bitte nicht. Kurz mit warmem Wasser und etwas Spülmittel abspülen und direkt abtrocknen. So bleiben Schärfe und Muster viele Jahre schön.</p>
           </details>
           <details>
             <summary>Wann kommt meine Bestellung an?</summary>
@@ -352,6 +319,10 @@
           <details>
             <summary>Eignet sich das Set als Geschenk?</summary>
             <p>Absolut. Das Duo kommt in einer Geschenkbox, und beim Bezahlen kannst du eine Geschenknachricht eintragen, die wir beilegen.</p>
+          </details>
+          <details>
+            <summary>Dürfen die Messer in die Spülmaschine?</summary>
+            <p>Bitte nicht. Kurz mit warmem Wasser und etwas Spülmittel abspülen und direkt abtrocknen. So bleiben Schärfe und Muster viele Jahre schön.</p>
           </details>
           <details>
             <summary>Wie schärfe ich die Messer nach?</summary>
@@ -373,7 +344,7 @@
     <section class="final dark">
       <div class="wrap final__inner">
         <h2 class="display display--md"><span data-sale-only>Black Friday endet in<br><span class="accent" data-countdown>–</span></span><span data-regular-only>Bereit für bessere Messer?</span></h2>
-        <a href="#angebot" class="btn btn--primary btn--xl">Jetzt sichern</a>
+        <a href="#angebot" class="btn btn--primary btn--xl">Jetzt für <span data-price-now>99 €</span> sichern</a>
       </div>
     </section>
   </main>

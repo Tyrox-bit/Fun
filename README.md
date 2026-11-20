@@ -117,11 +117,20 @@ Der Player kann:
 - Ton-Button (immer nur ein Clip mit Ton), Fortschrittsbalken, Antippen = Pause
 - Lädt Videos erst kurz bevor sie sichtbar werden; im Datensparmodus kein Autoplay
 
-## Animationen
+## Aufbau der Sales Page
 
-Alles ohne Zusatz-Bibliothek, flüssig auch auf älteren Handys:
-Headline wird „aufgeschnitten“ · Lichtreflex wandert über die Klingen · Streichpreis wird durchgeschnitten, neuer Preis knallt rein · Zahlen zählen hoch · Laufband · Countdown-Ziffern klappen um · Messer gleiten ins Bild · Glanz auf den Kauf-Buttons · leichte 3D-Neigung am Desktop · schräge Schnittkanten zwischen Abschnitten.
-Wer in den Systemeinstellungen „Bewegung reduzieren“ aktiviert hat, bekommt automatisch eine ruhige Version.
+Bewusst ruhig – die Messer und das Angebot stehen im Mittelpunkt, keine Effekt-Animationen:
+
+1. **Angebot oben** – Produktbild, Nutzen in 3 Häkchen, Preis, Live-Bestand, Kauf-Button
+2. **Kennst du das?** – das Problem (gequetschte Tomate, voller Messerblock, schnell stumpf)
+3. **Das bekommst du** – beide Messer groß, Geschenkbox, technische Daten zum Aufklappen
+4. **Vorteile** – 67 Lagen · 15° Schliff · 60 HRC, kurz erklärt
+5. **Videos** – erscheint nur, wenn echte Clips eingetragen sind
+6. **Vergleich** – Kaspar vs. Messerblock vs. Premium-Marken
+7. **Angebot** – Countdown, Pakete, Kauf
+8. **FAQ** + letzter Kauf-Button
+
+Nach jedem Block kommt ein Kauf-Button. Orientierung: fester Header mit Fortschrittsbalken, aktiver Abschnitt hervorgehoben (mobil als Name im Header). Bewegung gibt es nur, wo sie verkauft: Countdown, Live-Bestand, Kaufleiste beim Scrollen.
 
 ## Bilder austauschen
 
