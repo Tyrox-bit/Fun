@@ -41,6 +41,7 @@ local C = {
 }
 
 local root: Model
+local exteriorDetail: (outside: Instance) -> ()
 local rng = Random.new(707)
 
 ---------------------------------------------------------------------------
@@ -85,7 +86,7 @@ local function worldText(target: BasePart, face: Enum.NormalId, key: string?, st
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(1, 1)
-	label.Font = font or Enum.Font.RobotoMono
+	label.FontFace = Font.fromEnum(font or Enum.Font.RobotoMono)
 	label.TextScaled = true
 	label.TextWrapped = true
 	label.TextColor3 = color or Color3.fromRGB(30, 28, 26)
@@ -172,6 +173,19 @@ local function door(center: Vector3, alongX: boolean, width: number, locked: boo
 	local closed = CFrame.new(center.X, DOOR_H / 2, center.Z)
 	local slide = if alongX then Vector3.new(width - 0.4, 0, 0) else Vector3.new(0, 0, width - 0.4)
 	local panel = block(doors, "Door" .. doorCount, size, closed, C.Steel, Enum.Material.Metal)
+	-- frame (two posts + header) and yellow/black hazard stripes on the floor
+	local along = if alongX then Vector3.new(1, 0, 0) else Vector3.new(0, 0, 1)
+	for _, sideSign in { -1, 1 } do
+		local postPos = Vector3.new(center.X, DOOR_H / 2, center.Z) + along * sideSign * (width / 2 + 0.35)
+		block(doors, "DoorFrame", if alongX then Vector3.new(0.7, DOOR_H, 1.6) else Vector3.new(1.6, DOOR_H, 0.7), CFrame.new(postPos), C.SteelDark, Enum.Material.Metal)
+	end
+	block(doors, "DoorHeader", if alongX then Vector3.new(width + 1.4, 0.9, 1.6) else Vector3.new(1.6, 0.9, width + 1.4), CFrame.new(center.X, DOOR_H + 0.45, center.Z), C.SteelDark, Enum.Material.Metal)
+	local stripes = math.max(2, math.floor(width / 1.2))
+	for i = 0, stripes - 1 do
+		local offset = -width / 2 + (i + 0.5) * width / stripes
+		local stripe = block(doors, "Hazard", if alongX then Vector3.new(width / stripes, 0.05, 2.4) else Vector3.new(2.4, 0.05, width / stripes), CFrame.new(center.X, 0.03, center.Z) + along * offset, if i % 2 == 0 then Color3.fromRGB(214, 170, 40) else Color3.fromRGB(26, 24, 22), Enum.Material.SmoothPlastic)
+		stripe.CanCollide = false
+	end
 	local stripe = block(panel, "Stripe", if alongX then Vector3.new(width, 0.4, 0.7) else Vector3.new(0.7, 0.4, width), closed * CFrame.new(0, 1.5, 0), if locked then C.Emergency else C.Plastic, Enum.Material.Neon)
 	stripe.CanCollide = false
 	local weld = Instance.new("WeldConstraint")
@@ -209,15 +223,18 @@ local lightsPerSector: { [string]: number } = {}
 -- room is ever pitch black on low-end devices; further lights are decorative.
 local function ceilingLight(position: Vector3, sector: string, color: Color3?, shadows: boolean?, forceKey: boolean?)
 	lightsPerSector[sector] = (lightsPerSector[sector] or 0) + 1
-	local key = forceKey or lightsPerSector[sector] == 1
-	local fixture = block(lights, "Fixture_" .. sector, Vector3.new(6, 0.3, 1), CFrame.new(position.X, H - 0.2, position.Z), color or C.Fluorescent, Enum.Material.Neon)
+	-- the first TWO lights per sector are key lights (on at every graphics level)
+	local key = forceKey or lightsPerSector[sector] <= 2
+	local housing = block(lights, "LampHousing", Vector3.new(6.6, 0.45, 1.6), CFrame.new(position.X, H - 0.25, position.Z), C.SteelDark, Enum.Material.Metal)
+	housing.CanCollide = false
+	local fixture = block(lights, "Fixture_" .. sector, Vector3.new(6, 0.15, 1.1), CFrame.new(position.X, H - 0.52, position.Z), color or C.Fluorescent, Enum.Material.Neon)
 	fixture.CanCollide = false
 	fixture.CastShadow = false
 	local light = Instance.new("SurfaceLight")
 	light.Face = Enum.NormalId.Bottom
-	light.Range = 22
-	light.Angle = 120
-	light.Brightness = 1.1
+	light.Range = 28
+	light.Angle = 140
+	light.Brightness = 1.9
 	light.Color = color or C.Fluorescent
 	light.Shadows = shadows == true
 	light.Parent = fixture
@@ -228,6 +245,19 @@ local function ceilingLight(position: Vector3, sector: string, color: Color3?, s
 		CollectionService:AddTag(fixture, "FZ_DecorLight")
 	end
 	return fixture
+end
+
+-- Fill a rectangular room with a grid of ceiling lights (spacing ~14 studs).
+local function lightGrid(x0: number, x1: number, z0: number, z1: number, sector: string, color: Color3?)
+	local nx = math.max(1, math.floor((x1 - x0) / 16))
+	local nz = math.max(1, math.floor((z1 - z0) / 14))
+	for ix = 1, nx do
+		for iz = 1, nz do
+			local x = x0 + (x1 - x0) * (ix - 0.5) / nx
+			local z = z0 + (z1 - z0) * (iz - 0.5) / nz
+			ceilingLight(Vector3.new(x, 0, z), sector, color, ix == 1 and iz == 1)
+		end
+	end
 end
 
 local function emergencyLight(position: Vector3, sector: string)
@@ -255,18 +285,105 @@ local function desk(cf: CFrame)
 	end
 end
 
+local function chair(cf: CFrame)
+	block(props, "ChairSeat", Vector3.new(1.8, 0.3, 1.8), cf * CFrame.new(0, 1.8, 0), C.SteelDark, Enum.Material.Fabric)
+	block(props, "ChairBack", Vector3.new(1.8, 2, 0.25), cf * CFrame.new(0, 2.9, 0.8), C.SteelDark, Enum.Material.Fabric)
+	block(props, "ChairLeg", Vector3.new(0.25, 1.7, 0.25), cf * CFrame.new(0, 0.85, 0), C.Steel, Enum.Material.Metal)
+	block(props, "ChairFoot", Vector3.new(1.6, 0.15, 1.6), cf * CFrame.new(0, 0.1, 0), C.Steel, Enum.Material.Metal)
+end
+
 local function console(cf: CFrame)
 	block(props, "Console", Vector3.new(7, 3.4, 2.4), cf * CFrame.new(0, 1.7, 0), C.SteelDark, Enum.Material.Metal)
-	block(props, "ConsoleTop", Vector3.new(7, 0.3, 2.6), cf * CFrame.new(0, 3.5, 0) * CFrame.Angles(math.rad(-12), 0, 0), C.Steel, Enum.Material.Metal)
+	block(props, "ConsoleTop", Vector3.new(7.2, 0.3, 2.8), cf * CFrame.new(0, 3.5, 0) * CFrame.Angles(math.rad(-12), 0, 0), C.Steel, Enum.Material.Metal)
+	block(props, "Keyboard", Vector3.new(2.6, 0.15, 0.9), cf * CFrame.new(0, 3.72, -0.7) * CFrame.Angles(math.rad(-12), 0, 0), C.Plastic:Lerp(C.SteelDark, 0.5), Enum.Material.SmoothPlastic)
+	-- status LEDs
+	for i = -3, 3 do
+		local led = block(props, "Led", Vector3.new(0.18, 0.18, 0.05), cf * CFrame.new(i * 0.6, 2.6, -1.22), if i % 3 == 0 then C.Emergency else C.Screen, Enum.Material.Neon)
+		led.CanCollide = false
+	end
 	local screens = {}
 	for i = -1, 1 do
-		local screen = block(props, "Monitor", Vector3.new(1.9, 1.5, 1.2), cf * CFrame.new(i * 2.2, 4.6, 0.4), C.ConcreteDark, Enum.Material.SmoothPlastic)
-		local glass = block(props, "Screen", Vector3.new(1.6, 1.1, 0.05), screen.CFrame * CFrame.new(0, 0, -0.62), C.Screen, Enum.Material.Neon)
-		glass.Transparency = 0.25
+		local monitor = block(props, "Monitor", Vector3.new(2, 1.7, 1.6), cf * CFrame.new(i * 2.25, 4.7, 0.5), Color3.fromRGB(58, 56, 52), Enum.Material.SmoothPlastic)
+		local glass = block(props, "Screen", Vector3.new(1.6, 1.2, 0.05), monitor.CFrame * CFrame.new(0, 0.05, -0.82), C.Screen, Enum.Material.Neon)
+		glass.Transparency = 0.2
 		glass.CanCollide = false
+		local glow = Instance.new("SurfaceLight")
+		glow.Face = Enum.NormalId.Front
+		glow.Range = 7
+		glow.Brightness = 0.6
+		glow.Angle = 90
+		glow.Color = C.Screen
+		glow.Parent = glass
 		table.insert(screens, glass)
 	end
+	chair(cf * CFrame.new(1.2, 0, -2.8) * CFrame.Angles(0, math.rad(15), 0))
 	return screens
+end
+
+local function serverRack(cf: CFrame)
+	local rack = block(props, "ServerRack", Vector3.new(3, 9, 3), cf * CFrame.new(0, 4.5, 0), Color3.fromRGB(28, 30, 32), Enum.Material.Metal)
+	for row = 0, 7 do
+		local unit = block(props, "RackUnit", Vector3.new(2.6, 0.7, 0.1), rack.CFrame * CFrame.new(0, -3.6 + row * 1.05, -1.52), Color3.fromRGB(44, 46, 48), Enum.Material.DiamondPlate)
+		unit.CanCollide = false
+		for k = 0, 2 do
+			local led = block(props, "RackLed", Vector3.new(0.14, 0.14, 0.05), unit.CFrame * CFrame.new(-1 + k * 0.25, 0, -0.06), if (row + k) % 4 == 0 then Color3.fromRGB(255, 170, 60) else C.Screen, Enum.Material.Neon)
+			led.CanCollide = false
+		end
+	end
+	return rack
+end
+
+local function crate(cf: CFrame, size: number?)
+	local s = size or 2.4
+	block(props, "Crate", Vector3.new(s, s, s), cf * CFrame.new(0, s / 2, 0), Color3.fromRGB(120, 96, 66), Enum.Material.WoodPlanks)
+end
+
+local function deskLamp(cf: CFrame)
+	block(props, "LampBase", Vector3.new(0.6, 0.15, 0.6), cf, C.SteelDark, Enum.Material.Metal)
+	block(props, "LampArm", Vector3.new(0.12, 1.2, 0.12), cf * CFrame.new(0, 0.65, 0) * CFrame.Angles(0, 0, math.rad(15)), C.SteelDark, Enum.Material.Metal)
+	local head = block(props, "LampHead", Vector3.new(0.7, 0.35, 0.5), cf * CFrame.new(-0.3, 1.25, 0), Color3.fromRGB(255, 214, 150), Enum.Material.Neon)
+	head.CanCollide = false
+	local light = Instance.new("SpotLight")
+	light.Face = Enum.NormalId.Bottom
+	light.Range = 12
+	light.Angle = 100
+	light.Brightness = 1.4
+	light.Color = Color3.fromRGB(255, 205, 140)
+	light.Parent = head
+	CollectionService:AddTag(head, "FZ_DecorLight")
+end
+
+local function papers(cf: CFrame)
+	for i = 1, 3 do
+		local sheet = block(props, "Paper", Vector3.new(0.9, 0.02, 1.2), cf * CFrame.new(i * 0.35, 0.01 * i, 0) * CFrame.Angles(0, math.rad(i * 17), 0), C.Paper, Enum.Material.SmoothPlastic)
+		sheet.CanCollide = false
+	end
+end
+
+-- Ceiling structure, cable tray and floor seams for a rectangular space.
+local function roomDetail(x0: number, x1: number, z0: number, z1: number, floorColor: Color3?)
+	local w, d = x1 - x0, z1 - z0
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local ceiling = block(props, "Ceiling", Vector3.new(w, 0.2, d), CFrame.new(cx, H - 0.1, cz), Color3.fromRGB(46, 48, 50), Enum.Material.Concrete)
+	ceiling.CanCollide = false
+	for x = x0 + 8, x1 - 4, 8 do
+		local beam = block(props, "Beam", Vector3.new(0.6, 0.8, d), CFrame.new(x, H - 0.6, cz), Color3.fromRGB(58, 60, 62), Enum.Material.Metal)
+		beam.CanCollide = false
+	end
+	local tray = block(props, "CableTray", Vector3.new(w - 2, 0.25, 1.2), CFrame.new(cx, H - 1.8, z0 + 1.2), C.SteelDark, Enum.Material.DiamondPlate)
+	tray.CanCollide = false
+	for i = 0, 2 do
+		local cable = block(props, "Cable", Vector3.new(w - 2, 0.18, 0.18), CFrame.new(cx, H - 1.6, z0 + 0.8 + i * 0.35), Color3.fromRGB(20 + i * 30, 20, 20), Enum.Material.Rubber)
+		cable.CanCollide = false
+	end
+	if floorColor then
+		local overlay = block(props, "FloorFinish", Vector3.new(w - 1, 0.04, d - 1), CFrame.new(cx, 0.03, cz), floorColor, Enum.Material.Plastic)
+		overlay.CanCollide = false
+		for x = x0 + 5, x1 - 1, 5 do
+			local seam = block(props, "Seam", Vector3.new(0.06, 0.05, d - 1), CFrame.new(x, 0.04, cz), floorColor:Lerp(Color3.new(0, 0, 0), 0.25), Enum.Material.Plastic)
+			seam.CanCollide = false
+		end
+	end
 end
 
 
@@ -538,10 +655,26 @@ local function furnish()
 	interactable(terminal, "c1_terminal", "INTERACT_ACTIVATE", "OBJECT_CORE", { MaxDistance = 8 })
 	desk(CFrame.new(62, 0, 45))
 	cabinet(CFrame.new(98, 0, 30))
-	for z = 35, 60, 12 do
-		ceilingLight(Vector3.new(66, 0, z), "CONTROL", nil, z == 35, true)
-		ceilingLight(Vector3.new(84, 0, z), "CONTROL")
-	end
+	lightGrid(50, 100, 25, 70, "CONTROL")
+	roomDetail(50, 100, 25, 70, Color3.fromRGB(78, 82, 80))
+	serverRack(CFrame.new(97, 0, 50) * CFrame.Angles(0, math.rad(-90), 0))
+	serverRack(CFrame.new(97, 0, 46) * CFrame.Angles(0, math.rad(-90), 0))
+	deskLamp(CFrame.new(60, 3.15, 44.5))
+	papers(CFrame.new(63, 3.16, 45))
+	chair(CFrame.new(62, 0, 47.5) * CFrame.Angles(0, math.rad(200), 0))
+	-- vending machine with a cold glow
+	local vending = block(props, "Vending", Vector3.new(3.4, 7, 2.6), CFrame.new(56, 3.5, 28) * CFrame.Angles(0, math.rad(180), 0), Color3.fromRGB(150, 40, 36), Enum.Material.SmoothPlastic)
+	local front = block(props, "VendingFront", Vector3.new(2.6, 4.6, 0.05), vending.CFrame * CFrame.new(-0.2, 0.6, -1.32), Color3.fromRGB(200, 230, 255), Enum.Material.Neon)
+	front.Transparency = 0.35
+	front.CanCollide = false
+	local vendLight = Instance.new("SurfaceLight")
+	vendLight.Face = Enum.NormalId.Front
+	vendLight.Range = 12
+	vendLight.Brightness = 0.9
+	vendLight.Color = Color3.fromRGB(190, 220, 255)
+	vendLight.Parent = front
+	crate(CFrame.new(96, 0, 66) * CFrame.Angles(0, math.rad(12), 0))
+	crate(CFrame.new(96.5, 2.4, 66.2) * CFrame.Angles(0, math.rad(-7), 0), 1.8)
 	checkpoint("C1_CONTROL", CFrame.new(75, 0.5, 52))
 
 	-- Sector A: administration
@@ -554,9 +687,13 @@ local function furnish()
 	local breaker = block(props, "BreakerA", Vector3.new(3, 4, 0.8), CFrame.new(99.2, 5, 4) * CFrame.Angles(0, math.rad(-90), 0), C.Steel:Lerp(C.Emergency, 0.25), Enum.Material.Metal)
 	interactable(breaker, "c1_breaker_a", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { MaxDistance = 8, Sector = "A" })
 	breaker:SetAttribute("Armed", false)
-	for x = 60, 90, 15 do
-		ceilingLight(Vector3.new(x, 0, -12), "A")
-		ceilingLight(Vector3.new(x, 0, 12), "A")
+	lightGrid(50, 100, -25, 25, "A")
+	roomDetail(50, 100, -25, 25, Color3.fromRGB(92, 88, 78))
+	for x = 58, 91, 11 do
+		deskLamp(CFrame.new(x - 2, 3.15, -10.5))
+		papers(CFrame.new(x + 0.5, 3.16, 9.5))
+		chair(CFrame.new(x, 0, -12.6))
+		chair(CFrame.new(x, 0, 12.6) * CFrame.Angles(0, math.rad(180), 0))
 	end
 	emergencyLight(Vector3.new(99, 11, -20), "A")
 	fuseSpot(CFrame.new(91, 3.45, 10), "A")
@@ -570,8 +707,9 @@ local function furnish()
 	for z = -80, -60, 3 do
 		locker(CFrame.new(75 + (z % 2), 0, z) * CFrame.Angles(0, math.rad(90), 0))
 	end
-	ceilingLight(Vector3.new(66, 0, -70), "D", Color3.fromRGB(255, 214, 170))
-	ceilingLight(Vector3.new(84, 0, -45), "D", Color3.fromRGB(255, 214, 170))
+	lightGrid(50, 100, -85, -25, "D", Color3.fromRGB(255, 214, 170))
+	roomDetail(50, 100, -85, -25, Color3.fromRGB(70, 74, 66))
+	deskLamp(CFrame.new(89.2, 3.0, -30.6))
 	breakerBox(CFrame.new(99.2, 5, -30) * CFrame.Angles(0, math.rad(-90), 0), "D", "breaker")
 	-- Break room corner: coffee still warm, calendar on November 2009 (document)
 	local table_ = block(props, "CoffeeTable", Vector3.new(4, 3, 3), CFrame.new(90, 1.5, -30), C.Wood, Enum.Material.Wood)
@@ -590,8 +728,13 @@ local function furnish()
 		shelf(CFrame.new(-74, 0, z) * CFrame.Angles(0, math.rad(90), 0))
 	end
 	desk(CFrame.new(-60, 0, -40))
-	ceilingLight(Vector3.new(-82, 0, -70), "C", nil, true)
-	ceilingLight(Vector3.new(-62, 0, -45), "C")
+	lightGrid(-100, -50, -85, -25, "C", Color3.fromRGB(235, 225, 200))
+	roomDetail(-100, -50, -85, -25, Color3.fromRGB(84, 74, 58))
+	deskLamp(CFrame.new(-58, 3.15, -39.5))
+	papers(CFrame.new(-61.5, 3.16, -40.5))
+	for i = 0, 4 do
+		crate(CFrame.new(-56 + (i % 2) * 2.6, 0, -82 + i * 0.4) * CFrame.Angles(0, math.rad(i * 9), 0), 2.2)
+	end
 	breakerBox(CFrame.new(-99.2, 5, -45) * CFrame.Angles(0, math.rad(90), 0), "C", "breaker")
 	fuseSpot(CFrame.new(-60, 3.45, -40), "C")
 	fuseSpot(CFrame.new(-82, 0.4, -82), "C")
@@ -606,9 +749,9 @@ local function furnish()
 	relayLamp.CanCollide = false
 	tag(relayLamp, "FZ_SectorLight", { Sector = "B", OnColor = C.Screen })
 	interactable(relay, "c1_relay_b", "INTERACT_INSERT", "OBJECT_RELAY_B", { HoldDuration = 4, MaxDistance = 8 })
-	for z = -15, 15, 15 do
-		ceilingLight(Vector3.new(-78, 0, z), "B")
-	end
+	lightGrid(-100, -50, -25, 25, "B", Color3.fromRGB(210, 240, 235))
+	roomDetail(-100, -50, -25, 25, Color3.fromRGB(196, 200, 196))
+	serverRack(CFrame.new(-97, 0, -20) * CFrame.Angles(0, math.rad(90), 0))
 	emergencyLight(Vector3.new(-51.5, 9, 8), "B")
 
 	-- Sector E: engineering
@@ -622,8 +765,18 @@ local function furnish()
 	end
 	pipeRun(Vector3.new(-98, 12, 30), Vector3.new(-98, 12, 84))
 	pipeRun(Vector3.new(-60, 12.5, 30), Vector3.new(-60, 12.5, 84), 0.9)
-	ceilingLight(Vector3.new(-70, 0, 40), "E", C.Sodium)
-	ceilingLight(Vector3.new(-70, 0, 72), "E", C.Sodium)
+	lightGrid(-100, -50, 25, 85, "E", C.Sodium)
+	roomDetail(-100, -50, 25, 85, nil)
+	for i = 0, 3 do
+		crate(CFrame.new(-56, 0, 40 + i * 3) * CFrame.Angles(0, math.rad(i * 13), 0))
+	end
+	-- warning floor markings around the generators
+	for _, z in { 45, 70 } do
+		for _, dz in { -3.4, 3.4 } do
+			local stripe = block(props, "Hazard", Vector3.new(10, 0.05, 0.5), CFrame.new(-80, 0.03, z + dz), Color3.fromRGB(214, 170, 40), Enum.Material.SmoothPlastic)
+			stripe.CanCollide = false
+		end
+	end
 	breakerBox(CFrame.new(-99.2, 5, 35) * CFrame.Angles(0, math.rad(90), 0), "E", "breaker")
 	fuseSpot(CFrame.new(-66, 0.4, 82), "E")
 	fuseSpot(CFrame.new(-95, 0.4, 56), "E")
@@ -636,6 +789,27 @@ local function furnish()
 	for x = -35, 35, 35 do
 		ceilingLight(Vector3.new(x, 0, -55), "HALLS", nil, false, true)
 		ceilingLight(Vector3.new(x, 0, 55), "HALLS", nil, false, true)
+	end
+	roomDetail(-50, 50, -60, -50, nil)
+	roomDetail(-50, 50, 50, 60, nil)
+	roomDetail(-9, 9, -50, -21, nil)
+	roomDetail(-9, 9, 21, 50, nil)
+	roomDetail(-50, -21, -9, 9, nil)
+	roomDetail(21, 50, -9, 9, nil)
+	-- core: a cold ring of light around the machine
+	for i = 0, 7 do
+		local a = i / 8 * math.pi * 2
+		local p = Vector3.new(math.cos(a) * 15, 0, math.sin(a) * 15)
+		local spot = block(props, "CoreFloorLight", Vector3.new(1.2, 0.2, 1.2), CFrame.new(p.X, 0.1, p.Z), Color3.fromRGB(120, 180, 220), Enum.Material.Neon)
+		spot.CanCollide = false
+		local up = Instance.new("SpotLight")
+		up.Face = Enum.NormalId.Top
+		up.Range = 18
+		up.Angle = 60
+		up.Brightness = 1.2
+		up.Color = Color3.fromRGB(140, 190, 230)
+		up.Parent = spot
+		CollectionService:AddTag(spot, "FZ_KeyLight")
 	end
 	pipeRun(Vector3.new(-50, 13, -51), Vector3.new(50, 13, -51))
 	pipeRun(Vector3.new(-50, 13, 51), Vector3.new(50, 13, 51))
@@ -745,21 +919,192 @@ end
 -- Outside: terrain, road, fence, gatehouse, antenna, forest
 ---------------------------------------------------------------------------
 local function tree(parent: Instance, position: Vector3, scale: number)
-	local height = 26 * scale
-	block(parent, "Trunk", Vector3.new(1.4 * scale, height, 1.4 * scale), CFrame.new(position + Vector3.new(0, height / 2, 0)), C.Bark, Enum.Material.Wood)
-	for i, s in { 1, 0.75, 0.5 } do
-		local layer = block(parent, "Needles", Vector3.new(1, 1, 1), CFrame.new(position + Vector3.new(0, height * (0.35 + i * 0.18), 0)), C.Pine, Enum.Material.Grass)
+	local height = 30 * scale
+	local model = Instance.new("Model")
+	model.Name = "Pine"
+	model.Parent = parent
+	local trunk = block(model, "Trunk", Vector3.new(height, 1.3 * scale, 1.3 * scale), CFrame.new(position + Vector3.new(0, height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), C.Bark, Enum.Material.Wood)
+	trunk.Shape = Enum.PartType.Cylinder
+	local tint = rng:NextNumber(-0.12, 0.12)
+	local needleColor = Color3.new(math.clamp(C.Pine.R + tint * 0.3, 0, 1), math.clamp(C.Pine.G + tint * 0.4, 0, 1), math.clamp(C.Pine.B + tint * 0.3, 0, 1))
+	local layers = 6
+	for i = 0, layers - 1 do
+		local t = i / (layers - 1)
+		local radius = (7.5 - t * 5.8) * scale
+		local y = height * (0.28 + t * 0.66)
+		-- each layer: a flat wide disc that tapers - reads as a conifer silhouette
+		local layer = block(model, "Needles", Vector3.new(1, 1, 1), CFrame.new(position + Vector3.new(0, y, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi), 0), needleColor, Enum.Material.Grass)
 		layer.CanCollide = false
 		local mesh = Instance.new("SpecialMesh")
 		mesh.MeshType = Enum.MeshType.Sphere
-		mesh.Scale = Vector3.new(12 * s * scale, 10 * scale, 12 * s * scale)
+		mesh.Scale = Vector3.new(radius * 2, 4.2 * scale, radius * 2)
 		mesh.Parent = layer
+	end
+end
+
+local function rock(parent: Instance, position: Vector3, size: number)
+	local stone = block(parent, "Rock", Vector3.new(size * 1.4, size * 0.8, size), CFrame.new(position + Vector3.new(0, size * 0.25, 0)) * CFrame.Angles(rng:NextNumber(-0.3, 0.3), rng:NextNumber(0, 6.28), rng:NextNumber(-0.3, 0.3)), Color3.fromRGB(88, 88, 84), Enum.Material.Slate)
+	return stone
+end
+
+local function container(parent: Instance, cf: CFrame, color: Color3)
+	local box = block(parent, "Container", Vector3.new(8, 8.6, 20), cf * CFrame.new(0, 4.3, 0), color, Enum.Material.CorrodedMetal)
+	for i = -4, 4 do
+		local rib = block(parent, "ContainerRib", Vector3.new(8.2, 8.2, 0.3), box.CFrame * CFrame.new(0, 0, i * 2.2), color:Lerp(Color3.new(0, 0, 0), 0.25), Enum.Material.CorrodedMetal)
+		rib.CanCollide = false
+	end
+	return box
+end
+
+local function aviationLight(parent: Instance, position: Vector3)
+	local bulb = block(parent, "AviationLight", Vector3.new(0.8, 0.8, 0.8), CFrame.new(position), C.Emergency, Enum.Material.Neon)
+	bulb.Shape = Enum.PartType.Ball
+	bulb.CanCollide = false
+	local light = Instance.new("PointLight")
+	light.Range = 14
+	light.Brightness = 1.6
+	light.Color = C.Emergency
+	light.Parent = bulb
+	CollectionService:AddTag(bulb, "FZ_Beacon")
+	return bulb
+end
+
+-- Facade, roof and yard detail: what you see on the walk from the gate to the door.
+exteriorDetail = function(outside: Instance)
+	local facade = Instance.new("Folder")
+	facade.Name = "Facade"
+	facade.Parent = outside
+	-- plinth and roof edge around every outer wall
+	local outline = {
+		{ Vector3.new(-100, 0, -85), Vector3.new(100, 0, -85) },
+		{ Vector3.new(100, 0, -85), Vector3.new(100, 0, 70) },
+		{ Vector3.new(100, 0, 70), Vector3.new(50, 0, 70) },
+		{ Vector3.new(50, 0, 60), Vector3.new(-50, 0, 60) },
+		{ Vector3.new(-50, 0, 85), Vector3.new(-100, 0, 85) },
+		{ Vector3.new(-100, 0, 85), Vector3.new(-100, 0, -85) },
+	}
+	for _, edge in outline do
+		local a, b = edge[1], edge[2]
+		local mid = (a + b) / 2
+		local length = (b - a).Magnitude + 1
+		local outward = (mid - Vector3.new(0, 0, 0)) * Vector3.new(1, 0, 1)
+		local dir = (b - a).Unit
+		local normal = Vector3.new(-dir.Z, 0, dir.X)
+		if normal:Dot(outward) < 0 then
+			normal = -normal
+		end
+		local base = CFrame.lookAt(mid, mid + dir)
+		block(facade, "Plinth", Vector3.new(0.6, 1.6, length), base * CFrame.new(0, 0.8, 0) + normal * 0.75, C.ConcreteDark, Enum.Material.Concrete)
+		block(facade, "Parapet", Vector3.new(1.2, 2.2, length), base * CFrame.new(0, H + 2.3, 0) + normal * 0.1, C.Concrete, Enum.Material.Concrete)
+		block(facade, "Coping", Vector3.new(1.6, 0.25, length), base * CFrame.new(0, H + 3.5, 0) + normal * 0.1, C.SteelDark, Enum.Material.Metal)
+		-- high slit windows: a few are lit from inside, the rest are dark glass
+		local count = math.floor(length / 14)
+		for i = 1, count do
+			local t = (i - 0.5) / count
+			local p = a:Lerp(b, t) + normal * 0.62 + Vector3.new(0, H - 3.4, 0)
+			local lit = rng:NextNumber() < 0.28
+			local pane = block(facade, "FacadeWindow", Vector3.new(0.12, 1.8, 5), CFrame.lookAt(p, p + dir), if lit then Color3.fromRGB(255, 214, 150) else Color3.fromRGB(26, 34, 40), if lit then Enum.Material.Neon else Enum.Material.Glass)
+			pane.CanCollide = false
+			if lit then
+				pane.Transparency = 0.15
+			else
+				pane.Reflectance = 0.15
+			end
+			block(facade, "FacadeWindowFrame", Vector3.new(0.3, 0.3, 5.4), CFrame.lookAt(p - Vector3.new(0, 1.05, 0), p - Vector3.new(0, 1.05, 0) + dir), C.SteelDark, Enum.Material.Metal)
+		end
+	end
+	-- vertical concrete pilasters along the long walls
+	for z = -80, 65, 16 do
+		block(facade, "Pilaster", Vector3.new(1.2, H, 2), CFrame.new(100.9, H / 2, z), C.ConcreteDark, Enum.Material.Concrete)
+	end
+	for z = -80, 80, 16 do
+		block(facade, "Pilaster", Vector3.new(1.2, H, 2), CFrame.new(-100.9, H / 2, z), C.ConcreteDark, Enum.Material.Concrete)
+	end
+
+	-- entrance canopy with a lamp over the door (x 75, z 70)
+	block(facade, "Canopy", Vector3.new(16, 0.6, 7), CFrame.new(75, DOOR_H + 0.8, 73.6), C.SteelDark, Enum.Material.Metal)
+	for _, dx in { -7.4, 7.4 } do
+		block(facade, "CanopyPost", Vector3.new(0.5, DOOR_H + 0.6, 0.5), CFrame.new(75 + dx, (DOOR_H + 0.6) / 2, 76.8), C.SteelDark, Enum.Material.Metal)
+	end
+	local canopyLamp = block(facade, "CanopyLamp", Vector3.new(4, 0.2, 1), CFrame.new(75, DOOR_H + 0.4, 73.6), Color3.fromRGB(230, 240, 255), Enum.Material.Neon)
+	canopyLamp.CanCollide = false
+	local canopyLight = Instance.new("SpotLight")
+	canopyLight.Face = Enum.NormalId.Bottom
+	canopyLight.Range = 22
+	canopyLight.Angle = 120
+	canopyLight.Brightness = 2.2
+	canopyLight.Color = Color3.fromRGB(220, 232, 255)
+	canopyLight.Shadows = true
+	canopyLight.Parent = canopyLamp
+	CollectionService:AddTag(canopyLamp, "FZ_KeyLight")
+	for i = 0, 2 do
+		block(facade, "Step", Vector3.new(12 - i, 0.3, 1.2), CFrame.new(75, 0.15 + i * 0.0, 71.4 + i * 1.2 - 0.6), C.Concrete, Enum.Material.Concrete)
+	end
+
+	-- roof: AC units, vents, cable trays, aviation lights at the corners
+	local roof = Instance.new("Folder")
+	roof.Name = "Roof"
+	roof.Parent = outside
+	for _, p in { Vector3.new(-80, 0, -60), Vector3.new(-72, 0, 40), Vector3.new(70, 0, -50), Vector3.new(84, 0, 10), Vector3.new(30, 0, -40), Vector3.new(-32, 0, 38) } do
+		local unit = block(roof, "ACUnit", Vector3.new(6, 3.2, 4.4), CFrame.new(p.X, H + 2.8, p.Z), Color3.fromRGB(150, 152, 148), Enum.Material.Metal)
+		local fan = block(roof, "ACFan", Vector3.new(0.2, 3.4, 3.4), unit.CFrame * CFrame.new(0, 1.65, 0) * CFrame.Angles(0, 0, math.rad(90)), C.SteelDark, Enum.Material.DiamondPlate)
+		fan.Shape = Enum.PartType.Cylinder
+		fan.CanCollide = false
+	end
+	for _, p in { Vector3.new(-99, H + 3.9, -84), Vector3.new(99, H + 3.9, -84), Vector3.new(-99, H + 3.9, 84), Vector3.new(99, H + 3.9, 69) } do
+		aviationLight(roof, p)
+	end
+	local mast = block(roof, "RoofMast", Vector3.new(0.6, 16, 0.6), CFrame.new(88, H + 9, -70), C.SteelDark, Enum.Material.Metal)
+	aviationLight(roof, mast.CFrame.Position + Vector3.new(0, 8.4, 0))
+	block(roof, "MastDish", Vector3.new(0.6, 5, 5), CFrame.new(88, H + 12, -68.4) * CFrame.Angles(0, math.rad(-70), math.rad(-15)), C.Plastic, Enum.Material.Metal).Shape = Enum.PartType.Cylinder
+
+	-- yard props: containers, barrels, pallets, rocks, road markings
+	local yard = Instance.new("Folder")
+	yard.Name = "Yard"
+	yard.Parent = outside
+	container(yard, CFrame.new(118, 0, 110) * CFrame.Angles(0, math.rad(4), 0), Color3.fromRGB(120, 56, 40))
+	container(yard, CFrame.new(118, 0, 132) * CFrame.Angles(0, math.rad(-3), 0), Color3.fromRGB(44, 74, 96))
+	container(yard, CFrame.new(118, 8.6, 121) * CFrame.Angles(0, math.rad(1), 0), Color3.fromRGB(70, 90, 60))
+	for i = 0, 5 do
+		local barrel = block(yard, "Barrel", Vector3.new(4, 2.6, 2.6), CFrame.new(24 + (i % 3) * 2.8, 2, 126 + math.floor(i / 3) * 2.8) * CFrame.Angles(0, 0, math.rad(90)), if i % 2 == 0 then Color3.fromRGB(150, 60, 34) else Color3.fromRGB(40, 70, 110), Enum.Material.CorrodedMetal)
+		barrel.Shape = Enum.PartType.Cylinder
+	end
+	for i = 0, 3 do
+		block(yard, "Pallet", Vector3.new(4, 0.6, 4), CFrame.new(10, 0.3 + i * 0.62, 118) * CFrame.Angles(0, math.rad(i * 6), 0), C.Wood, Enum.Material.WoodPlanks)
+	end
+	for z = 150, 236, 8 do
+		local mark = block(yard, "RoadMark", Vector3.new(0.4, 0.05, 4), CFrame.new(75, 0.06, z), Color3.fromRGB(210, 206, 190), Enum.Material.SmoothPlastic)
+		mark.CanCollide = false
+	end
+	for z = 250, 420, 8 do
+		local mark = block(yard, "RoadMark", Vector3.new(0.4, 0.05, 4), CFrame.new(75, 0.06, z), Color3.fromRGB(210, 206, 190), Enum.Material.SmoothPlastic)
+		mark.CanCollide = false
+	end
+	-- gate barrier arm (raised, red/white)
+	block(yard, "BarrierBox", Vector3.new(1.4, 3.6, 1.4), CFrame.new(87, 1.8, 243), Color3.fromRGB(200, 170, 40), Enum.Material.Metal)
+	for i = 0, 5 do
+		local seg = block(yard, "BarrierArm", Vector3.new(0.5, 2.4, 0.5), CFrame.new(87, 3.6, 243) * CFrame.Angles(0, 0, math.rad(78)) * CFrame.new(0, 1.2 + i * 2.4, 0), if i % 2 == 0 then Color3.fromRGB(200, 40, 34) else Color3.fromRGB(230, 230, 225), Enum.Material.SmoothPlastic)
+		seg.CanCollide = false
+	end
+	-- warning sign at the gate
+	local warn = block(yard, "WarningSign", Vector3.new(4, 3, 0.2), CFrame.new(64, 5.5, 241), Color3.fromRGB(220, 180, 40), Enum.Material.SmoothPlastic)
+	worldText(warn, Enum.NormalId.Back, nil, "⚠  ZUTRITT VERBOTEN\nRESTRICTED AREA", nil, Color3.fromRGB(20, 20, 20))
+	block(yard, "WarningPost", Vector3.new(0.3, 5, 0.3), CFrame.new(64, 2.5, 241.3), C.SteelDark, Enum.Material.Metal)
+	-- rocks scattered around the compound edge
+	for _ = 1, 40 do
+		local x = rng:NextNumber(-200, 220)
+		local z = rng:NextNumber(-180, 320)
+		local nearRoad = math.abs(x - 75) < 14 and z > 80
+		local inside = x > -105 and x < 105 and z > -90 and z < 90
+		if not nearRoad and not inside then
+			rock(yard, Vector3.new(x, 0, z), rng:NextNumber(1.5, 5))
+		end
 	end
 end
 
 local function lampPost(parent: Instance, position: Vector3, facing: Vector3)
 	local post = block(parent, "LampPost", Vector3.new(0.5, 14, 0.5), CFrame.new(position + Vector3.new(0, 7, 0)), C.SteelDark, Enum.Material.Metal)
-	local head = block(parent, "LampHead", Vector3.new(2, 0.5, 1), CFrame.lookAt(post.Position + Vector3.new(0, 7, 0), post.Position + Vector3.new(0, 7, 0) + facing) * CFrame.new(0, 0, -1), C.Sodium, Enum.Material.Neon)
+	local head = block(parent, "LampHead", Vector3.new(2, 0.5, 1), CFrame.lookAt(post.CFrame.Position + Vector3.new(0, 7, 0), post.CFrame.Position + Vector3.new(0, 7, 0) + facing) * CFrame.new(0, 0, -1), C.Sodium, Enum.Material.Neon)
 	local light = Instance.new("SpotLight")
 	light.Face = Enum.NormalId.Bottom
 	light.Angle = 110
@@ -774,9 +1119,11 @@ end
 local function buildOutside()
 	local outside = folder("Outside")
 
-	-- Terrain ground (cheap, looks natural). Building/road sit on top.
-	workspace.Terrain:FillBlock(CFrame.new(0, -5.1, 80), Vector3.new(900, 10, 900), Enum.Material.Grass)
-	workspace.Terrain:FillBlock(CFrame.new(-60, -1.2, 150), Vector3.new(60, 2, 40), Enum.Material.Mud)
+	-- Edit-mode stand-in for the terrain ground (terrain is filled at runtime by BuildTerrain,
+	-- which removes this part). Lets you see the site in Studio without pressing Play.
+	local preview = block(outside, "EditPreviewGround", Vector3.new(900, 1, 900), CFrame.new(0, -0.62, 80), Color3.fromRGB(46, 58, 40), Enum.Material.Grass)
+	preview:SetAttribute("FZ_EditPreview", true)
+	exteriorDetail(outside)
 
 	-- Yard and road (main entrance at x 75, z 70 -> gate at z 240)
 	block(outside, "Yard", Vector3.new(120, 1, 60), CFrame.new(40, -0.45, 100), C.Asphalt, Enum.Material.Asphalt)
@@ -803,6 +1150,10 @@ local function buildOutside()
 		for _, y in { 0.6, 8.6 } do
 			local rail = block(fence, "Rail", Vector3.new(0.25, 0.25, length), CFrame.lookAt((a + b) / 2 + Vector3.new(0, y, 0), b + Vector3.new(0, y, 0)), C.SteelDark, Enum.Material.Metal)
 			rail.CanCollide = false
+		end
+		for _, side in { -0.35, 0.35 } do
+			local wire = block(fence, "BarbedWire", Vector3.new(0.12, 0.12, length), CFrame.lookAt((a + b) / 2 + Vector3.new(0, 9.4, 0), b + Vector3.new(0, 9.4, 0)) * CFrame.new(side, 0, 0), C.Steel, Enum.Material.Metal)
+			wire.CanCollide = false
 		end
 		local mesh = block(fence, "Mesh", Vector3.new(0.1, 8, length), CFrame.lookAt((a + b) / 2 + Vector3.new(0, 4.6, 0), b + Vector3.new(0, 4.6, 0)), C.Steel, Enum.Material.DiamondPlate)
 		mesh.Transparency = 0.75
@@ -900,7 +1251,7 @@ local function buildOutside()
 		local x = rng:NextNumber(-360, 380)
 		local z = rng:NextNumber(-330, 460)
 		local insideCompound = x > -140 and x < 160 and z > -120 and z < 250
-		local onRoad = math.abs(x - 75) < 16 and z > 240
+		local onRoad = (math.abs(x - 75) < 16 and z > 240) or (x > 20 and x < 130 and z > 240 and z < 330)
 		if not insideCompound and not onRoad then
 			tree(forest, Vector3.new(x, 0, z), rng:NextNumber(0.8, 1.35))
 			placed += 1
@@ -923,29 +1274,91 @@ local function buildOutside()
 		decal:Destroy()
 	end
 	checkpoint("C1_START", CFrame.new(75, 0.5, 252))
-	local menuCamera = block(outside, "MenuCamera", Vector3.new(1, 1, 1), CFrame.lookAt(Vector3.new(58, 7, 286), Vector3.new(10, 26, 60)), C.Concrete)
-	menuCamera.Transparency = 1
-	menuCamera.CanCollide = false
-	menuCamera.CanQuery = false
-	CollectionService:AddTag(menuCamera, "FZ_MenuCamera")
+	-- Title screen shots (cycled with slow dolly moves, see Main.client setMenuCamera)
+	local shots = {
+		{ Vector3.new(80, 5.5, 134), Vector3.new(74, 8, 70), 7 }, -- yard: lit entrance under the canopy
+		{ Vector3.new(-18, 3.2, 128), Vector3.new(-60, 60, 150), 4 }, -- low angle up the antenna mast
+		{ Vector3.new(130, 34, 150), Vector3.new(10, 14, 10), 10 }, -- high over the containers: roof + radome
+		{ Vector3.new(92, 5.5, 64), Vector3.new(60, 4, 35), 5 }, -- inside the control room
+		{ Vector3.new(75, 4.5, 262), Vector3.new(75, 6, 200), 6 }, -- at the gate, looking in
+	}
+	for i, shot in shots do
+		local menuCamera = block(outside, "MenuCamera" .. i, Vector3.new(1, 1, 1), CFrame.lookAt(shot[1], shot[2]), C.Concrete)
+		menuCamera.Transparency = 1
+		menuCamera.CanCollide = false
+		menuCamera.CanQuery = false
+		menuCamera.CanTouch = false
+		menuCamera:SetAttribute("Shot", i)
+		menuCamera:SetAttribute("Drift", shot[3])
+		CollectionService:AddTag(menuCamera, "FZ_MenuCamera")
+	end
+end
+
+-- Terrain cannot be saved by script tools, so it is filled at runtime (also for a pre-baked
+-- FZ_Map). Removes the edit-mode preview ground.
+function Map.BuildTerrain(model: Instance?)
+	local terrain = workspace.Terrain
+	terrain:FillBlock(CFrame.new(0, -5.1, 80), Vector3.new(900, 10, 900), Enum.Material.Grass)
+	terrain:FillBlock(CFrame.new(-60, -1.2, 150), Vector3.new(60, 2, 40), Enum.Material.Mud)
+	-- variety patches so the ground does not read as one flat colour
+	local patches = Random.new(91)
+	for _ = 1, 26 do
+		local x = patches:NextNumber(-420, 420)
+		local z = patches:NextNumber(-350, 500)
+		local inside = x > -135 and x < 155 and z > -115 and z < 245
+		if not inside then
+			local material = if patches:NextNumber() < 0.5 then Enum.Material.LeafyGrass else Enum.Material.Ground
+			terrain:FillBall(Vector3.new(x, -2.6, z), patches:NextNumber(10, 26), material)
+		end
+	end
+	-- low hills on the horizon frame the site
+	for i = 0, 11 do
+		local a = i / 12 * math.pi * 2
+		terrain:FillBall(Vector3.new(math.cos(a) * 470, -30, 80 + math.sin(a) * 470), 70 + (i % 3) * 18, if i % 2 == 0 then Enum.Material.Grass else Enum.Material.Rock)
+	end
+	terrain.WaterWaveSize = 0.05
+	local clouds = terrain:FindFirstChildOfClass("Clouds") or Instance.new("Clouds")
+	clouds.Cover = 0.62
+	clouds.Density = 0.45
+	clouds.Color = Color3.fromRGB(70, 78, 92)
+	clouds.Parent = terrain
+	local scope = model or root
+	if scope then
+		for _, part in scope:GetDescendants() do
+			if part:IsA("BasePart") and part:GetAttribute("FZ_EditPreview") then
+				part:Destroy()
+			end
+		end
+	end
 end
 
 local function buildLighting()
-	Lighting.ClockTime = 0.4
-	Lighting.Brightness = 0.7
-	Lighting.Ambient = Color3.fromRGB(18, 21, 24)
-	Lighting.OutdoorAmbient = Color3.fromRGB(38, 44, 52)
-	Lighting.EnvironmentDiffuseScale = 0.35
-	Lighting.EnvironmentSpecularScale = 0.6
+	-- Readable moonlit night: you can see the silhouettes, the light sources lead the way.
+	Lighting.ClockTime = 23.6
+	Lighting.GeographicLatitude = 48
+	Lighting.Brightness = 1.6
+	Lighting.ExposureCompensation = 0.35
+	Lighting.Ambient = Color3.fromRGB(38, 42, 50)
+	Lighting.OutdoorAmbient = Color3.fromRGB(82, 92, 110)
+	Lighting.ColorShift_Top = Color3.fromRGB(150, 165, 190)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(20, 22, 28)
+	Lighting.EnvironmentDiffuseScale = 0.6
+	Lighting.EnvironmentSpecularScale = 0.85
+	Lighting.ShadowSoftness = 0.25
 	Lighting.GlobalShadows = true
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
-	atmosphere.Density = 0.36
-	atmosphere.Offset = 0.12
-	atmosphere.Color = Color3.fromRGB(112, 124, 134)
-	atmosphere.Decay = Color3.fromRGB(46, 56, 66)
-	atmosphere.Glare = 0
-	atmosphere.Haze = 1.6
+	atmosphere.Density = 0.27
+	atmosphere.Offset = 0.04
+	atmosphere.Color = Color3.fromRGB(150, 165, 185)
+	atmosphere.Decay = Color3.fromRGB(72, 86, 108)
+	atmosphere.Glare = 0.15
+	atmosphere.Haze = 0.9
 	atmosphere.Parent = Lighting
+	local sky = Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky")
+	sky.StarCount = 3000
+	sky.MoonAngularSize = 14
+	sky.CelestialBodiesShown = true
+	sky.Parent = Lighting
 end
 
 function Map.Build(): Model
@@ -955,7 +1368,11 @@ function Map.Build(): Model
 	furnish()
 	buildOutside()
 	buildLighting()
+	root:SetAttribute("FZ_Builder", "RelayStation07")
 	root.Parent = workspace
+	if not Map.SkipTerrain then
+		Map.BuildTerrain(root)
+	end
 	return root
 end
 

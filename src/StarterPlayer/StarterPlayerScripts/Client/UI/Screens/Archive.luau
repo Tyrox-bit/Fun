@@ -122,7 +122,7 @@ function Archive.new(router)
 	local category = "all"
 	local render: () -> ()
 
-	local transmit = Components.Button({ Key = "ARCHIVE_FREQ_SEND", Height = 40, Parent = inputRow, OnActivated = function()
+	local transmit = Components.Button({ Key = "ARCHIVE_FREQ_SEND", Height = 40, Centered = true, Parent = inputRow, OnActivated = function()
 		local text = box.Text
 		if #string.gsub(text, "%s", "") == 0 then
 			return
@@ -238,7 +238,7 @@ function Archive.new(router)
 
 	local tabButtons = {}
 	for index, name in CATEGORIES do
-		local tab = Components.Button({ Key = "ARCHIVE_CAT_" .. string.upper(name), Height = 34, LayoutOrder = index, Parent = tabs, OnActivated = function()
+		local tab = Components.Button({ Key = "ARCHIVE_CAT_" .. string.upper(name), Height = 34, Centered = true, LayoutOrder = index, Parent = tabs, OnActivated = function()
 			category = name
 			for n, b in tabButtons do
 				b.SetFocused(n == name)

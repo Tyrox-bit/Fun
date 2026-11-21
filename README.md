@@ -22,7 +22,7 @@ Roblox Studio läuft nur auf **Windows oder macOS**. Entwickeln und Veröffentli
 3. **Play** drücken. Das Testgelände wird beim Start automatisch gebaut.
 4. Zum Veröffentlichen: **Datei → Auf Roblox veröffentlichen**, danach die einmaligen Einstellungen unten setzen.
 
-Die Datei wird aus `src/` mit Rojo 7.4.4 erzeugt (`rojo build default.project.json -o build/SilentRelay.rbxlx`). Ohne Rojo liefert `python3 tools/build_place.py` denselben Explorer-Baum (gegen Rojo geprüft: 62 Objekte, alle 44 Skripte zeichengleich). Wenn du in Studio direkt etwas änderst, gilt ab dann die Studio-Version – für eine weitere Zusammenarbeit über dieses Repository ist Weg B besser.
+Die Datei wird aus `src/` mit Rojo 7.4.4 erzeugt (`rojo build default.project.json -o build/SilentRelay.rbxlx`) und danach mit [Lune](https://lune-org.github.io/docs) 0.11 die Karte eingebacken (`lune run tools/bake_map.luau build/SilentRelay.rbxlx`) – dadurch siehst du die Relaisanlage schon im Editor, ohne Play zu drücken. Das Terrain (Gras, Hügel, Wolken) entsteht erst beim Start, weil Skript-Tools kein Terrain speichern können; bis dahin zeigt eine flache Vorschau-Bodenplatte den Untergrund. Ohne Rojo liefert `python3 tools/build_place.py` denselben Explorer-Baum (gegen Rojo geprüft: 62 Objekte, alle 44 Skripte zeichengleich). Wenn du in Studio direkt etwas änderst, gilt ab dann die Studio-Version – für eine weitere Zusammenarbeit über dieses Repository ist Weg B besser.
 
 ## Installation B – Rojo (für die laufende Entwicklung)
 
@@ -121,6 +121,10 @@ Adminrechte: Besitzer des Spiels (User) bzw. Gruppenrang ≥ 254 sind automatisc
 python3 tools/check_localization.py   # alle Sprachen vollständig, Platzhalter identisch, alle im Code genutzten Schlüssel existieren
 python3 tools/check_luau_blocks.py    # Blockstruktur (function/if/do … end, Klammern) aller .luau-Dateien
 python3 tools/build_place.py          # erzeugt build/SilentRelay.rbxlx (ohne Rojo)
+lune run tools/check_syntax.luau      # echter Luau-Compiler: Syntaxfehler in allen Skripten
+lune run tools/ui_smoke.luau          # baut alle Menüs + HUD headless auf, prüft jede Property gegen die Roblox-API
+                                      # (FZ_VIEWPORT=844x390 simuliert ein Handy im Querformat)
+lune run tools/bake_map.luau build/SilentRelay.rbxlx   # führt den Kartenbauer aus und backt Workspace.FZ_Map in die Datei
 ```
 
 Das ersetzt **keinen** Studio-Test: Typfehler und API-Fehler findet nur Studio bzw. `luau-analyze`.

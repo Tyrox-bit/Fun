@@ -101,9 +101,11 @@ def check(path: Path) -> list:
             elif token == "," and if_expr_depth and if_expr_depth[-1] == len(brackets):
                 if_expr_depth.pop()
         # An if-expression ends at a statement boundary; approximate with line ends at depth 0.
-        if if_expr_depth and "\n" in text[match.end():match.end() + 1] and not brackets:
-            if token not in ("then", "else", "elseif", "and", "or", "=", ","):
-                if_expr_depth.clear()
+        # (also inside brackets, e.g. a callback body: then it ends at its own bracket depth)
+        if if_expr_depth and "\n" in text[match.end():match.end() + 1] and if_expr_depth[-1] == len(brackets):
+            if token not in ("then", "else", "elseif", "and", "or", "=", ",", "..", "+", "-", "*", "/"):
+                while if_expr_depth and if_expr_depth[-1] == len(brackets):
+                    if_expr_depth.pop()
         prev = token
     for kind, start in stack:
         problems.append(f"{path}:{start}: '{kind}' is never closed")

@@ -50,6 +50,17 @@ function MapService.Load(mapId: string): boolean
 	if mapId == "relay07" and workspace:FindFirstChild("FZ_Map") then
 		model = workspace:FindFirstChild("FZ_Map")
 		owned = true
+		-- A pre-baked builder map (in the place file) still needs its terrain at runtime.
+		local builderName = (model :: Instance):GetAttribute("FZ_Builder")
+		local builder = type(builderName) == "string" and script.Parent.Parent.Map:FindFirstChild(builderName)
+		if builder and builder:IsA("ModuleScript") then
+			local ok, err = pcall(function()
+				(require(builder) :: any).BuildTerrain(model)
+			end)
+			if not ok then
+				warn("[FZ-Map] terrain failed: " .. tostring(err))
+			end
+		end
 	else
 		local maps = ServerStorage:FindFirstChild("Maps")
 		local source = maps and map.model and maps:FindFirstChild(map.model)

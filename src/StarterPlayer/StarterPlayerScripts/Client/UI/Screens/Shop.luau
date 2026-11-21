@@ -204,7 +204,7 @@ function Shop.new(router)
 	end
 
 	for index, tab in Catalog.Tabs do
-		local tabButton = Components.Button({ Key = Catalog.TabLabels[tab], Height = 40, LayoutOrder = index, Parent = tabsRow, OnActivated = function()
+		local tabButton = Components.Button({ Key = Catalog.TabLabels[tab], Height = 40, Centered = true, LayoutOrder = index, Parent = tabsRow, OnActivated = function()
 			currentTab = tab
 			pendingConfirm = nil
 			render()

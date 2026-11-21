@@ -73,11 +73,32 @@ backdrop.Visible = false
 backdrop.Parent = backdropGui
 local gradient = Instance.new("UIGradient")
 gradient.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0.05),
-	NumberSequenceKeypoint.new(0.45, 0.35),
-	NumberSequenceKeypoint.new(1, 0.75),
+	NumberSequenceKeypoint.new(0, 0.55),
+	NumberSequenceKeypoint.new(0.5, 0.85),
+	NumberSequenceKeypoint.new(1, 0.92),
 })
 gradient.Parent = backdrop
+Components.Vignette(backdrop, 0.6)
+-- letterbox bars: cinematic frame for the title screen
+for _, top in { true, false } do
+	local bar = Instance.new("Frame")
+	bar.Name = if top then "LetterboxTop" else "LetterboxBottom"
+	bar.BackgroundColor3 = Color3.new(0, 0, 0)
+	bar.BorderSizePixel = 0
+	bar.AnchorPoint = Vector2.new(0, if top then 0 else 1)
+	bar.Position = UDim2.fromScale(0, if top then 0 else 1)
+	bar.Size = UDim2.new(1, 0, 0.055, 0)
+	bar.Parent = backdrop
+end
+-- black frame used for cuts between menu camera shots
+local cutFrame = Instance.new("Frame")
+cutFrame.Name = "Cut"
+cutFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+cutFrame.BackgroundTransparency = 1
+cutFrame.BorderSizePixel = 0
+cutFrame.Size = UDim2.fromScale(1, 1)
+cutFrame.ZIndex = 60
+cutFrame.Parent = backdropGui
 
 InputController.Init(hudGui)
 
@@ -170,21 +191,75 @@ local function setGameplay(enabled: boolean)
 	end
 end
 
+-- Title screen camera: slow dolly shots between the FZ_MenuCamera anchors (ordered by
+-- their "Shot" attribute), with short black cuts. One anchor = one slow drifting shot.
+local menuCameraConnection: RBXScriptConnection? = nil
+local SHOT_SECONDS = 14
+local function menuShots(): { BasePart }
+	local shots = {}
+	for _, anchor in CollectionService:GetTagged("FZ_MenuCamera") do
+		if anchor:IsA("BasePart") then
+			table.insert(shots, anchor)
+		end
+	end
+	table.sort(shots, function(a, b)
+		return (a:GetAttribute("Shot") or 0) < (b:GetAttribute("Shot") or 0)
+	end)
+	return shots
+end
 local function setMenuCamera(active: boolean)
 	local camera = workspace.CurrentCamera
 	if not camera then
 		return
 	end
+	if menuCameraConnection then
+		menuCameraConnection:Disconnect()
+		menuCameraConnection = nil
+	end
+	cutFrame.BackgroundTransparency = 1
 	if active then
-		local anchor = CollectionService:GetTagged("FZ_MenuCamera")[1]
-		if anchor and anchor:IsA("BasePart") then
-			camera.CameraType = Enum.CameraType.Scriptable
-			camera.CFrame = anchor.CFrame
+		local shots = menuShots()
+		if #shots == 0 then
+			return
 		end
+		camera.CameraType = Enum.CameraType.Scriptable
+		camera.FieldOfView = 62
+		local index, elapsed = 1, 0
+		local calm = SettingsController.Get("cameraEffects") == "off"
+		menuCameraConnection = RunService.RenderStepped:Connect(function(dt)
+			elapsed += dt
+			if elapsed >= SHOT_SECONDS and #shots > 1 then
+				elapsed = 0
+				index = index % #shots + 1
+			end
+			local anchor = shots[index]
+			if not anchor.Parent then
+				return
+			end
+			local t = elapsed / SHOT_SECONDS
+			local drift = anchor:GetAttribute("Drift") or 6
+			local offset = if calm then CFrame.new() else CFrame.new((t - 0.5) * drift, math.sin(t * math.pi) * 0.4, -(t * drift * 0.35)) * CFrame.Angles(0, (0.5 - t) * 0.04, 0)
+			camera.CFrame = anchor.CFrame * offset
+			-- black cut at the end/start of each shot
+			if #shots > 1 then
+				local edge = math.min(elapsed, SHOT_SECONDS - elapsed)
+				cutFrame.BackgroundTransparency = math.clamp(edge / 0.6, 0, 1)
+			end
+		end)
 	else
 		camera.CameraType = Enum.CameraType.Custom
 		camera.FieldOfView = Config.Movement.BaseFov
 	end
+end
+
+-- Menu blur: the world softens behind any open menu while playing (pause, documents).
+local Lighting = game:GetService("Lighting")
+local menuBlur = Instance.new("BlurEffect")
+menuBlur.Name = "FZ_MenuBlur"
+menuBlur.Size = 0
+menuBlur.Parent = Lighting
+local function setMenuBlur(on: boolean)
+	TweenService:Create(menuBlur, TweenInfo.new(0.35, Enum.EasingStyle.Quad), { Size = if on then 14 else 0 }):Play()
 end
 
 GraphicsController.Init(SettingsController)
@@ -352,6 +427,7 @@ function app.HasNewUpdate(): boolean
 end
 
 local function enterGame()
+	setMenuBlur(false)
 	AudioController.SetMenu(false)
 	state = "playing"
 	router:Clear()
@@ -362,6 +438,7 @@ local function enterGame()
 end
 
 local function showMainMenu()
+	setMenuBlur(false)
 	AudioController.SetMenu(true)
 	state = "menu"
 	setGameplay(false)
@@ -410,6 +487,7 @@ function app.Resume()
 		state = "playing"
 		router:Clear()
 		backdrop.Visible = false
+		setMenuBlur(false)
 		setMenuCamera(false)
 		setGameplay(true)
 	end
@@ -480,6 +558,7 @@ local function openPause()
 	pauseOpenedAt = os.clock()
 	setGameplay(false)
 	backdrop.Visible = true
+	setMenuBlur(true)
 	router:Replace(MainMenu, { mode = "pause" })
 end
 

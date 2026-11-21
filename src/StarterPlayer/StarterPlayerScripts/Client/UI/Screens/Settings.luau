@@ -141,6 +141,7 @@ function Settings.new(router)
 		})
 		row.Instance.Size = UDim2.fromScale(1, 1)
 		row.Label.Size = UDim2.new(0.5, -16, 1, 0)
+		;(row.Instance:FindFirstChild("Chevron") :: GuiObject).Visible = false
 		rows[row.Instance] = key
 		if not focus then
 			focus = row.Instance
@@ -205,7 +206,7 @@ function Settings.new(router)
 	end
 
 	for index, category in Config.SettingsCategories do
-		local tab = Components.Button({ Key = Config.SettingsCategoryLabels[category], Height = 36, LayoutOrder = index, Parent = tabsRow, OnActivated = function()
+		local tab = Components.Button({ Key = Config.SettingsCategoryLabels[category], Height = 36, Centered = true, LayoutOrder = index, Parent = tabsRow, OnActivated = function()
 			currentCategory = category
 			for c, b in tabButtons do
 				b.SetFocused(c == category)

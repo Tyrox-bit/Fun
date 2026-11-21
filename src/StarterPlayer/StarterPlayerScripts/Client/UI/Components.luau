@@ -68,6 +68,16 @@ function Components.AttachScale(gui: ScreenGui): UIScale
 	return scale
 end
 
+-- Height of the screen in layout units (after AttachScale): < 600 means phone-sized.
+function Components.LogicalHeight(): number
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return 720
+	end
+	local y = camera.ViewportSize.Y
+	return y / math.clamp(y / 720, 0.9, 1.5)
+end
+
 export type TextProps = {
 	Name: string?,
 	Key: string?,
@@ -150,6 +160,8 @@ export type ButtonProps = {
 	Height: number?,
 	Disabled: boolean?,
 	Font: Enum.Font?,
+	Index: number?, -- small "01" number in front of the label (menu lists)
+	Centered: boolean?, -- tabs / short choice buttons: centred label, no chevron
 	Parent: Instance?,
 }
 
@@ -161,20 +173,78 @@ export type Button = {
 	SetFocused: (focused: boolean) -> (),
 }
 
+function Components.Corner(parent: Instance, radius: number?): UICorner
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, radius or Theme.Sizes.Corner)
+	corner.Parent = parent
+	return corner
+end
+
+function Components.Stroke(parent: Instance, color: Color3?, transparency: number?, thickness: number?): UIStroke
+	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Color = color or Theme.Colors.PanelLine
+	stroke.Transparency = transparency or 0.35
+	stroke.Thickness = thickness or 1
+	stroke.Parent = parent
+	return stroke
+end
+
+-- Glass card: dark translucent panel with a soft top highlight and a hairline border.
+function Components.Panel(props: { Name: string?, Size: UDim2?, Position: UDim2?, AnchorPoint: Vector2?, Transparency: number?, LayoutOrder: number?, Parent: Instance? }): Frame
+	local panel = Instance.new("Frame")
+	panel.Name = props.Name or "Panel"
+	panel.BackgroundColor3 = Theme.Colors.Panel
+	panel.BackgroundTransparency = props.Transparency or 0.18
+	panel.BorderSizePixel = 0
+	panel.Size = props.Size or UDim2.fromScale(1, 0)
+	panel.Position = props.Position or UDim2.new()
+	panel.AnchorPoint = props.AnchorPoint or Vector2.zero
+	panel.LayoutOrder = props.LayoutOrder or 0
+	Components.Corner(panel)
+	Components.Stroke(panel, Theme.Colors.PanelLine, 0.45)
+	local sheen = Instance.new("UIGradient")
+	sheen.Rotation = 90
+	sheen.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 178, 186))
+	sheen.Parent = panel
+	panel.Parent = props.Parent
+	return panel
+end
+
 function Components.Button(props: ButtonProps): Button
 	local height = props.Height or Theme.Sizes.Button
+	local compact = height < 44
 	local button = Instance.new("TextButton")
 	button.Name = props.Key or "Button"
 	button.AutoButtonColor = false
 	button.AutoLocalize = false
 	button.Text = ""
-	button.BackgroundColor3 = Theme.Colors.TextBright
-	button.BackgroundTransparency = 1
+	button.BackgroundColor3 = Theme.Colors.PanelRaised
+	button.BackgroundTransparency = 0.45
 	button.BorderSizePixel = 0
+	button.ClipsDescendants = true
 	button.Size = UDim2.new(1, 0, 0, height)
 	button.LayoutOrder = props.LayoutOrder or 0
 	button.Selectable = true
 	button.SelectionImageObject = hiddenSelection
+	Components.Corner(button, 5)
+	local stroke = Components.Stroke(button, Theme.Colors.PanelLine, 0.6)
+
+	-- Accent sweep: a red glow that slides in from the left on focus/hover.
+	local sweep = Instance.new("Frame")
+	sweep.Name = "Sweep"
+	sweep.BackgroundColor3 = Theme.Colors.Accent
+	sweep.BorderSizePixel = 0
+	sweep.Size = UDim2.fromScale(0, 1)
+	sweep.ZIndex = 0
+	sweep.Parent = button
+	local sweepGradient = Instance.new("UIGradient")
+	sweepGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.62),
+		NumberSequenceKeypoint.new(0.55, 0.9),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	sweepGradient.Parent = sweep
 
 	local bar = Instance.new("Frame")
 	bar.Name = "FocusBar"
@@ -182,9 +252,27 @@ function Components.Button(props: ButtonProps): Button
 	bar.BorderSizePixel = 0
 	bar.AnchorPoint = Vector2.new(0, 0.5)
 	bar.Position = UDim2.fromScale(0, 0.5)
-	bar.Size = UDim2.new(0, 3, 0.55, 0)
+	bar.Size = UDim2.new(0, 3, 1, 0)
 	bar.BackgroundTransparency = 1
 	bar.Parent = button
+
+	local centered = props.Centered == true
+	local textLeft = if centered then 6 else 18
+	local index: TextLabel? = nil
+	if props.Index then
+		index = Components.Text({
+			Name = "Index",
+			Text = string.format("%02d", props.Index),
+			Font = Theme.Fonts.Mono,
+			TextSize = 13,
+			Color = Theme.Colors.TextFaint,
+			Wrapped = false,
+			Size = UDim2.new(0, 26, 1, 0),
+			Position = UDim2.fromOffset(16, 0),
+			Parent = button,
+		})
+		textLeft = 48
+	end
 
 	local label = Components.Text({
 		Name = "Label",
@@ -192,44 +280,86 @@ function Components.Button(props: ButtonProps): Button
 		Params = props.Params,
 		Text = props.Text,
 		Font = props.Font or Theme.Fonts.Medium,
-		TextSize = Theme.Sizes.TextButton,
+		TextSize = if compact then Theme.Sizes.TextSmall + 1 else Theme.Sizes.TextButton,
 		Wrapped = false,
-		Size = UDim2.new(1, -18, 1, 0),
-		Position = UDim2.fromOffset(16, 0),
+		Size = if centered then UDim2.new(1, -12, 1, 0) else UDim2.new(1, -(textLeft + 34), 1, 0),
+		Position = UDim2.fromOffset(textLeft, 0),
+		XAlign = if centered then Enum.TextXAlignment.Center else nil,
 		Parent = button,
 	})
 	label.TextTruncate = Enum.TextTruncate.AtEnd
+	if centered then
+		-- tabs are narrow: shrink long labels ("Barrierefreiheit") instead of cutting them
+		label.TextScaled = true
+		local limit = Instance.new("UITextSizeConstraint")
+		limit.MaxTextSize = label.TextSize
+		limit.MinTextSize = 9
+		limit.Parent = label
+		label.Size = UDim2.new(1, -12, 0.62, 0)
+		label.Position = UDim2.new(0, textLeft, 0.19, 0)
+	end
+
+	local chevron = Components.Text({
+		Name = "Chevron",
+		Text = "›",
+		Font = Theme.Fonts.Bold,
+		TextSize = if compact then 18 else 24,
+		Color = Theme.Colors.TextFaint,
+		XAlign = Enum.TextXAlignment.Center,
+		Wrapped = false,
+		AnchorPoint = Vector2.new(1, 0.5),
+		Size = UDim2.new(0, 24, 1, 0),
+		Position = UDim2.new(1, -8, 0.5, 0),
+		Parent = button,
+	})
 
 	local tag = Components.Text({
 		Name = "Tag",
 		Key = props.TagKey,
 		Params = props.TagParams,
 		Font = Theme.Fonts.Mono,
-		TextSize = Theme.Sizes.TextSmall,
+		TextSize = Theme.Sizes.TextSmall - 1,
 		Color = Theme.Colors.TextDim,
 		XAlign = Enum.TextXAlignment.Right,
 		Wrapped = false,
-		Size = UDim2.new(0.45, -12, 1, 0),
+		Size = UDim2.new(0.45, -16, 1, 0),
 		Position = UDim2.new(0.55, 0, 0, 0),
 		Parent = button,
 	})
 	tag.Visible = props.TagKey ~= nil
+	chevron.Visible = not centered
 	if tag.Visible then
-		label.Size = UDim2.new(0.6, -18, 1, 0)
+		label.Size = UDim2.new(0.6, -textLeft, 1, 0)
+		chevron.Visible = false
 	end
 
 	local disabled = props.Disabled == true
 	local focused = false
 	local hovered = false
+	local pressed = false
 
 	local function render()
 		local active = (focused or hovered) and not disabled
 		TweenService:Create(bar, Theme.Fast, { BackgroundTransparency = if active then 0 else 1 }):Play()
-		TweenService:Create(button, Theme.Fast, { BackgroundTransparency = if active then 0.93 else 1 }):Play()
+		TweenService:Create(sweep, Theme.Fade, { Size = UDim2.fromScale(if active then 1 else 0, 1) }):Play()
+		TweenService:Create(button, Theme.Fast, {
+			BackgroundTransparency = if pressed and active then 0.05 elseif active then 0.2 else 0.45,
+		}):Play()
+		TweenService:Create(stroke, Theme.Fast, {
+			Color = if active then Theme.Colors.Accent else Theme.Colors.PanelLine,
+			Transparency = if active then 0.35 else 0.6,
+		}):Play()
 		TweenService:Create(label, Theme.Fast, {
 			TextColor3 = if disabled then Theme.Colors.TextFaint elseif active then Theme.Colors.TextBright else Theme.Colors.Text,
-			Position = UDim2.fromOffset(if active then 20 else 16, 0),
+			Position = if centered then UDim2.new(0, textLeft, 0.19, 0) else UDim2.fromOffset(if active then textLeft + 4 else textLeft, 0),
 		}):Play()
+		TweenService:Create(chevron, Theme.Fast, {
+			TextColor3 = if active then Theme.Colors.Accent else Theme.Colors.TextFaint,
+			Position = UDim2.new(1, if active then -4 else -8, 0.5, 0),
+		}):Play()
+		if index then
+			TweenService:Create(index, Theme.Fast, { TextColor3 = if active then Theme.Colors.Accent else Theme.Colors.TextFaint }):Play()
+		end
 	end
 
 	button.MouseEnter:Connect(function()
@@ -241,6 +371,15 @@ function Components.Button(props: ButtonProps): Button
 	end)
 	button.MouseLeave:Connect(function()
 		hovered = false
+		pressed = false
+		render()
+	end)
+	button.MouseButton1Down:Connect(function()
+		pressed = true
+		render()
+	end)
+	button.MouseButton1Up:Connect(function()
+		pressed = false
 		render()
 	end)
 	button.SelectionGained:Connect(function()
@@ -299,15 +438,34 @@ function Components.ScrollColumn(parent: Instance, size: UDim2, position: UDim2?
 end
 
 function Components.Heading(parent: Instance, key: string, layoutOrder: number?): TextLabel
-	return Components.Text({
+	local heading = Components.Text({
 		Key = key,
 		Font = Theme.Fonts.Bold, -- Michroma is reserved for the Latin-only logo (accent coverage)
-		TextSize = Theme.Sizes.TextHeading + 4,
+		TextSize = Theme.Sizes.TextHeading + 8,
 		Color = Theme.Colors.TextBright,
-		Size = UDim2.new(1, 0, 0, 44),
+		Size = UDim2.new(1, 0, 0, 52),
 		LayoutOrder = layoutOrder or 0,
 		Parent = parent,
 	})
+	heading.TextYAlignment = Enum.TextYAlignment.Top
+	local rule = Instance.new("Frame")
+	rule.Name = "Rule"
+	rule.BackgroundColor3 = Theme.Colors.Accent
+	rule.BorderSizePixel = 0
+	rule.AnchorPoint = Vector2.new(0, 1)
+	rule.Position = UDim2.new(0, 0, 1, -2)
+	rule.Size = UDim2.fromOffset(36, 2)
+	rule.Parent = heading
+	local line = Instance.new("Frame")
+	line.Name = "Line"
+	line.BackgroundColor3 = Theme.Colors.PanelLine
+	line.BackgroundTransparency = 0.5
+	line.BorderSizePixel = 0
+	line.AnchorPoint = Vector2.new(0, 1)
+	line.Position = UDim2.new(0, 42, 1, -2.5)
+	line.Size = UDim2.new(1, -42, 0, 1)
+	line.Parent = heading
+	return heading
 end
 
 function Components.Spacer(parent: Instance, height: number, layoutOrder: number)
@@ -327,17 +485,80 @@ function Components.ScreenRoot(name: string): (CanvasGroup, Frame)
 	root.Size = UDim2.fromScale(1, 1)
 	root.GroupTransparency = 1
 
+	-- Side slab: dark glass from the left edge, fading out towards the scene.
+	local slab = Instance.new("Frame")
+	slab.Name = "Slab"
+	slab.BackgroundColor3 = Theme.Colors.Background
+	slab.BorderSizePixel = 0
+	slab.Size = UDim2.new(0, Theme.Sizes.Margin * 2 + Theme.Sizes.ContentWidth + 120, 1, 0)
+	slab.ZIndex = 0
+	slab.Parent = root
+	local fade = Instance.new("UIGradient")
+	fade.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.12),
+		NumberSequenceKeypoint.new(0.72, 0.3),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	fade.Parent = slab
+	local edge = Instance.new("Frame")
+	edge.Name = "Edge"
+	edge.BackgroundColor3 = Theme.Colors.Accent
+	edge.BackgroundTransparency = 0.2
+	edge.BorderSizePixel = 0
+	edge.Size = UDim2.new(0, 2, 1, 0)
+	edge.Parent = root
+	local edgeFade = Instance.new("UIGradient")
+	edgeFade.Rotation = 90
+	edgeFade.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.5, 0.1),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	edgeFade.Parent = edge
+
 	local column = Instance.new("Frame")
 	column.Name = "Column"
 	column.BackgroundTransparency = 1
 	column.AnchorPoint = Vector2.new(0, 0.5)
 	column.Position = UDim2.new(0, Theme.Sizes.Margin, 0.5, 0)
-	column.Size = UDim2.new(0, Theme.Sizes.ContentWidth, 1, -48)
+	column.Size = UDim2.new(0, Theme.Sizes.ContentWidth, 1, -64)
 	column.Parent = root
 	local constraint = Instance.new("UISizeConstraint")
 	constraint.MaxSize = Vector2.new(Theme.Sizes.ContentWidth, math.huge)
 	constraint.Parent = column
 	return root, column
+end
+
+-- Full-screen vignette (four soft edges, no image assets needed).
+function Components.Vignette(parent: Instance, strength: number?): Frame
+	local holder = Instance.new("Frame")
+	holder.Name = "Vignette"
+	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.fromScale(1, 1)
+	holder.ZIndex = 50
+	holder.Active = false
+	holder.Parent = parent
+	local s = strength or 0.35
+	for i, rotation in { 0, 90, 180, 270 } do
+		local edge = Instance.new("Frame")
+		edge.Name = "Edge" .. i
+		edge.BackgroundColor3 = Color3.new(0, 0, 0)
+		edge.BorderSizePixel = 0
+		edge.AnchorPoint = Vector2.new(0.5, 0.5)
+		edge.Position = UDim2.fromScale(0.5, 0.5)
+		edge.Size = if rotation % 180 == 0 then UDim2.fromScale(1, 1) else UDim2.fromScale(1, 1)
+		edge.ZIndex = 50
+		edge.Parent = holder
+		local g = Instance.new("UIGradient")
+		g.Rotation = rotation
+		g.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1 - s),
+			NumberSequenceKeypoint.new(0.22, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		g.Parent = edge
+	end
+	return holder
 end
 
 return Components

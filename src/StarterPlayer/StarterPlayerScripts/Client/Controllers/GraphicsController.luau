@@ -14,10 +14,10 @@ local UserInputService = game:GetService("UserInputService")
 local GraphicsController = {}
 
 local PROFILES = {
-	low = { bloom = false, decorLights = false, particles = 0.35, grade = 0.8 },
-	medium = { bloom = true, decorLights = false, particles = 0.65, grade = 1 },
-	high = { bloom = true, decorLights = true, particles = 1, grade = 1 },
-	ultra = { bloom = true, decorLights = true, particles = 1.4, grade = 1 },
+	low = { bloom = false, decorLights = false, particles = 0.35, grade = 0.8, depth = false },
+	medium = { bloom = true, decorLights = true, particles = 0.65, grade = 1, depth = false },
+	high = { bloom = true, decorLights = true, particles = 1, grade = 1, depth = true },
+	ultra = { bloom = true, decorLights = true, particles = 1.4, grade = 1, depth = true },
 }
 
 local current = "high"
@@ -25,6 +25,7 @@ local resolvedProfile = PROFILES.high
 local brightness = 5
 local grade: ColorCorrectionEffect? = nil
 local bloom: BloomEffect? = nil
+local depth: DepthOfFieldEffect? = nil
 local decorConnection: RBXScriptConnection? = nil
 
 local function ensureEffects()
@@ -38,11 +39,22 @@ local function ensureEffects()
 	if not bloom then
 		local effect = Instance.new("BloomEffect")
 		effect.Name = "FZ_Bloom"
-		effect.Intensity = 0.35
-		effect.Size = 22
-		effect.Threshold = 1.6
+		effect.Intensity = 0.7
+		effect.Size = 28
+		effect.Threshold = 1.15 -- neon screens, lamps and the core glow softly; walls do not
 		effect.Parent = Lighting
 		bloom = effect
+	end
+	if not depth then
+		-- very gentle: the far distance softens, everything you can interact with stays sharp
+		local effect = Instance.new("DepthOfFieldEffect")
+		effect.Name = "FZ_Depth"
+		effect.FarIntensity = 0.12
+		effect.FocusDistance = 40
+		effect.InFocusRadius = 60
+		effect.NearIntensity = 0
+		effect.Parent = Lighting
+		depth = effect
 	end
 end
 
@@ -90,10 +102,11 @@ local function apply()
 	resolvedProfile = PROFILES[resolve(current)] or PROFILES.high
 	local g = grade :: ColorCorrectionEffect
 	-- Base grade: slightly desaturated, cool shadows. Brightness setting 0..10 (5 = neutral).
-	g.Saturation = -0.18 * resolvedProfile.grade
-	g.Contrast = 0.08 * resolvedProfile.grade
-	g.TintColor = Color3.fromRGB(236, 242, 244)
-	g.Brightness = (brightness - 5) * 0.025
+	g.Saturation = -0.1 * resolvedProfile.grade
+	g.Contrast = 0.14 * resolvedProfile.grade
+	g.TintColor = Color3.fromRGB(228, 238, 248)
+	g.Brightness = 0.02 + (brightness - 5) * 0.03
+	;(depth :: DepthOfFieldEffect).Enabled = resolvedProfile.depth
 	;(bloom :: BloomEffect).Enabled = resolvedProfile.bloom
 	for _, light in CollectionService:GetTagged("FZ_DecorLight") do
 		applyDecor(light)

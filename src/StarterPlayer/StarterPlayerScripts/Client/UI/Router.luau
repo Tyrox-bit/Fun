@@ -83,6 +83,13 @@ local function fadeIn(root: GuiObject)
 		root.GroupTransparency = 1
 		TweenService:Create(root, Theme.Fade, { GroupTransparency = 0 }):Play()
 	end
+	local column = root:FindFirstChild("Column")
+	if column and column:IsA("GuiObject") then
+		local target = column:GetAttribute("FZ_Home") or column.Position
+		column:SetAttribute("FZ_Home", target)
+		column.Position = target + UDim2.fromOffset(-28, 0)
+		TweenService:Create(column, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = target }):Play()
+	end
 end
 
 function Router:_show(screen)

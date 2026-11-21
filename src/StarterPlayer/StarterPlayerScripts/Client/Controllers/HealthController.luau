@@ -44,6 +44,8 @@ function HealthController.Init(hudGui: ScreenGui, settings)
 	fill.BorderSizePixel = 0
 	fill.BackgroundColor3 = Theme.Colors.TextBright
 	fill.Size = UDim2.fromScale(1, 1)
+	Components.Corner(fill, 2)
+	Components.Corner(bar, 2)
 	fill.Parent = bar
 
 	local downed = Components.Text({ Key = "HUD_DOWNED", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextHeading, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.8, 0, 0, 40), Position = UDim2.fromScale(0.5, 0.42), AnchorPoint = Vector2.new(0.5, 0.5), Parent = hudGui })

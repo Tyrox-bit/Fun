@@ -15,6 +15,9 @@ local Theme = require(script.Parent.Parent.UI.Theme)
 
 local InventoryController = {}
 
+-- Emoji glyphs render on every platform without uploading image assets.
+local ICONS = { bandage = "🩹", medkit = "🧰", syringe = "💉" }
+
 local player = Players.LocalPlayer
 local bar: Frame
 local selected = 1
@@ -45,7 +48,7 @@ local function render()
 		button.AutoButtonColor = false
 		button.AutoLocalize = false
 		button.Text = ""
-		button.Size = UDim2.fromOffset(64, 64)
+		button.Size = UDim2.fromOffset(68, 68)
 		button.LayoutOrder = slot
 		button.Selectable = false
 		button.BackgroundColor3 = Theme.Colors.Panel
@@ -55,10 +58,22 @@ local function render()
 		stroke.Color = if slot == selected and itemId then Theme.Colors.Relay else Theme.Colors.PanelLine
 		stroke.Thickness = if slot == selected and itemId then 2 else 1
 		stroke.Parent = button
+		Components.Corner(button, 8)
+		if slot == selected and itemId then
+			local underline = Instance.new("Frame")
+			underline.Name = "Selected"
+			underline.BackgroundColor3 = Theme.Colors.Relay
+			underline.BorderSizePixel = 0
+			underline.AnchorPoint = Vector2.new(0.5, 1)
+			underline.Position = UDim2.new(0.5, 0, 1, -4)
+			underline.Size = UDim2.fromOffset(22, 2)
+			underline.Parent = button
+		end
 		Components.Text({ Text = tostring(slot), Font = Theme.Fonts.Mono, TextSize = 11, Color = Theme.Colors.TextFaint, Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(4, 2), Parent = button })
 		if itemId then
-			local name = Components.Text({ Key = Config.Items[itemId].name, Font = Theme.Fonts.Medium, TextSize = 12, Color = if using == itemId then Theme.Colors.Relay else Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, -6, 1, -16), Position = UDim2.fromOffset(3, 14), Parent = button })
-			name.TextWrapped = true
+			Components.Text({ Text = ICONS[itemId] or "◆", TextSize = 24, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, 0, 0, 30), Position = UDim2.fromOffset(0, 8), Parent = button })
+			local name = Components.Text({ Key = Config.Items[itemId].name, Font = Theme.Fonts.Medium, TextSize = 11, Color = if using == itemId then Theme.Colors.Relay else Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Wrapped = false, Size = UDim2.new(1, -6, 0, 14), Position = UDim2.fromOffset(3, 42), Parent = button })
+			name.TextTruncate = Enum.TextTruncate.AtEnd
 		end
 		button.Activated:Connect(function()
 			use(slot)
@@ -73,7 +88,7 @@ function InventoryController.Init(hudGui: ScreenGui)
 	bar.BackgroundTransparency = 1
 	bar.AnchorPoint = Vector2.new(0.5, 1)
 	bar.Position = UDim2.new(0.5, 0, 1, -22)
-	bar.Size = UDim2.fromOffset(4 * 70, 64)
+	bar.Size = UDim2.fromOffset(4 * 76, 68)
 	bar.Visible = false
 	bar.Parent = hudGui
 	local layout = Components.List(bar, 6, true)

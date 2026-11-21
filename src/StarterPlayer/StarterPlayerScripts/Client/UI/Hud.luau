@@ -36,7 +36,7 @@ local staminaFill: Frame
 local documentLayer: Frame? = nil
 local documentCallbacks: { onOpen: () -> (), onClose: () -> () }? = nil
 
-type ActiveLine = { label: TextLabel, line: { [string]: any }, expires: number }
+type ActiveLine = { label: TextLabel, pill: Frame, line: { [string]: any }, expires: number }
 local activeLines: { ActiveLine } = {}
 local currentObjective: string? = nil
 local objectiveToken = 0
@@ -77,9 +77,10 @@ local function removeLine(entry: ActiveLine)
 	if index then
 		table.remove(activeLines, index)
 	end
+	TweenService:Create(entry.pill, Theme.Fade, { BackgroundTransparency = 1 }):Play()
 	local tween = TweenService:Create(entry.label, Theme.Fade, { TextTransparency = 1, TextStrokeTransparency = 1 })
 	tween.Completed:Once(function()
-		entry.label:Destroy()
+		entry.pill:Destroy()
 	end)
 	tween:Play()
 end
@@ -94,31 +95,55 @@ function Hud.ShowSubtitle(line: { [string]: any })
 	if #activeLines >= MAX_LINES then
 		removeLine(activeLines[1])
 	end
+	-- each line sits on its own dark pill: readable on bright and dark scenes alike
+	local pill = Instance.new("Frame")
+	pill.Name = "Line"
+	pill.BackgroundColor3 = Color3.fromRGB(4, 6, 8)
+	pill.BackgroundTransparency = 1
+	pill.BorderSizePixel = 0
+	pill.AutomaticSize = Enum.AutomaticSize.XY
+	pill.Size = UDim2.new()
+	Components.Corner(pill, 6)
+	Components.Padding(pill, 14, 6)
+	lineCounter += 1
+	pill.LayoutOrder = lineCounter
+	pill.Parent = subtitleFrame
+	if line.speaker then
+		local accent = Instance.new("Frame")
+		accent.Name = "Accent"
+		accent.BackgroundColor3 = if line.speaker == "SPEAKER_RELAY" then Theme.Colors.Relay else Theme.Colors.Radio
+		accent.BorderSizePixel = 0
+		accent.Position = UDim2.new(0, -14, 0, -6)
+		accent.Size = UDim2.new(0, 2, 1, 12)
+		accent.Parent = pill
+	end
 	local label = Components.Text({
-		Name = "Line",
+		Name = "Text",
 		Text = "",
 		RichText = true,
 		Font = Theme.Fonts.Medium,
 		TextSize = subtitleSize(),
 		Color = Theme.Colors.TextBright,
 		XAlign = Enum.TextXAlignment.Center,
-		AutoY = true,
-		Size = UDim2.fromScale(1, 0),
-		Parent = subtitleFrame,
+		Size = UDim2.new(),
+		Parent = pill,
 	})
+	label.AutomaticSize = Enum.AutomaticSize.XY
+	local maxWidth = Instance.new("UISizeConstraint")
+	maxWidth.MaxSize = Vector2.new(780, math.huge)
+	maxWidth.Parent = label
 	label.Text = subtitleText(line)
 	label.TextStrokeColor3 = Color3.new(0, 0, 0)
 	label.TextStrokeTransparency = 1
 	label.TextTransparency = 1
-	lineCounter += 1
-	label.LayoutOrder = lineCounter
-	TweenService:Create(label, Theme.Fast, { TextTransparency = 0, TextStrokeTransparency = 0.45 }):Play()
+	TweenService:Create(label, Theme.Fast, { TextTransparency = 0, TextStrokeTransparency = 0.7 }):Play()
+	TweenService:Create(pill, Theme.Fast, { BackgroundTransparency = 0.38 }):Play()
 
 	local duration = math.clamp(tonumber(line.duration) or 4, 1.5, 12)
 	if line.speaker then
 		AudioController.Duck(duration) -- voices sit on top of the mix
 	end
-	local entry: ActiveLine = { label = label, line = line, expires = os.clock() + duration }
+	local entry: ActiveLine = { label = label, pill = pill, line = line, expires = os.clock() + duration }
 	table.insert(activeLines, entry)
 	task.delay(duration, function()
 		if table.find(activeLines, entry) then
@@ -138,7 +163,8 @@ function Hud.ShowObjective(key: string?, announce: boolean?, params: { [string]:
 	local token = objectiveToken
 	objectiveFrame.Visible = true
 	objectiveFrame.GroupTransparency = 1
-	TweenService:Create(objectiveFrame, Theme.Slow, { GroupTransparency = 0 }):Play()
+	objectiveFrame.Position = UDim2.fromOffset(4, 16)
+	TweenService:Create(objectiveFrame, Theme.Slow, { GroupTransparency = 0, Position = UDim2.fromOffset(24, 16) }):Play()
 	task.delay(if announce == false then 4 else 7, function()
 		if token == objectiveToken then
 			TweenService:Create(objectiveFrame, Theme.Slow, { GroupTransparency = 1 }):Play()
@@ -158,12 +184,15 @@ function Hud.Notify(key: string, params: { [string]: any }?)
 	notifyToken += 1
 	local token = notifyToken
 	Localization.Bind(notifyLabel, key, params)
+	local toast = notifyLabel.Parent :: CanvasGroup
+	toast.Visible = true
 	notifyLabel.Visible = true
-	notifyLabel.TextTransparency = 1
-	TweenService:Create(notifyLabel, Theme.Fast, { TextTransparency = 0 }):Play()
+	toast.GroupTransparency = 1
+	toast.Position = UDim2.new(0.5, 0, 0, 6)
+	TweenService:Create(toast, Theme.Fade, { GroupTransparency = 0, Position = UDim2.new(0.5, 0, 0, 18) }):Play()
 	task.delay(4, function()
 		if token == notifyToken then
-			TweenService:Create(notifyLabel, Theme.Fade, { TextTransparency = 1 }):Play()
+			TweenService:Create(toast, Theme.Slow, { GroupTransparency = 1 }):Play()
 		end
 	end)
 end
@@ -174,7 +203,7 @@ function Hud.SetStamina(value: number, exhausted: boolean)
 		staminaTrack.Visible = visible
 	end
 	staminaFill.Size = UDim2.fromScale(value, 1)
-	staminaFill.BackgroundColor3 = if exhausted then Theme.Colors.Accent else Theme.Colors.TextDim
+	staminaFill.BackgroundColor3 = if exhausted then Theme.Colors.Accent else Theme.Colors.Text
 end
 
 local function formatDate(unix: number): string
@@ -238,9 +267,18 @@ function Hud.ShowDocument(document: { [string]: any })
 	local sizeLimit = Instance.new("UISizeConstraint")
 	sizeLimit.MaxSize = Vector2.new(520, 600)
 	sizeLimit.Parent = panel
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Theme.Colors.PanelLine
-	stroke.Parent = panel
+	Components.Corner(panel, 8)
+	Components.Stroke(panel, Theme.Colors.PanelLine, 0.3)
+	local topBar = Instance.new("Frame")
+	topBar.Name = "TopBar"
+	topBar.BackgroundColor3 = Theme.Colors.Accent
+	topBar.BorderSizePixel = 0
+	topBar.Size = UDim2.fromOffset(40, 2)
+	topBar.LayoutOrder = -1
+	topBar.ZIndex = 22
+	topBar.Parent = panel
+	layer.BackgroundTransparency = 1
+	TweenService:Create(layer, Theme.Fade, { BackgroundTransparency = 0.25 }):Play()
 	Components.Padding(panel, 28, 24)
 	Components.List(panel, 12)
 
@@ -328,41 +366,91 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 
 	objectiveFrame = Instance.new("CanvasGroup")
 	objectiveFrame.Name = "Objective"
-	objectiveFrame.BackgroundTransparency = 1
+	objectiveFrame.BackgroundColor3 = Theme.Colors.Panel
+	objectiveFrame.BackgroundTransparency = 0.3
+	objectiveFrame.BorderSizePixel = 0
 	objectiveFrame.Position = UDim2.fromOffset(24, 16)
-	objectiveFrame.Size = UDim2.fromOffset(420, 70)
+	objectiveFrame.Size = UDim2.fromOffset(400, 0)
+	objectiveFrame.AutomaticSize = Enum.AutomaticSize.Y
 	objectiveFrame.Visible = false
 	objectiveFrame.Parent = gui
+	Components.Corner(objectiveFrame, 6)
+	Components.Padding(objectiveFrame, 18, 10, 14, 12)
 	Components.List(objectiveFrame, 2)
-	Components.Text({ Key = "OBJECTIVE_NEW", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = objectiveFrame })
-	objectiveText = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextHeading, Color = Theme.Colors.TextBright, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 2, Parent = objectiveFrame })
+	local objectiveBar = Instance.new("Frame")
+	objectiveBar.Name = "Bar"
+	objectiveBar.BackgroundColor3 = Theme.Colors.Accent
+	objectiveBar.BorderSizePixel = 0
+	objectiveBar.Size = UDim2.fromOffset(28, 2)
+	objectiveBar.LayoutOrder = 0
+	objectiveBar.Parent = objectiveFrame
+	Components.Text({ Key = "OBJECTIVE_NEW", Font = Theme.Fonts.Mono, TextSize = 13, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = objectiveFrame })
+	objectiveText = Components.Text({ Text = "", Font = Theme.Fonts.Bold, TextSize = Theme.Sizes.TextHeading - 2, Color = Theme.Colors.TextBright, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 2, Parent = objectiveFrame })
 
-	notifyLabel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.8, 0, 0, 28), Position = UDim2.new(0.5, 0, 0, 20), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
-	notifyLabel.Visible = false
+	-- notification toast (top centre)
+	local toast = Instance.new("CanvasGroup")
+	toast.Name = "Toast"
+	toast.BackgroundColor3 = Theme.Colors.Panel
+	toast.BackgroundTransparency = 0.2
+	toast.BorderSizePixel = 0
+	toast.AnchorPoint = Vector2.new(0.5, 0)
+	toast.Position = UDim2.new(0.5, 0, 0, 18)
+	toast.Size = UDim2.new()
+	toast.AutomaticSize = Enum.AutomaticSize.XY
+	toast.Visible = false
+	toast.Parent = gui
+	Components.Corner(toast, 18)
+	Components.Stroke(toast, Theme.Colors.Accent, 0.55)
+	Components.Padding(toast, 18, 8)
+	notifyLabel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(), Parent = toast })
+	notifyLabel.AutomaticSize = Enum.AutomaticSize.XY
+	local toastLimit = Instance.new("UISizeConstraint")
+	toastLimit.MaxSize = Vector2.new(640, math.huge)
+	toastLimit.Parent = notifyLabel
 
-	statusLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Radio, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.6, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 52), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
-	;(statusLine :: TextLabel).TextStrokeTransparency = 0.5
+	local function pillLine(color: Color3, y: number): TextLabel
+		local holder = Instance.new("Frame")
+		holder.BackgroundColor3 = Color3.fromRGB(4, 6, 8)
+		holder.BackgroundTransparency = 0.4
+		holder.BorderSizePixel = 0
+		holder.AnchorPoint = Vector2.new(0.5, 0)
+		holder.Position = UDim2.new(0.5, 0, 0, y)
+		holder.AutomaticSize = Enum.AutomaticSize.XY
+		holder.Size = UDim2.new()
+		holder.Parent = gui
+		Components.Corner(holder, 4)
+		Components.Padding(holder, 12, 3)
+		local label = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = color, XAlign = Enum.TextXAlignment.Center, Wrapped = false, Size = UDim2.new(), Parent = holder })
+		label.AutomaticSize = Enum.AutomaticSize.XY
+		-- the holder follows the label's visibility
+		holder.Visible = false
+		label:GetPropertyChangedSignal("Visible"):Connect(function()
+			holder.Visible = label.Visible
+		end)
+		return label
+	end
+	statusLine = pillLine(Theme.Colors.Radio, 62)
+	forecastLine = pillLine(Theme.Colors.Relay, 90)
 	;(statusLine :: TextLabel).Visible = false
-
-	forecastLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Relay, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.7, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 74), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
-	;(forecastLine :: TextLabel).TextStrokeTransparency = 0.5
 	;(forecastLine :: TextLabel).Visible = false
 
 	staminaTrack = Instance.new("Frame")
 	staminaTrack.Name = "Stamina"
 	staminaTrack.AnchorPoint = Vector2.new(0.5, 1)
-	staminaTrack.Position = UDim2.new(0.5, 0, 1, -8)
-	staminaTrack.Size = UDim2.fromOffset(160, 2)
-	staminaTrack.BackgroundColor3 = Theme.Colors.TextFaint
-	staminaTrack.BackgroundTransparency = 0.5
+	staminaTrack.Position = UDim2.new(0.5, 0, 1, -10)
+	staminaTrack.Size = UDim2.fromOffset(220, 4)
+	staminaTrack.BackgroundColor3 = Color3.new(0, 0, 0)
+	staminaTrack.BackgroundTransparency = 0.45
 	staminaTrack.BorderSizePixel = 0
 	staminaTrack.Visible = false
 	staminaTrack.Parent = gui
+	Components.Corner(staminaTrack, 2)
 	staminaFill = Instance.new("Frame")
 	staminaFill.BorderSizePixel = 0
-	staminaFill.BackgroundColor3 = Theme.Colors.TextDim
+	staminaFill.BackgroundColor3 = Theme.Colors.Text
 	staminaFill.Size = UDim2.fromScale(1, 1)
 	staminaFill.Parent = staminaTrack
+	Components.Corner(staminaFill, 2)
 
 	-- Re-render visible subtitles when the language or subtitle size changes.
 	Localization.Changed:Connect(function()

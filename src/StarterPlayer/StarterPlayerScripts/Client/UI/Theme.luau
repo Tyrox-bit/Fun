@@ -3,17 +3,20 @@
 local Theme = {}
 
 Theme.Colors = {
-	Background = Color3.fromRGB(6, 8, 9),
-	Panel = Color3.fromRGB(13, 17, 19),
-	PanelLine = Color3.fromRGB(38, 44, 46),
-	Text = Color3.fromRGB(206, 202, 192),
-	TextBright = Color3.fromRGB(240, 236, 226),
-	TextDim = Color3.fromRGB(128, 134, 131),
-	TextFaint = Color3.fromRGB(78, 84, 82),
-	Accent = Color3.fromRGB(201, 64, 48), -- "signal red": focus bar, warnings, live signal
-	Radio = Color3.fromRGB(214, 184, 120), -- unknown voices on the radio (warm amber)
-	Relay = Color3.fromRGB(146, 192, 188), -- the Relay voice (cold teal)
-	World = Color3.fromRGB(180, 180, 172), -- sound captions
+	Background = Color3.fromRGB(5, 7, 10),
+	Panel = Color3.fromRGB(12, 16, 21),
+	PanelRaised = Color3.fromRGB(20, 26, 33),
+	PanelLine = Color3.fromRGB(52, 62, 72),
+	Text = Color3.fromRGB(212, 216, 220),
+	TextBright = Color3.fromRGB(246, 246, 242),
+	TextDim = Color3.fromRGB(136, 146, 156),
+	TextFaint = Color3.fromRGB(82, 92, 102),
+	Accent = Color3.fromRGB(232, 62, 50), -- "signal red": focus, warnings, live signal
+	AccentDeep = Color3.fromRGB(120, 22, 18),
+	Radio = Color3.fromRGB(226, 192, 124), -- unknown voices on the radio (warm amber)
+	Relay = Color3.fromRGB(140, 214, 208), -- the Relay voice (cold teal)
+	World = Color3.fromRGB(190, 192, 186), -- sound captions
+	Good = Color3.fromRGB(120, 214, 150),
 }
 
 Theme.Fonts = {
@@ -26,7 +29,7 @@ Theme.Fonts = {
 
 -- Logical sizes at UIScale 1 (UIScale adapts them to the device, see Components.AttachScale).
 Theme.Sizes = {
-	Button = 48,
+	Button = 52,
 	Gap = 6,
 	TextTitle = 30,
 	TextHeading = 24,
@@ -34,7 +37,8 @@ Theme.Sizes = {
 	TextBody = 18,
 	TextSmall = 15,
 	Margin = 48,
-	ContentWidth = 440,
+	ContentWidth = 460,
+	Corner = 6,
 }
 
 Theme.Fast = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
