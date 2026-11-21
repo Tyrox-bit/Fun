@@ -23,6 +23,9 @@ type RigState = {
 	nextClick: number,
 	breath: Sound?,
 	lastHidden: boolean?,
+	nextBreath: number,
+	nextVoice: number,
+	lastStep: number,
 }
 
 local rigs: { [Model]: RigState } = {}
@@ -51,8 +54,12 @@ local function register(model: Instance)
 		frozenUntil = 0,
 		nextFreeze = os.clock() + 2,
 		nextClick = os.clock() + 3,
-		breath = if head and head:IsA("BasePart") then AudioController.Loop("creature_breath", head, 0.45, "Creature") else nil,
+		-- legacy loop only when the new breath variants are not uploaded yet
+		breath = if head and head:IsA("BasePart") and not AudioController.Id("creature_breath_deep_1") then AudioController.Loop("creature_breath", head, 0.45, "Creature") else nil,
 		lastHidden = nil,
+		nextBreath = os.clock() + 1,
+		nextVoice = os.clock() + 4,
+		lastStep = 0,
 	}
 	rigs[model] = state
 	model.AncestryChanged:Connect(function()
@@ -94,9 +101,34 @@ local function animate(state: RigState, dt: number)
 	if model == Players.LocalPlayer.Character then
 		distance = math.huge -- you are the monster (admin test mode): no warnings for yourself
 	end
-	if now >= state.nextClick and creatureState ~= "Dormant" and distance < 60 and not state.lastHidden then
-		state.nextClick = now + math.random(30, 70) / 10
-		AudioController.Play("creature_click", root, 0.7, "Creature")
+	local head = model:FindFirstChild("Head")
+	local source = if head and head:IsA("BasePart") then head else root
+	if creatureState ~= "Dormant" and distance < 70 and not state.lastHidden then
+		-- Irregular deep breathing: never on a fixed rhythm
+		if now >= state.nextBreath then
+			state.nextBreath = now + math.random(28, 55) / 10
+			AudioController.PlayVariant("creature_breath_deep", source, 0.55, "Creature", true)
+		end
+		-- Body cracks, growl while listening / investigating, knocking while searching
+		if now >= state.nextClick then
+			state.nextClick = now + math.random(30, 70) / 10
+			AudioController.PlayVariant("creature_crack", source, 0.5, "Creature", true)
+		end
+		if now >= state.nextVoice and (creatureState == "Listen" or creatureState == "Investigate" or creatureState == "Search") then
+			state.nextVoice = now + math.random(50, 110) / 10
+			if creatureState == "Search" and math.random() < 0.4 then
+				AudioController.Play("creature_rhythm", source, 0.45, "Creature", true)
+			else
+				AudioController.PlayVariant("creature_growl", source, 0.55, "Creature", true)
+			end
+		end
+		-- Dragging steps synced to its movement
+		local velocity = root.AssemblyLinearVelocity
+		local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+		if speed > 2 and now - state.lastStep > math.clamp(5 / speed, 0.35, 1.1) then
+			state.lastStep = now
+			AudioController.PlayVariant("creature_drag", root.Position - Vector3.new(0, 4.5, 0), 0.5, "Creature", true)
+		end
 	end
 	if distance < 16 and creatureState ~= "Dormant" and not state.lastHidden and now - lastWarning > 25 and showCaption then
 		lastWarning = now

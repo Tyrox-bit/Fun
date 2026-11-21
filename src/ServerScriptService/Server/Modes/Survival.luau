@@ -30,6 +30,7 @@ local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local InventoryService = require(Services.InventoryService)
 local BadgeTracker = require(Services.BadgeTracker)
+local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
 
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
@@ -416,7 +417,7 @@ function Survival.Begin(entry)
 	PowerService.Set("B", true) -- the core is reachable in survival
 	PowerService.Set("HALLS", true)
 	SessionState.Set("Cameras", true)
-	DirectorService.Configure(SURVIVAL_BEATS, {}, ctx.playersInGame)
+	DirectorService.Configure(HorrorEvents.With(SURVIVAL_BEATS), {}, ctx.playersInGame)
 	HealthService.TeamWipeHandler = function()
 		if run == r and active then
 			endRun(r, false)

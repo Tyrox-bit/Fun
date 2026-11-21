@@ -450,4 +450,11 @@ return {
 	PARTY_ACCEPT = "Come along",
 	PARTY_DECLINE = "Stay here",
 	PARTY_SENT = "Invites sent. You leave in 15 seconds.",
+
+	-- 0.5: PA voice
+	SPEAKER_PA = "Loudspeaker",
+	SPK_LINE_1 = "Attention. Night shift to the core. Night shift to the core.",
+	SPK_LINE_2 = "Station 07 to all personnel: do not answer channel zero.",
+	SPK_LINE_3 = "...the team at the gate, please report... the team at the gate...",
+	SPK_LINE_4 = "This is a recorded message. It has not been recorded yet.",
 }

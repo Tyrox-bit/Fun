@@ -450,4 +450,11 @@ return {
 	PARTY_ACCEPT = "Mitkommen",
 	PARTY_DECLINE = "Hierbleiben",
 	PARTY_SENT = "Einladungen verschickt. In 15 Sekunden geht es los.",
+
+	-- 0.5: PA voice
+	SPEAKER_PA = "Lautsprecher",
+	SPK_LINE_1 = "Achtung. Nachtschicht in den Kern. Nachtschicht in den Kern.",
+	SPK_LINE_2 = "Station 07 an alle Mitarbeiter: Kanal Null nicht beantworten.",
+	SPK_LINE_3 = "… das Team am Tor, bitte melden … das Team am Tor …",
+	SPK_LINE_4 = "Dies ist eine aufgezeichnete Nachricht. Sie wurde noch nicht aufgezeichnet.",
 }

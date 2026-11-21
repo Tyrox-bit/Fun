@@ -329,6 +329,162 @@ def tension_high():
     return make_loop(normalize(s, -14), 0.5)
 
 
+# --------------------------------------------------------------------------- 0.5: creature identity
+def resonator(x, freq, q):
+    """Two-pole resonant band-pass (formants, body resonances)."""
+    w = 2 * np.pi * freq / SR
+    r = np.exp(-w / (2 * q))
+    a1, a2 = -2 * r * np.cos(w), r * r
+    y = np.zeros_like(x)
+    y1 = y2 = 0.0
+    gain = 1 - r
+    for i, v in enumerate(x):
+        out = gain * v - a1 * y1 - a2 * y2
+        y2, y1 = y1, out
+        y[i] = out
+    return y
+
+
+def glottal(seconds, f0, jitter, local):
+    """Pulse train with irregular pitch - the 'throat' of the creature."""
+    n = int(seconds * SR)
+    out = np.zeros(n)
+    pos = 0.0
+    while pos < n:
+        out[int(pos)] = 1.0
+        period = SR / max(20.0, f0 * (1 + local.uniform(-jitter, jitter)))
+        pos += period
+    return lowpass(out, 1200)
+
+
+def breath_deep(seed):
+    local = np.random.default_rng(seed)
+    seconds = local.uniform(2.4, 3.4)
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    split = local.uniform(0.35, 0.55)
+    shape = np.where(x < seconds * split, np.sin(np.pi * x / (seconds * split)), 0.7 * np.sin(np.pi * (x - seconds * split) / (seconds * (1 - split))))
+    shape = np.clip(shape, 0, 1) ** 1.3
+    air = local.uniform(-1, 1, n)
+    s = resonator(air, local.uniform(280, 380), 4) * 2 + resonator(air, local.uniform(700, 900), 5)
+    s += glottal(seconds, local.uniform(38, 52), 0.35, local) * 0.8  # wet, irregular rattle
+    s *= shape * (0.8 + 0.2 * np.sin(2 * np.pi * local.uniform(5, 9) * x))
+    return normalize(s, -12)
+
+
+def growl(seed):
+    local = np.random.default_rng(seed)
+    seconds = local.uniform(1.2, 2.0)
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    voice = glottal(seconds, local.uniform(55, 75), 0.25, local)
+    rasp = local.uniform(-1, 1, n) * (0.5 + 0.5 * np.sin(2 * np.pi * local.uniform(28, 40) * x))
+    s = resonator(voice * 3 + rasp * 0.4, local.uniform(450, 600), 3) + resonator(voice, 160, 2) * 1.5
+    s = np.tanh(s * 6) * env(n, 0.12, 0.4)
+    return normalize(s, -10)
+
+
+def crack(seed):
+    local = np.random.default_rng(seed)
+    seconds = 0.6
+    n = int(seconds * SR)
+    out = np.zeros(n)
+    pos = 0
+    for _ in range(local.integers(2, 6)):
+        length = int(local.integers(200, 900))
+        if pos + length >= n:
+            break
+        click = local.uniform(-1, 1, length) * decay(length, 0.003)
+        out[pos:pos + length] += resonator(click, local.uniform(900, 2400), 8) * 4
+        pos += int(local.integers(800, 3500))
+    return normalize(out, -14)
+
+
+def drag_step(seed):
+    local = np.random.default_rng(seed)
+    seconds = local.uniform(0.9, 1.3)
+    n = int(seconds * SR)
+    thump = np.zeros(n)
+    m = int(0.18 * SR)
+    thump[:m] = np.sin(2 * np.pi * 60 * np.arange(m) / SR) * decay(m, 0.05)
+    scrape = bandpass(local.uniform(-1, 1, n), 300, 2500) * env(n, 0.08, 0.35) * 0.35
+    scrape *= 0.6 + 0.4 * np.sin(2 * np.pi * local.uniform(11, 17) * np.arange(n) / SR)
+    return normalize(thump + scrape, -14)
+
+
+def rhythm():
+    """Three knocks, slightly wrong in time - nothing alive knocks like that."""
+    seconds = 3.2
+    out = np.zeros(int(seconds * SR))
+    for at in (0.0, 0.41, 0.97, 1.6, 2.02, 2.71):
+        i = int(at * SR)
+        m = int(0.12 * SR)
+        hit = resonator(rng.uniform(-1, 1, m) * decay(m, 0.01), 180, 6) * 6 + np.sin(2 * np.pi * 70 * np.arange(m) / SR) * decay(m, 0.04)
+        out[i:i + m] += hit[: len(out) - i]
+    return normalize(lowpass(out, 2500), -12)
+
+
+def voices_muffled(seed):
+    local = np.random.default_rng(seed)
+    seconds = 4.0
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    s = np.zeros(n)
+    for speaker in range(local.integers(2, 4)):
+        f0 = local.uniform(95, 190)
+        voice = glottal(seconds, f0, 0.08, local)
+        formant = resonator(voice, local.uniform(500, 750), 5) + resonator(voice, local.uniform(1100, 1600), 6) * 0.6
+        syllables = (np.sin(2 * np.pi * local.uniform(3, 5) * x + local.uniform(0, 6)) > local.uniform(-0.2, 0.3)).astype(float)
+        s += formant * lowpass(syllables, 12)
+    s = lowpass(s, 700)  # through a wall
+    return make_loop(normalize(s, -20), 0.5)
+
+
+def speaker_voice(seed):
+    local = np.random.default_rng(seed)
+    seconds = 3.0
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    voice = glottal(seconds, local.uniform(110, 140), 0.12, local)
+    s = resonator(voice, 650, 5) + resonator(voice, 1250, 6) * 0.7 + resonator(voice, 2400, 8) * 0.3
+    s *= lowpass((np.sin(2 * np.pi * 4.2 * x + local.uniform(0, 3)) > 0).astype(float), 15)
+    s = bandpass(np.tanh(s * 8), 400, 3200) + bandpass(local.uniform(-1, 1, n), 1000, 5000) * 0.15
+    gate = (local.uniform(0, 1, n // 2000 + 1) > 0.15).repeat(2000)[:n]  # dropouts
+    return normalize(s * lowpass(gate.astype(float), 40), -14)
+
+
+def approach():
+    """Something walks closer down a corridor: steps speed up and get louder, then stop."""
+    seconds = 6.5
+    out = np.zeros(int(seconds * SR))
+    t_ = 0.0
+    interval = 0.85
+    while t_ < seconds - 0.6:
+        i = int(t_ * SR)
+        m = int(0.3 * SR)
+        loudness = 0.15 + 0.85 * (t_ / seconds) ** 1.6
+        hit = lowpass(rng.uniform(-1, 1, m), 400 + 2500 * (t_ / seconds)) * decay(m, 0.04) * loudness
+        hit += np.sin(2 * np.pi * 55 * np.arange(m) / SR) * decay(m, 0.06) * loudness
+        out[i:i + m] += hit
+        t_ += interval
+        interval = max(0.38, interval * 0.93)
+    return normalize(out, -12)
+
+
+def glass_tap():
+    seconds = 0.5
+    s = sum(np.sin(2 * np.pi * f * t(seconds)) * decay(int(seconds * SR), d) for f, d in ((2900, 0.05), (4300, 0.03), (1700, 0.08)))
+    return normalize(s, -16)
+
+
+def light_click():
+    n = int(0.25 * SR)
+    s = np.zeros(n)
+    s[:200] = rng.uniform(-1, 1, 200) * decay(200, 0.002)
+    s += np.sin(2 * np.pi * 100 * np.arange(n) / SR) * decay(n, 0.05) * 0.3
+    return normalize(s, -14)
+
+
 SOUNDS = {
     "radio_static_loop": radio_static_loop,
     "radio_squelch_on": radio_squelch_on,
@@ -362,6 +518,28 @@ SOUNDS = {
     "music_menu": music_menu,
     "tension_low": tension_low,
     "tension_high": tension_high,
+    # 0.5 creature identity and director events (appended: earlier sounds stay identical)
+    "creature_breath_deep_1": lambda: breath_deep(101),
+    "creature_breath_deep_2": lambda: breath_deep(102),
+    "creature_breath_deep_3": lambda: breath_deep(103),
+    "creature_growl_1": lambda: growl(201),
+    "creature_growl_2": lambda: growl(202),
+    "creature_growl_3": lambda: growl(203),
+    "creature_crack_1": lambda: crack(301),
+    "creature_crack_2": lambda: crack(302),
+    "creature_crack_3": lambda: crack(303),
+    "creature_crack_4": lambda: crack(304),
+    "creature_drag_1": lambda: drag_step(401),
+    "creature_drag_2": lambda: drag_step(402),
+    "creature_drag_3": lambda: drag_step(403),
+    "creature_rhythm": rhythm,
+    "voices_muffled_1": lambda: voices_muffled(501),
+    "voices_muffled_2": lambda: voices_muffled(502),
+    "speaker_voice_1": lambda: speaker_voice(601),
+    "speaker_voice_2": lambda: speaker_voice(602),
+    "approach_corridor": approach,
+    "glass_tap": glass_tap,
+    "light_click": light_click,
 }
 
 

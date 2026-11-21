@@ -34,7 +34,7 @@ function LanguageSelect.new(router, args)
 	layout.VerticalAlignment = Enum.VerticalAlignment.Center
 
 	if firstStart then
-		Components.Text({ Text = "FREQUENCY ZERO", Font = Theme.Fonts.Title, TextSize = 18, Color = Theme.Colors.TextDim, LayoutOrder = 1, Parent = column })
+		Components.Text({ Text = "SILENT RELAY", Font = Theme.Fonts.Title, TextSize = 18, Color = Theme.Colors.TextDim, LayoutOrder = 1, Parent = column })
 	end
 	Components.Heading(column, "LANG_PROMPT", 2)
 	if firstStart and Localization.GetLanguage() ~= Config.FallbackLanguage then

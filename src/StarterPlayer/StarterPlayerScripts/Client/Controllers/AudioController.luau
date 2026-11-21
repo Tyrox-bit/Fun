@@ -51,8 +51,53 @@ function AudioController.Id(name: string): string?
 	return nil
 end
 
+-- Variants: "creature_growl" -> creature_growl_1 / _2 / _3 (only uploaded ones), never the
+-- same one twice in a row, so repeated events do not sound repeated.
+local lastVariant: { [string]: string } = {}
+function AudioController.Variant(base: string): string
+	local options = {}
+	for i = 1, 9 do
+		local name = base .. "_" .. i
+		if AudioController.Id(name) and name ~= lastVariant[base] then
+			table.insert(options, name)
+		end
+	end
+	if #options == 0 then
+		return lastVariant[base] or base
+	end
+	local choice = options[math.random(1, #options)]
+	lastVariant[base] = choice
+	return choice
+end
+
+-- Muffles a 3D sound when a wall is between the listener and the source.
+local occlusionParams = RaycastParams.new()
+occlusionParams.FilterType = Enum.RaycastFilterType.Exclude
+local function occlude(sound: Sound, position: Vector3)
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	local filter: { Instance } = { camera }
+	if Players.LocalPlayer.Character then
+		table.insert(filter, Players.LocalPlayer.Character :: Instance)
+	end
+	occlusionParams.FilterDescendantsInstances = filter
+	local origin = camera.CFrame.Position
+	local hit = workspace:Raycast(origin, position - origin, occlusionParams)
+	if hit and (hit.Position - position).Magnitude > 2 then
+		local eq = Instance.new("EqualizerSoundEffect")
+		eq.LowGain = 2
+		eq.MidGain = -10
+		eq.HighGain = -26
+		eq.Parent = sound
+		sound.Volume *= 0.75
+	end
+end
+
 -- Plays a one-shot. `at` may be a Vector3, a BasePart/Attachment, or nil (2D).
-function AudioController.Play(name: string, at: any?, volume: number?, groupName: string?): Sound?
+-- muffle = true: sounds behind walls are low-passed (spatial credibility).
+function AudioController.Play(name: string, at: any?, volume: number?, groupName: string?, muffle: boolean?): Sound?
 	local id = AudioController.Id(name)
 	if not id then
 		return nil
@@ -83,8 +128,18 @@ function AudioController.Play(name: string, at: any?, volume: number?, groupName
 			sound:Destroy()
 		end)
 	end
+	if muffle then
+		local position = if typeof(at) == "Vector3" then at elseif typeof(at) == "Instance" and at:IsA("BasePart") then at.Position elseif typeof(at) == "Instance" and at:IsA("Attachment") then at.WorldPosition else nil
+		if position then
+			occlude(sound, position)
+		end
+	end
 	sound:Play()
 	return sound
+end
+
+function AudioController.PlayVariant(base: string, at: any?, volume: number?, groupName: string?, muffle: boolean?): Sound?
+	return AudioController.Play(AudioController.Variant(base), at, volume, groupName, muffle)
 end
 
 function AudioController.Loop(name: string, parent: Instance, volume: number, groupName: string?): Sound?

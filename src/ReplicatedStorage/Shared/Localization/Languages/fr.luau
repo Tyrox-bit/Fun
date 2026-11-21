@@ -450,4 +450,11 @@ return {
 	PARTY_ACCEPT = "Venir",
 	PARTY_DECLINE = "Rester ici",
 	PARTY_SENT = "Invitations envoyées. Départ dans 15 secondes.",
+
+	-- 0.5: PA voice
+	SPEAKER_PA = "Haut-parleur",
+	SPK_LINE_1 = "Attention. Équipe de nuit au noyau. Équipe de nuit au noyau.",
+	SPK_LINE_2 = "Station 07 à tout le personnel : ne répondez pas au canal zéro.",
+	SPK_LINE_3 = "...l'équipe au portail, répondez... l'équipe au portail...",
+	SPK_LINE_4 = "Ceci est un message enregistré. Il n'a pas encore été enregistré.",
 }

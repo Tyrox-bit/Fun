@@ -450,4 +450,11 @@ return {
 	PARTY_ACCEPT = "Ir",
 	PARTY_DECLINE = "Quedarme",
 	PARTY_SENT = "Invitaciones enviadas. Salen en 15 segundos.",
+
+	-- 0.5: PA voice
+	SPEAKER_PA = "Altavoz",
+	SPK_LINE_1 = "Atención. Turno de noche al núcleo. Turno de noche al núcleo.",
+	SPK_LINE_2 = "Estación 07 a todo el personal: no respondan al canal cero.",
+	SPK_LINE_3 = "...el equipo del portón, repórtense... el equipo del portón...",
+	SPK_LINE_4 = "Este es un mensaje grabado. Todavía no se ha grabado.",
 }

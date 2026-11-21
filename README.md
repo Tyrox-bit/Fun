@@ -1,4 +1,6 @@
-# FREQUENCY ZERO
+# SILENT RELAY
+
+> Früherer Arbeitstitel: FREQUENCY ZERO. Interne Kürzel (`FZ_…`) und DataStore-Namen bleiben absichtlich unverändert, damit keine Spielstände verloren gehen.
 
 Natives Roblox-Erlebnis (Roblox Studio + Luau), veröffentlicht auf Roblox und spielbar in der Roblox-App auf PC, Smartphone, Tablet und Konsole. Psychologisches Koop-Horrorspiel für 1–4 Spieler.
 
@@ -15,12 +17,12 @@ Roblox Studio läuft nur auf **Windows oder macOS**. Entwickeln und Veröffentli
 
 ## Installation A – fertige Place-Datei (am einfachsten)
 
-1. [`build/FrequencyZero.rbxlx`](build/FrequencyZero.rbxlx) auf den PC/Mac herunterladen.
+1. [`build/SilentRelay.rbxlx`](build/SilentRelay.rbxlx) auf den PC/Mac herunterladen.
 2. Roblox Studio → **Datei → Öffnen** (File → Open from File) → die Datei wählen.
 3. **Play** drücken. Das Testgelände wird beim Start automatisch gebaut.
 4. Zum Veröffentlichen: **Datei → Auf Roblox veröffentlichen**, danach die einmaligen Einstellungen unten setzen.
 
-Die Datei wird aus `src/` mit Rojo 7.4.4 erzeugt (`rojo build default.project.json -o build/FrequencyZero.rbxlx`). Ohne Rojo liefert `python3 tools/build_place.py` denselben Explorer-Baum (gegen Rojo geprüft: 62 Objekte, alle 44 Skripte zeichengleich). Wenn du in Studio direkt etwas änderst, gilt ab dann die Studio-Version – für eine weitere Zusammenarbeit über dieses Repository ist Weg B besser.
+Die Datei wird aus `src/` mit Rojo 7.4.4 erzeugt (`rojo build default.project.json -o build/SilentRelay.rbxlx`). Ohne Rojo liefert `python3 tools/build_place.py` denselben Explorer-Baum (gegen Rojo geprüft: 62 Objekte, alle 44 Skripte zeichengleich). Wenn du in Studio direkt etwas änderst, gilt ab dann die Studio-Version – für eine weitere Zusammenarbeit über dieses Repository ist Weg B besser.
 
 ## Installation B – Rojo (für die laufende Entwicklung)
 
@@ -118,7 +120,7 @@ Adminrechte: Besitzer des Spiels (User) bzw. Gruppenrang ≥ 254 sind automatisc
 ```
 python3 tools/check_localization.py   # alle Sprachen vollständig, Platzhalter identisch, alle im Code genutzten Schlüssel existieren
 python3 tools/check_luau_blocks.py    # Blockstruktur (function/if/do … end, Klammern) aller .luau-Dateien
-python3 tools/build_place.py          # erzeugt build/FrequencyZero.rbxlx (ohne Rojo)
+python3 tools/build_place.py          # erzeugt build/SilentRelay.rbxlx (ohne Rojo)
 ```
 
 Das ersetzt **keinen** Studio-Test: Typfehler und API-Fehler findet nur Studio bzw. `luau-analyze`.

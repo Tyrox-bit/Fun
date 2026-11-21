@@ -48,4 +48,4 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 ## Nur du kannst
 - 👤 In Studio testen und Output-Meldungen schicken
 - 👤 Sounds/Badges/Gamepass/Places anlegen, Voice-Chat aktivieren, Altersfreigabe-Fragebogen
-- 👤 Name: FREQUENCY ZERO oder SILENT RELAY?
+- 👤 Name: SILENT RELAY oder SILENT RELAY?

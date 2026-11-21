@@ -1,4 +1,4 @@
--- FREQUENCY ZERO - client bootstrap.
+-- SILENT RELAY - client bootstrap.
 --
 -- Flow: boot screen (logo only) -> load profile -> apply saved language BEFORE any text
 -- exists -> first start: language picker / otherwise: main menu -> play.

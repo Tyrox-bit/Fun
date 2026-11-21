@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds an importable Roblox Studio place (build/FrequencyZero.rbxlx) from src/.
+"""Builds an importable Roblox Studio place (build/SilentRelay.rbxlx) from src/.
 
 No Rojo required: open the generated file directly in Roblox Studio (File > Open).
 Follows default.project.json and Rojo's file conventions so both workflows produce

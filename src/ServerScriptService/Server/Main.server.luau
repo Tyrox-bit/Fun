@@ -1,4 +1,4 @@
--- FREQUENCY ZERO - server bootstrap.
+-- SILENT RELAY - server bootstrap.
 -- Order matters: remotes and shared state first, then data, then gameplay services.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

@@ -23,7 +23,7 @@ function MainMenu.new(router, args)
 		Components.Heading(column, "PAUSE_TITLE", 1)
 		Components.Text({ Key = "PAUSE_NOTE", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 2, Parent = column })
 	else
-		Components.Text({ Text = "FREQUENCY ZERO", Font = Theme.Fonts.Title, TextSize = Theme.Sizes.TextTitle, Color = Theme.Colors.TextBright, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1, Parent = column })
+		Components.Text({ Text = "SILENT RELAY", Font = Theme.Fonts.Title, TextSize = Theme.Sizes.TextTitle, Color = Theme.Colors.TextBright, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 1, Parent = column })
 		Components.Text({ Key = "MENU_TAGLINE", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 2, Parent = column })
 	end
 	Components.Spacer(column, 18, 3)

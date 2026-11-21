@@ -142,7 +142,8 @@ def check_use_before_declare(path: Path) -> list:
         for var in LOCAL_VAR.finditer(code):
             if var.group(1) == name:
                 first_decl = min(first_decl, code.count("\n", 0, var.start()))
-        use = re.compile(r"(?<![.:\w])" + re.escape(name) + r"\b")
+        # a use, but not a table field key like `{ name = ... }`
+        use = re.compile(r"(?<![.:\w])" + re.escape(name) + r"\b(?!\s*=[^=])")
         for number in range(first_decl):
             if use.search(lines[number]):
                 problems.append(f"{path}:{number + 1}: '{name}' used before 'local function {name}' (line {decl_line + 1})")

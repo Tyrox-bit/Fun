@@ -24,8 +24,11 @@ local HINT_AFTER = 150
 
 export type Beat = {
 	id: string,
-	kind: string, -- apparition | footsteps | flicker | cctv | namecall | doorslam
+	kind: string, -- see DirectorController for all kinds
 	once: boolean?,
+	weight: number?, -- relative chance among the eligible beats (default 1)
+	cooldown: number?, -- seconds before this beat may happen again (default 120)
+	chance: number?, -- 0..1 extra rarity roll per check (default 1)
 	condition: (player: Player, info: { [string]: any }) -> boolean,
 	data: ((player: Player) -> { [string]: any })?,
 	others: boolean?, -- also notify the other players (for "cctv": they see it WITHOUT the figure)
@@ -33,6 +36,7 @@ export type Beat = {
 
 local beats: { Beat } = {}
 local used: { [string]: boolean } = {}
+local lastFired: { [string]: number } = {}
 local lastGlobal = 0
 local lastKind: string? = nil
 local lastForPlayer: { [Player]: number } = {}
@@ -62,6 +66,7 @@ function DirectorService.Configure(newBeats: { Beat }, newHints: { [string]: str
 	hints = newHints
 	playersInGame = voters
 	table.clear(used)
+	table.clear(lastFired)
 	table.clear(lastForPlayer)
 	lastGlobal = os.clock() - GLOBAL_GAP + 45 -- first scare no earlier than ~45 s in
 	lastKind = nil
@@ -78,6 +83,7 @@ end
 
 local function fire(beat: Beat, player: Player)
 	used[beat.id] = true
+	lastFired[beat.id] = os.clock()
 	lastGlobal = os.clock()
 	lastKind = beat.kind
 	lastForPlayer[player] = os.clock()
@@ -107,6 +113,19 @@ local function nearestTeammate(player: Player, players: { Player }): number
 		end
 	end
 	return best
+end
+
+-- Is a tagged object (window, speaker...) within [minDistance, maxDistance] of a position?
+function DirectorService.NearTagged(tagName: string, position: Vector3, minDistance: number, maxDistance: number): boolean
+	for _, instance in CollectionService:GetTagged(tagName) do
+		if instance:IsA("BasePart") then
+			local d = (instance.Position - position).Magnitude
+			if d >= minDistance and d <= maxDistance then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 function DirectorService.Start()
@@ -147,15 +166,27 @@ function DirectorService.Start()
 						area = DirectorService.AreaOf(root.Position),
 						alone = nearestTeammate(player, players) > 25,
 					}
-					local fired = false
+					-- Weighted pick among everything that is allowed right now.
+					local eligible, total = {}, 0
 					for _, beat in beats do
-						if not (beat.once and used[beat.id]) and beat.kind ~= lastKind and beat.condition(player, info) then
-							fire(beat, player)
-							fired = true
-							break
+						local cooled = now - (lastFired[beat.id] or -math.huge) > (beat.cooldown or 120)
+						if not (beat.once and used[beat.id]) and cooled and beat.kind ~= lastKind and math.random() <= (beat.chance or 1) then
+							local ok, allowed = pcall(beat.condition, player, info)
+							if ok and allowed then
+								table.insert(eligible, beat)
+								total += beat.weight or 1
+							end
 						end
 					end
-					if fired then
+					if #eligible > 0 then
+						local roll = math.random() * total
+						for _, beat in eligible do
+							roll -= beat.weight or 1
+							if roll <= 0 then
+								fire(beat, player)
+								break
+							end
+						end
 						break
 					end
 				end

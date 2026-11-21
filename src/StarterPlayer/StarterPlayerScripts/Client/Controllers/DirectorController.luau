@@ -317,6 +317,269 @@ local function bindCctvText()
 	CollectionService:GetInstanceAddedSignal("FZ_CctvText"):Connect(refresh)
 end
 
+---------------------------------------------------------------------------
+-- 0.5 events (pool shared by all modes)
+---------------------------------------------------------------------------
+local function cameraPosition(): Vector3?
+	local camera = workspace.CurrentCamera
+	return camera and camera.CFrame.Position
+end
+
+local function nearestTagged(tagName: string, maxDistance: number): BasePart?
+	local origin = cameraPosition()
+	if not origin then
+		return nil
+	end
+	local best, bestDistance = nil, maxDistance
+	for _, instance in CollectionService:GetTagged(tagName) do
+		if instance:IsA("BasePart") then
+			local d = (instance.Position - origin).Magnitude
+			if d < bestDistance then
+				best, bestDistance = instance, d
+			end
+		end
+	end
+	return best
+end
+
+-- A figure stands behind the glass for a moment. Taps once. Gone when you look again.
+local function window()
+	local glass = nearestTagged("FZ_Window", 40)
+	local origin = cameraPosition()
+	if not glass or not origin then
+		return
+	end
+	local toGlass = glass.Position - origin
+	local away = Vector3.new(toGlass.X, 0, toGlass.Z)
+	if away.Magnitude < 1 then
+		return
+	end
+	away = away.Unit
+	local base = Vector3.new(glass.Position.X, glass.Position.Y - glass.Size.Y / 2 - 3.5, glass.Position.Z) + away * 2.5
+	local figure = buildFigure()
+	figure:PivotTo(CFrame.lookAt(base, base - away))
+	figure.Parent = workspace.CurrentCamera
+	AudioController.Play("glass_tap", glass.Position, 0.45, "Creature")
+	local started = os.clock()
+	local connection
+	connection = RunService.Heartbeat:Connect(function()
+		local camera = workspace.CurrentCamera
+		local looking = camera and camera.CFrame.LookVector:Dot((base - camera.CFrame.Position).Unit) > 0.92
+		if os.clock() - started > (if intensity() == "reduced" then 1.2 else 2.6) or (looking and os.clock() - started > 0.7) then
+			connection:Disconnect()
+			figure:Destroy()
+		end
+	end)
+end
+
+-- Someone stands in the room ahead (a room that was empty a second ago).
+local function occupant()
+	apparition()
+end
+
+local SPEAKER_LINES = { "SPK_LINE_1", "SPK_LINE_2", "SPK_LINE_3", "SPK_LINE_4" }
+local function speaker()
+	local box = nearestTagged("FZ_Speaker", 45)
+	if not box then
+		return
+	end
+	AudioController.Play("radio_squelch_on", box, 0.4, "SFX")
+	AudioController.PlayVariant("speaker_voice", box, 0.6, "SFX")
+	if showSubtitle then
+		showSubtitle({ speaker = "SPEAKER_PA", text = SPEAKER_LINES[math.random(1, #SPEAKER_LINES)], channel = "radio", duration = 3.5 })
+	end
+end
+
+-- The light in the neighbouring room switches on - nobody is there.
+local function neighborLight()
+	local origin = cameraPosition()
+	if not origin then
+		return
+	end
+	local candidates = {}
+	for _, fixture in CollectionService:GetTagged("FZ_SectorLight") do
+		if fixture:IsA("BasePart") then
+			local d = (fixture.Position - origin).Magnitude
+			if d > 18 and d < 48 then
+				table.insert(candidates, fixture)
+			end
+		end
+	end
+	if #candidates == 0 then
+		return
+	end
+	local fixture = candidates[math.random(1, #candidates)]
+	local lights = {}
+	for _, child in fixture:GetChildren() do
+		if child:IsA("Light") then
+			table.insert(lights, { light = child, enabled = child.Enabled, brightness = child.Brightness })
+			child.Enabled = true
+			child.Brightness *= 1.6
+		end
+	end
+	AudioController.Play("light_click", fixture.Position, 0.5, "SFX", true)
+	task.delay(if intensity() == "reduced" then 3 else 6, function()
+		AudioController.Play("light_click", fixture.Position, 0.4, "SFX", true)
+		for _, entry in lights do
+			entry.light.Brightness = entry.brightness
+			entry.light.Enabled = fixture:GetAttribute("Powered") ~= false and entry.enabled
+		end
+	end)
+end
+
+-- A shadow slides along the wall - against the direction the light would throw it.
+local function shadow()
+	local camera = workspace.CurrentCamera
+	local character = player.Character
+	if not camera or not character then
+		return
+	end
+	rayParams.FilterDescendantsInstances = { character, camera }
+	local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+	if look.Magnitude < 0.1 then
+		return
+	end
+	local hit = workspace:Raycast(camera.CFrame.Position, look.Unit * 30, rayParams)
+	if not hit or hit.Distance < 6 then
+		return
+	end
+	local normal = hit.Normal
+	local side = normal:Cross(Vector3.yAxis).Unit
+	local base = hit.Position + normal * 0.08
+	local plate = Instance.new("Part")
+	plate.Anchored = true
+	plate.CanCollide = false
+	plate.CanQuery = false
+	plate.CanTouch = false
+	plate.CastShadow = false
+	plate.Material = Enum.Material.SmoothPlastic
+	plate.Color = Color3.new(0, 0, 0)
+	plate.Transparency = if intensity() == "reduced" then 0.65 else 0.45
+	plate.Size = Vector3.new(1.6, 7.5, 0.05)
+	plate.CFrame = CFrame.lookAt(base - side * 4, base - side * 4 + normal)
+	plate.Parent = camera
+	local tween = TweenService:Create(plate, TweenInfo.new(1.3, Enum.EasingStyle.Sine), { CFrame = CFrame.lookAt(base + side * 4, base + side * 4 + normal), Transparency = 1 })
+	tween.Completed:Once(function()
+		plate:Destroy()
+	end)
+	tween:Play()
+end
+
+-- Find a wall next to the player and return a point just behind it.
+local function behindWall(): Vector3?
+	local camera = workspace.CurrentCamera
+	local character = player.Character
+	if not camera or not character then
+		return nil
+	end
+	rayParams.FilterDescendantsInstances = { character, camera }
+	local origin = camera.CFrame.Position
+	local directions = { -camera.CFrame.RightVector, camera.CFrame.RightVector, -camera.CFrame.LookVector }
+	for i = #directions, 2, -1 do
+		local j = math.random(1, i)
+		directions[i], directions[j] = directions[j], directions[i]
+	end
+	for _, direction in directions do
+		local flat = Vector3.new(direction.X, 0, direction.Z)
+		if flat.Magnitude > 0.1 then
+			local hit = workspace:Raycast(origin, flat.Unit * 14, rayParams)
+			if hit then
+				return hit.Position + flat.Unit * 5
+			end
+		end
+	end
+	return nil
+end
+
+-- Acoustic deception: the creature seems to move behind the wall. It is not there.
+local function phantom()
+	local position = behindWall()
+	if not position then
+		return
+	end
+	local roll = math.random()
+	if roll < 0.35 then
+		AudioController.PlayVariant("creature_breath_deep", position, 0.4, "Creature", true)
+	elseif roll < 0.6 then
+		AudioController.PlayVariant("creature_growl", position, 0.35, "Creature", true)
+	elseif roll < 0.8 then
+		for i = 0, 2 do
+			task.delay(i * 0.7, function()
+				AudioController.PlayVariant("creature_drag", position + Vector3.new(i * 2, 0, 0), 0.4, "Creature", true)
+			end)
+		end
+	else
+		AudioController.PlayVariant("creature_crack", position, 0.45, "Creature", true)
+	end
+end
+
+-- Something comes closer down the corridor... and stops.
+local function approach()
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	local behind = -Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z).Unit
+	local start = camera.CFrame.Position + behind * 45
+	local sound = AudioController.Play("approach_corridor", start, 0.6, "Creature", true)
+	if sound and sound.Parent and sound.Parent:IsA("Attachment") then
+		local attachment = sound.Parent :: Attachment
+		TweenService:Create(attachment, TweenInfo.new(6, Enum.EasingStyle.Linear), { WorldPosition = camera.CFrame.Position + behind * 8 }):Play()
+	end
+end
+
+local function voices()
+	local position = behindWall()
+	if position then
+		AudioController.PlayVariant("voices_muffled", position, 0.5, "SFX", true)
+	end
+end
+
+-- Very rare: an object that only you can see - a radio in YOUR colours, hissing.
+local function object()
+	local camera = workspace.CurrentCamera
+	local character = player.Character
+	if not camera or not character then
+		return
+	end
+	rayParams.FilterDescendantsInstances = { character, camera }
+	local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+	if look.Magnitude < 0.1 then
+		return
+	end
+	local spot = camera.CFrame.Position + look.Unit * 11
+	local floor = workspace:Raycast(spot, Vector3.new(0, -20, 0), rayParams)
+	if not floor then
+		return
+	end
+	local radio = Instance.new("Part")
+	radio.Anchored = true
+	radio.CanCollide = false
+	radio.CanQuery = false
+	radio.Size = Vector3.new(0.75, 1.7, 0.42)
+	local color = player:GetAttribute("FZ_RadioColor")
+	radio.Color = if typeof(color) == "Color3" then color else Color3.fromRGB(46, 48, 50)
+	radio.CFrame = CFrame.new(floor.Position + Vector3.new(0, 0.85, 0)) * CFrame.Angles(0, math.random() * 6, 0.2)
+	radio.Parent = camera
+	local led = Instance.new("PointLight")
+	led.Color = Color3.fromRGB(255, 40, 30)
+	led.Range = 4
+	led.Brightness = 1
+	led.Parent = radio
+	AudioController.Play("radio_static_loop", radio, 0.25, "SFX")
+	local started = os.clock()
+	local connection
+	connection = RunService.Heartbeat:Connect(function()
+		local cam = workspace.CurrentCamera
+		local close = cam and (cam.CFrame.Position - radio.Position).Magnitude < 6
+		local lookingAway = cam and cam.CFrame.LookVector:Dot((radio.Position - cam.CFrame.Position).Unit) < 0.2
+		if close or (lookingAway and os.clock() - started > 2) or os.clock() - started > 20 then
+			connection:Disconnect()
+			radio:Destroy()
+		end
+	end)
+end
+
 function DirectorController.Init(settingsController, captionCallback: (line: { [string]: any }) -> ())
 	settings = settingsController
 	showSubtitle = captionCallback
@@ -335,6 +598,24 @@ function DirectorController.Init(settingsController, captionCallback: (line: { [
 			cctv(data)
 		elseif kind == "namecall" then
 			namecall(data)
+		elseif kind == "window" then
+			window()
+		elseif kind == "occupant" then
+			occupant()
+		elseif kind == "speaker" then
+			speaker()
+		elseif kind == "neighborlight" then
+			neighborLight()
+		elseif kind == "shadow" then
+			shadow()
+		elseif kind == "phantom" then
+			phantom()
+		elseif kind == "approach" then
+			approach()
+		elseif kind == "voices" then
+			voices()
+		elseif kind == "object" then
+			object()
 		end
 	end)
 	bindCctvText()

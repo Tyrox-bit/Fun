@@ -1,4 +1,4 @@
-# FREQUENCY ZERO – Game Design Document (v0.1)
+# SILENT RELAY – Game Design Document (v0.1)
 
 > Arbeitsdokument. Enthält vollständige Spoiler. Änderungen an Story und Mechaniken werden hier gepflegt, damit Code und Konzept nicht auseinanderlaufen.
 

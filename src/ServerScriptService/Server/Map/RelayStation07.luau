@@ -418,7 +418,12 @@ local function buildShell()
 	wallZ(25, 50, 100, { { 75, 6 } })
 	wallX(50, -85, -25, { { -55, 10 } })
 	wallX(50, -25, 25, { { 0, 18 } })
-	wallX(50, 25, 70, { { 55, 10 } })
+	wallX(50, 25, 70, { { 55, 10 }, { 65, 6 } })
+	-- Window from the control room to the dark outside (sill + glass)
+	block(walls, "WindowSill", Vector3.new(T, 3.5, 6), CFrame.new(50, 1.75, 65), C.Concrete, Enum.Material.Concrete)
+	local window = block(walls, "Window", Vector3.new(0.3, 6.5, 6), CFrame.new(50, 6.75, 65), Color3.fromRGB(150, 170, 175), Enum.Material.Glass)
+	window.Transparency = 0.55
+	CollectionService:AddTag(window, "FZ_Window")
 
 	-- Halls
 	wallZ(-50, -50, 50, { { 0, 18 } })
@@ -442,6 +447,7 @@ local function buildShell()
 	for i = 0, segments - 1 do
 		local angle = (i + 0.5) / segments * math.pi * 2
 		local onAxis = (i % 4 == 0) or (i % 4 == 3) -- the two segments around each axis
+		local glass = i == 2 or i == 10 -- observation glass into the dark gaps behind the core
 		local mid = Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
 		local length = 2 * radius * math.tan(math.pi / segments) + 0.4
 		if onAxis then
@@ -449,7 +455,13 @@ local function buildShell()
 			local y = DOOR_H + (H - DOOR_H) / 2
 			block(core, "CoreLintel", Vector3.new(length, H - DOOR_H, T), CFrame.lookAt(mid + Vector3.new(0, y, 0), Vector3.new(0, y, 0)), C.SteelDark, Enum.Material.Metal)
 		else
-			block(core, "CoreWall", Vector3.new(length, H, T), CFrame.lookAt(mid + Vector3.new(0, H / 2, 0), Vector3.new(0, H / 2, 0)), C.SteelDark, Enum.Material.Metal)
+			local segment = block(core, "CoreWall", Vector3.new(length, H, T), CFrame.lookAt(mid + Vector3.new(0, H / 2, 0), Vector3.new(0, H / 2, 0)), C.SteelDark, Enum.Material.Metal)
+			if glass then
+				segment.Material = Enum.Material.Glass
+				segment.Color = Color3.fromRGB(120, 140, 145)
+				segment.Transparency = 0.6
+				CollectionService:AddTag(segment, "FZ_Window")
+			end
 		end
 	end
 	-- The core machine
@@ -650,6 +662,17 @@ local function furnish()
 		{ Vector3.new(-36, 0, 0), "HALL" }, { Vector3.new(36, 0, 0), "HALL" },
 	} do
 		patrol(node[1], node[2])
+	end
+
+	-- PA loudspeakers (the station sometimes speaks with a voice nobody recognises)
+	for _, sp in {
+		{ Vector3.new(0, 12.5, -59.2), Vector3.new(0, 0, 1) }, { Vector3.new(0, 12.5, 59.2), Vector3.new(0, 0, -1) },
+		{ Vector3.new(-49.2, 12.5, 20), Vector3.new(1, 0, 0) }, { Vector3.new(99.2, 12.5, 50), Vector3.new(-1, 0, 0) },
+		{ Vector3.new(-99.2, 12.5, -10), Vector3.new(1, 0, 0) },
+	} do
+		local speaker = block(props, "Speaker", Vector3.new(1.4, 1.4, 1.6), CFrame.lookAt(sp[1], sp[1] + sp[2]), C.SteelDark, Enum.Material.Metal)
+		speaker.CanCollide = false
+		CollectionService:AddTag(speaker, "FZ_Speaker")
 	end
 
 	-- Hidden finds (ghost logs): tape recorders with a note

@@ -37,6 +37,7 @@ local DirectorService = require(Services.DirectorService)
 local DoorService = require(Services.DoorService)
 local AnalyticsTracker = require(Services.AnalyticsTracker)
 local BadgeTracker = require(Services.BadgeTracker)
+local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
 
 local Chapter1 = {}
 Chapter1.StartCheckpoint = "C1_START"
@@ -345,6 +346,7 @@ local function beats()
 			id = "cctv_future",
 			kind = "cctv",
 			once = true,
+			weight = 50,
 			others = true,
 			condition = function(_player, info)
 				return state.systems.cameras == true and after("power") and screenNear(info.position, 12)
@@ -357,6 +359,7 @@ local function beats()
 			id = "name_call",
 			kind = "namecall",
 			once = true,
+			weight = 20,
 			condition = function(_player, info)
 				return info.alone and after("fuses") and inBuilding(info.position)
 			end,
@@ -369,6 +372,7 @@ local function beats()
 			id = "apparition_hall",
 			kind = "apparition",
 			once = true,
+			weight = 20,
 			condition = function(_player, info)
 				return info.area == "HALL" and after("control")
 			end,
@@ -447,7 +451,7 @@ function Chapter1.Begin()
 	table.clear(stepped)
 	active = true
 	applySystems()
-	DirectorService.Configure(beats(), HINTS, ctx.playersInGame)
+	DirectorService.Configure(HorrorEvents.With(beats()), HINTS, ctx.playersInGame)
 end
 
 function Chapter1.Stop()

@@ -1,5 +1,5 @@
 {
-  "name": "FrequencyZero",
+  "name": "SilentRelay",
   "tree": {
     "$className": "DataModel",
     "ReplicatedFirst": {
