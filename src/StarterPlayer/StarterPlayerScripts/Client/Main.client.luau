@@ -307,6 +307,7 @@ local app = {
 	Radio = RadioController,
 }
 router.App = app
+router.ShouldIgnoreBack = Hud.IsDocumentOpen
 
 function app.HasProgress(): boolean
 	return profile.isNew == false

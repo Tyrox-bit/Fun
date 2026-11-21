@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Catalog = require(Shared.Catalog)
+local Titles = require(Shared.Titles)
 local Config = require(Shared.Config)
 local Net = require(Shared.Net)
 
@@ -36,6 +37,21 @@ function ShopService.Publish(player: Player)
 	player:SetAttribute("FZ_BlindCooldownScale", effects.blindCooldown or 1)
 	local skin = data.equipped.radioSkin and Catalog.Items[data.equipped.radioSkin]
 	player:SetAttribute("FZ_RadioColor", if skin then skin.color else Catalog.DefaultRadioColor)
+	local flash = data.equipped.flashlight and Catalog.Items[data.equipped.flashlight]
+	player:SetAttribute("FZ_FlashColor", if flash then flash.light else Catalog.DefaultFlashlight)
+	local title = data.equipped.title and Titles.Get(data.equipped.title)
+	player:SetAttribute("FZ_Title", if title and title.earned(data) then title.name else nil)
+end
+
+local function earnedTitles(data): { string }
+	local list = {}
+	for _, title in Titles.List do
+		local ok, earned = pcall(title.earned, data)
+		if ok and earned then
+			table.insert(list, title.id)
+		end
+	end
+	return list
 end
 
 local function snapshot(player: Player)
@@ -48,6 +64,7 @@ local function snapshot(player: Player)
 		inventory = table.clone(profile.Data.inventory),
 		equipped = table.clone(profile.Data.equipped),
 		balance = profile.Data.signalMarks,
+		titles = earnedTitles(profile.Data),
 	}
 end
 
@@ -86,6 +103,8 @@ local function equip(player: Player, itemId: string, on: boolean)
 			data.equipped.set = if on then itemId else nil
 		elseif item.kind == "radioSkin" then
 			data.equipped.radioSkin = if on then itemId else nil
+		elseif item.kind == "flashlightSkin" then
+			data.equipped.flashlight = if on then itemId else nil
 		end
 	end)
 	return { ok = true }
@@ -111,6 +130,17 @@ function ShopService.Start()
 			return snapshot(player)
 		elseif type(itemId) ~= "string" then
 			return { ok = false, reason = "error" }
+		elseif action == "title" then
+			local profile = DataService.Get(player)
+			local title = Titles.Get(itemId)
+			if profile and (itemId == "" or (title and title.earned(profile.Data))) then
+				DataService.Mutate(player, function(data)
+					data.equipped.title = if itemId == "" then nil else itemId
+				end)
+				result = { ok = true }
+			else
+				result = { ok = false, reason = "error" }
+			end
 		elseif action == "buy" then
 			result = buy(player, itemId)
 		elseif action == "equip" then

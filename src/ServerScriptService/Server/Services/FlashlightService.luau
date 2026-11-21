@@ -27,6 +27,17 @@ local function attach(character: Model)
 	light.Shadows = true
 	light.Enabled = false
 	light.Parent = head
+	local player = game:GetService("Players"):GetPlayerFromCharacter(character)
+	if player then
+		local function color()
+			local value = player:GetAttribute("FZ_FlashColor")
+			if typeof(value) == "Color3" then
+				light.Color = value
+			end
+		end
+		color()
+		player:GetAttributeChangedSignal("FZ_FlashColor"):Connect(color)
+	end
 end
 
 function FlashlightService.Start()

@@ -568,7 +568,7 @@ local function furnish()
 	mug.CFrame = table_.CFrame * CFrame.new(0.8, 1.8, 0) * CFrame.Angles(0, 0, math.rad(90))
 	local calendar = block(props, "Calendar", Vector3.new(2, 2.6, 0.1), CFrame.new(99.4, 6, -36) * CFrame.Angles(0, math.rad(-90), 0), C.Paper, Enum.Material.SmoothPlastic)
 	worldText(calendar, Enum.NormalId.Front, nil, "NOV 2009\n14", nil, Color3.fromRGB(140, 30, 24))
-	interactable(calendar, "c1_calendar", "INTERACT_READ", "OBJECT_CALENDAR", { MaxDistance = 7 })
+	interactable(calendar, "lore", "INTERACT_READ", "OBJECT_CALENDAR", { MaxDistance = 7, LogId = "calendar_2009" })
 	fuseSpot(CFrame.new(93, 5.8, -65), "D")
 	fuseSpot(CFrame.new(60, 2.2, -39), "D")
 
@@ -650,6 +650,25 @@ local function furnish()
 		{ Vector3.new(-36, 0, 0), "HALL" }, { Vector3.new(36, 0, 0), "HALL" },
 	} do
 		patrol(node[1], node[2])
+	end
+
+	-- Hidden finds (ghost logs): tape recorders with a note
+	for _, find in {
+		{ "log_okafor", CFrame.new(-62, 0.6, -80) },
+		{ "log_venn", CFrame.new(-86, 3.6, -15) },
+		{ "log_ehle", CFrame.new(-60, 0.6, 30) },
+		{ "log_0006", CFrame.new(-8, 0.6, 8) },
+	} do
+		local recorder = block(props, "Recorder", Vector3.new(1.4, 0.6, 1), find[2], Color3.fromRGB(48, 44, 40), Enum.Material.SmoothPlastic)
+		local reel = block(props, "Reel", Vector3.new(0.1, 0.5, 0.5), find[2] * CFrame.new(0, 0.35, 0) * CFrame.Angles(0, 0, math.rad(90)), C.Plastic, Enum.Material.SmoothPlastic)
+		reel.Shape = Enum.PartType.Cylinder
+		reel.CanCollide = false
+		local led = Instance.new("PointLight")
+		led.Range = 3
+		led.Brightness = 0.6
+		led.Color = Color3.fromRGB(255, 120, 60)
+		led.Parent = recorder
+		interactable(recorder, "lore", "INTERACT_LISTEN", "OBJECT_RECORDER", { MaxDistance = 7, LogId = find[1] })
 	end
 
 	-- Item spots (bandages / syringes are placed at random spots per session)

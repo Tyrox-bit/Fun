@@ -42,6 +42,10 @@ function Lobby.new(router)
 		for index, player in players do
 			local isSelf = player == Players.LocalPlayer
 			local suffix = if isSelf then "  " .. Localization.T("LOBBY_YOU") else ""
+			local title = player:GetAttribute("FZ_Title")
+			if type(title) == "string" then
+				suffix ..= "  · " .. Localization.T(title)
+			end
 			if isSelf then
 				Components.Text({
 					Text = string.format("%s  @%s%s", player.DisplayName, player.Name, suffix),
@@ -55,8 +59,9 @@ function Lobby.new(router)
 			else
 				-- Tap a teammate to mute / unmute their voice and radio for you only.
 				local muted = app.Voice.IsMuted(player)
+				local otherTitle = player:GetAttribute("FZ_Title")
 				local row = Components.Button({
-					Text = string.format("%s  @%s", player.DisplayName, player.Name),
+					Text = string.format("%s  @%s%s", player.DisplayName, player.Name, if type(otherTitle) == "string" then "  · " .. Localization.T(otherTitle) else ""),
 					TagKey = if muted then "LOBBY_UNMUTE" else "LOBBY_MUTE",
 					Height = 40,
 					LayoutOrder = index,

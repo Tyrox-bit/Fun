@@ -106,7 +106,7 @@ function Shop.new(router)
 	local function card(itemId: string, order: number)
 		local item = Catalog.Items[itemId]
 		local owned = data.inventory[itemId] == true
-		local equipped = data.equipped.set == itemId or data.equipped.radioSkin == itemId
+		local equipped = data.equipped.set == itemId or data.equipped.radioSkin == itemId or data.equipped.flashlight == itemId
 		local button = Instance.new("TextButton")
 		button.Name = itemId
 		button.AutoButtonColor = false

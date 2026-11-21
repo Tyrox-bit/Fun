@@ -77,7 +77,14 @@ Catalog.Items = {
 	},
 }
 
-Catalog.Order = { "set_technician", "set_observer", "set_medic", "flashlight_upgrade", "radio_olive", "radio_rust", "radio_signal" }
+-- Flashlight housings: purely cosmetic beam colour (same range and brightness).
+Catalog.Items.flash_cold = { tab = "cosmetic", kind = "flashlightSkin", price = 400, name = "ITEM_FLASH_COLD_NAME", description = "ITEM_FLASH_DESC", icon = "LUX", color = Color3.fromRGB(200, 225, 255), light = Color3.fromRGB(205, 225, 255) }
+Catalog.Items.flash_amber = { tab = "cosmetic", kind = "flashlightSkin", price = 400, name = "ITEM_FLASH_AMBER_NAME", description = "ITEM_FLASH_DESC", icon = "LUX", color = Color3.fromRGB(255, 190, 110), light = Color3.fromRGB(255, 200, 130) }
+Catalog.Items.flash_red = { tab = "cosmetic", kind = "flashlightSkin", price = 900, name = "ITEM_FLASH_RED_NAME", description = "ITEM_FLASH_DESC", icon = "LUX", color = Color3.fromRGB(200, 60, 50), light = Color3.fromRGB(255, 120, 105) }
+
+Catalog.DefaultFlashlight = Color3.fromRGB(255, 236, 206)
+
+Catalog.Order = { "set_technician", "set_observer", "set_medic", "flashlight_upgrade", "radio_olive", "radio_rust", "radio_signal", "flash_cold", "flash_amber", "flash_red" }
 
 Catalog.DefaultRadioColor = Color3.fromRGB(46, 48, 50)
 

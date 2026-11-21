@@ -36,6 +36,7 @@ local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local DoorService = require(Services.DoorService)
 local AnalyticsTracker = require(Services.AnalyticsTracker)
+local BadgeTracker = require(Services.BadgeTracker)
 
 local Chapter1 = {}
 Chapter1.StartCheckpoint = "C1_START"
@@ -245,6 +246,9 @@ local function askAnswer()
 				end
 				state.answered = index == 1
 				step("Decision")
+				for _, p in ctx.playersInGame() do
+					BadgeTracker.Award(p, if state.answered then "answered" else "stayed_silent")
+				end
 				if state.answered then
 					unknown("RADIO_C1_ANSWERED", { name = randomName() }, 1)
 					relay("RADIO_C1_RELAY_ANSWERED", nil, 7)
@@ -475,16 +479,6 @@ function Chapter1.Init(context)
 		askAnswer()
 	end)
 
-	InteractionService.Register("c1_calendar", function(player)
-		if not active then
-			return
-		end
-		StoryService.ShowDocument(player, { title = "CAL_TITLE", body = "CAL_BODY" })
-		DataService.Mutate(player, function(data)
-			data.secrets.logs.calendar_2009 = data.secrets.logs.calendar_2009 or os.time()
-		end)
-	end)
-
 	InteractionService.Register("c1_terminal", function()
 		if not active or (state.stage ~= "control" and state.stage ~= "arrival" and state.stage ~= "decision") then
 			return
@@ -637,6 +631,7 @@ function Chapter1.Init(context)
 				end)
 				DataService.SaveNow(p)
 				Net.Event("Notify"):FireClient(p, "CHAPTER_COMPLETE")
+				BadgeTracker.Award(p, "ch1_complete")
 			end
 		end
 	end)

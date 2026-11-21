@@ -29,6 +29,7 @@ local LeaderboardService = require(Services.LeaderboardService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local InventoryService = require(Services.InventoryService)
+local BadgeTracker = require(Services.BadgeTracker)
 
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
@@ -369,6 +370,12 @@ local function endRun(r: Run, extracted: boolean)
 			})
 			if newBest then
 				Net.Event("Notify"):FireClient(player, "SV_NEW_BEST")
+			end
+			if r.completed >= 5 then
+				BadgeTracker.Award(player, "survival_5")
+			end
+			if r.completed >= 10 then
+				BadgeTracker.Award(player, "survival_10")
 			end
 		end
 	end

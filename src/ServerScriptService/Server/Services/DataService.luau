@@ -463,6 +463,8 @@ function DataService.Start()
 			survival = deepCopy(data.modes.survival),
 			seenContent = deepCopy(data.seenContent),
 			lastSeenUpdate = data.lastSeenUpdate,
+			secrets = deepCopy(data.secrets),
+			storyChoices = deepCopy(data.storyChoices),
 			inventory = deepCopy(data.inventory),
 			equipped = deepCopy(data.equipped),
 			persistent = profile.Persistent,

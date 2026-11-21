@@ -42,6 +42,9 @@ function Router.new(container: GuiObject, input)
 			return
 		end
 		local key = inputObject.KeyCode
+		if self.ShouldIgnoreBack and self.ShouldIgnoreBack() then
+			return -- e.g. a document is open on top of the menu: Back closes that first
+		end
 		if key == Enum.KeyCode.ButtonB or (key == Enum.KeyCode.Backspace and not UserInputService:GetFocusedTextBox()) then
 			self:Back()
 		end

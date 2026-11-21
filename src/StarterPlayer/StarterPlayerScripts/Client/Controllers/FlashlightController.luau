@@ -97,6 +97,10 @@ function FlashlightController.Set(value: boolean)
 	local light = part:FindFirstChild("Light") :: SpotLight
 	light.Enabled = value
 	light.Range = 40 * (tonumber(player:GetAttribute("FZ_FlashRange")) or 1)
+	local color = player:GetAttribute("FZ_FlashColor")
+	if typeof(color) == "Color3" then
+		light.Color = color
+	end
 	if value and not follow then
 		follow = RunService.RenderStepped:Connect(function()
 			local camera = workspace.CurrentCamera

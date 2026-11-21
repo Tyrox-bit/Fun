@@ -15,6 +15,7 @@ local SessionState = require(Shared.SessionState)
 local StoryService = require(script.Parent.StoryService)
 local InteractionService = require(script.Parent.InteractionService)
 local DataService = require(script.Parent.DataService)
+local BadgeTracker = require(script.Parent.BadgeTracker)
 
 local ForecastService = {}
 
@@ -81,6 +82,7 @@ local function tryBreak(player: Player, instance: Instance, interactId: string)
 			DataService.Mutate(p, function(data)
 				data.secrets.forecastsBroken[forecast.id] = true
 			end)
+			BadgeTracker.Award(p, "forecast_breaker")
 		end
 	end
 	if forecast.brokenLine then
