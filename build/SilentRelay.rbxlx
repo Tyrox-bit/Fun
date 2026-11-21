@@ -528,10 +528,11 @@ Config.Health = {
 	RegenDelay = 10,
 	RegenCap = 50,
 	RegenPerSecond = 3,
-	DownedTimeout = 35,
-	ReviveHold = 3,
+	DownedTimeout = 35, -- first test values - tune after real playtests
+	ReviveHold = 4,
 	ReviveHealth = 35,
 	CrawlSpeed = 2,
+	EliminatedMaxWait = 60, -- an eliminated player returns at the next checkpoint / break, at the latest after this
 }
 
 ---------------------------------------------------------------------------
@@ -557,13 +558,16 @@ Config.Survival = {
 ---------------------------------------------------------------------------
 Config.Items = {
 	bandage = { name = "ITEM_BANDAGE", heal = 35, useTime = 1.5 },
-	syringe = { name = "ITEM_SYRINGE", heal = 100, useTime = 1 },
+	medkit = { name = "ITEM_MEDKIT", heal = 60, useTime = 2.5 }, -- needed to help a teammate up
+	syringe = { name = "ITEM_SYRINGE", heal = 100, useTime = 1 }, -- emergency: gets YOU back up
 }
 Config.Inventory = {
 	Slots = 3,
 	TechnicianSlots = 4,
 	MedicHealBonus = 1.5,
-	MedicStart = { "bandage", "bandage", "syringe" },
+	MedicStart = { "medkit", "medkit", "bandage" },
+	EveryoneStart = { "syringe" }, -- one emergency self-rescue per session (fair for solo players)
+	CabinetMedkits = 1, -- per first-aid cabinet and session (survival refills every break)
 	WorldItems = 4, -- placed at random FZ_ItemSpot spots when a session starts
 	SurvivalItemsPerBreak = 2,
 }
@@ -1036,7 +1040,7 @@ return {
 	ITEM_OBSERVER_NAME = "Observer-Set",
 	ITEM_OBSERVER_DESC = "Nachtsicht mit aufladbarem Akku. Zeigt frische Spuren der Kreatur.",
 	ITEM_MEDIC_NAME = "Sanitäter-Set",
-	ITEM_MEDIC_DESC = "Hilft Teammitgliedern doppelt so schnell und mit mehr Gesundheit auf. Regeneriert weiter.",
+	ITEM_MEDIC_DESC = "Startet mit 2 Medkits, hilft doppelt so schnell und mit mehr Gesundheit auf. Heilgegenstände wirken 50 % stärker.",
 	ITEM_FLASHLIGHT_NAME = "Taschenlampen-Upgrade",
 	ITEM_FLASHLIGHT_DESC = "Längerer Lichtkegel. Das Blenden der Kreatur lädt schneller nach.",
 	ITEM_SKIN_OLIVE_NAME = "Funkgerät: Feldoliv",
@@ -1047,7 +1051,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Unterstützt die Entwicklung. Enthält das signalrote Funkgerät-Gehäuse. Rein kosmetisch.",
 	HUD_DOWNED = "Du bist am Boden. Dein Team kann dir aufhelfen.",
 	HUD_SIGNAL_LOST = "Signal verloren. Zurück zum letzten Kontrollpunkt.",
-	INTERACT_REVIVE = "Aufhelfen",
+	INTERACT_REVIVE = "Aufhelfen (Medkit)",
 	OBJECT_TEAMMATE = "Teammitglied",
 	INTERACT_PICKUP = "Nehmen",
 	INTERACT_INSERT = "Sicherungen einsetzen",
@@ -1334,6 +1338,17 @@ return {
 	SPK_LINE_2 = "Station 07 an alle Mitarbeiter: Kanal Null nicht beantworten.",
 	SPK_LINE_3 = "… das Team am Tor, bitte melden … das Team am Tor …",
 	SPK_LINE_4 = "Dies ist eine aufgezeichnete Nachricht. Sie wurde noch nicht aufgezeichnet.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Medkit",
+	REVIVE_NEED_MEDKIT = "Du brauchst ein Medkit, um aufzuhelfen.",
+	CABINET_EMPTY = "Der Schrank ist leer.",
+	HUD_ELIMINATED = "Niemand hat dich rechtzeitig erreicht. Du kehrst am nächsten Kontrollpunkt zurück.",
+	HUD_SPECTATING = "Du bist vorerst raus.\nDu beobachtest dein Team – tippen oder klicken für den Nächsten.",
+	HUD_DOWNED_TIMER = "Du bist am Boden. Ein Teammitglied mit Medkit kann dir aufhelfen.\n{seconds} s – oder benutze deine Spritze.",
+	HELP_MARKER = "{name} · HILFE · {seconds}",
+	OBJECT_MEDCABINET = "Erste-Hilfe-Schrank",
+	INTERACT_TAKE_MEDKIT = "Medkit nehmen",
 }
 ]]></string>
             </Properties>
@@ -1502,7 +1517,7 @@ return {
 	ITEM_OBSERVER_NAME = "Observer set",
 	ITEM_OBSERVER_DESC = "Night vision with a rechargeable battery. Shows fresh tracks of the creature.",
 	ITEM_MEDIC_NAME = "Medic set",
-	ITEM_MEDIC_DESC = "Helps teammates up twice as fast and with more health. Regenerates further.",
+	ITEM_MEDIC_DESC = "Starts with 2 medkits, helps teammates up twice as fast and with more health. Healing items work 50 % better.",
 	ITEM_FLASHLIGHT_NAME = "Flashlight upgrade",
 	ITEM_FLASHLIGHT_DESC = "Longer beam. Blinding the creature recharges faster.",
 	ITEM_SKIN_OLIVE_NAME = "Radio: Field olive",
@@ -1513,7 +1528,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Supports development. Includes the signal-red radio housing. Purely cosmetic.",
 	HUD_DOWNED = "You are down. Your team can help you up.",
 	HUD_SIGNAL_LOST = "Signal lost. Back to the last checkpoint.",
-	INTERACT_REVIVE = "Help up",
+	INTERACT_REVIVE = "Help up (medkit)",
 	OBJECT_TEAMMATE = "Teammate",
 	INTERACT_PICKUP = "Take",
 	INTERACT_INSERT = "Insert fuses",
@@ -1800,6 +1815,17 @@ return {
 	SPK_LINE_2 = "Station 07 to all personnel: do not answer channel zero.",
 	SPK_LINE_3 = "...the team at the gate, please report... the team at the gate...",
 	SPK_LINE_4 = "This is a recorded message. It has not been recorded yet.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Medkit",
+	REVIVE_NEED_MEDKIT = "You need a medkit to help them up.",
+	CABINET_EMPTY = "The cabinet is empty.",
+	HUD_ELIMINATED = "Nobody reached you in time. You return at the next checkpoint.",
+	HUD_SPECTATING = "You are out for now.\nWatching your team – tap or click for the next one.",
+	HUD_DOWNED_TIMER = "You are down. A teammate with a medkit can help you up.\n{seconds} s – or use your syringe.",
+	HELP_MARKER = "{name} · HELP · {seconds}",
+	OBJECT_MEDCABINET = "First-aid cabinet",
+	INTERACT_TAKE_MEDKIT = "Take medkit",
 }
 ]]></string>
             </Properties>
@@ -1968,7 +1994,7 @@ return {
 	ITEM_OBSERVER_NAME = "Set de observador",
 	ITEM_OBSERVER_DESC = "Visión nocturna con batería recargable. Muestra las huellas recientes de la criatura.",
 	ITEM_MEDIC_NAME = "Set de médico",
-	ITEM_MEDIC_DESC = "Levanta a tus compañeros el doble de rápido y con más salud. Regenera más.",
+	ITEM_MEDIC_DESC = "Empieza con 2 botiquines, levanta compañeros el doble de rápido y con más salud. La curación funciona un 50 % mejor.",
 	ITEM_FLASHLIGHT_NAME = "Mejora de linterna",
 	ITEM_FLASHLIGHT_DESC = "Haz más largo. Cegar a la criatura se recarga más rápido.",
 	ITEM_SKIN_OLIVE_NAME = "Radio: oliva de campaña",
@@ -1979,7 +2005,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Apoya el desarrollo. Incluye la carcasa roja señal. Solo cosmético.",
 	HUD_DOWNED = "Estás en el suelo. Tu equipo puede levantarte.",
 	HUD_SIGNAL_LOST = "Señal perdida. De vuelta al último punto de control.",
-	INTERACT_REVIVE = "Levantar",
+	INTERACT_REVIVE = "Levantar (botiquín)",
 	OBJECT_TEAMMATE = "Compañero",
 	INTERACT_PICKUP = "Tomar",
 	INTERACT_INSERT = "Colocar fusibles",
@@ -2266,6 +2292,17 @@ return {
 	SPK_LINE_2 = "Estación 07 a todo el personal: no respondan al canal cero.",
 	SPK_LINE_3 = "...el equipo del portón, repórtense... el equipo del portón...",
 	SPK_LINE_4 = "Este es un mensaje grabado. Todavía no se ha grabado.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Botiquín",
+	REVIVE_NEED_MEDKIT = "Necesitas un botiquín para levantarlo.",
+	CABINET_EMPTY = "El armario está vacío.",
+	HUD_ELIMINATED = "Nadie llegó a tiempo. Vuelves en el próximo punto de control.",
+	HUD_SPECTATING = "Por ahora estás fuera.\nObservas a tu equipo: toca o haz clic para el siguiente.",
+	HUD_DOWNED_TIMER = "Estás en el suelo. Un compañero con botiquín puede levantarte.\n{seconds} s, o usa tu jeringa.",
+	HELP_MARKER = "{name} · AYUDA · {seconds}",
+	OBJECT_MEDCABINET = "Botiquín de primeros auxilios",
+	INTERACT_TAKE_MEDKIT = "Tomar botiquín",
 }
 ]]></string>
             </Properties>
@@ -2434,7 +2471,7 @@ return {
 	ITEM_OBSERVER_NAME = "Ensemble observateur",
 	ITEM_OBSERVER_DESC = "Vision nocturne avec batterie rechargeable. Révèle les traces récentes de la créature.",
 	ITEM_MEDIC_NAME = "Ensemble secouriste",
-	ITEM_MEDIC_DESC = "Relève les coéquipiers deux fois plus vite et avec plus de santé. Régénère davantage.",
+	ITEM_MEDIC_DESC = "Commence avec 2 trousses, relève deux fois plus vite et avec plus de santé. Les soins sont 50 % plus efficaces.",
 	ITEM_FLASHLIGHT_NAME = "Lampe améliorée",
 	ITEM_FLASHLIGHT_DESC = "Faisceau plus long. L'éblouissement de la créature se recharge plus vite.",
 	ITEM_SKIN_OLIVE_NAME = "Radio : olive de campagne",
@@ -2445,7 +2482,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Soutient le développement. Inclut le boîtier rouge signal. Purement cosmétique.",
 	HUD_DOWNED = "Tu es à terre. Ton équipe peut te relever.",
 	HUD_SIGNAL_LOST = "Signal perdu. Retour au dernier point de contrôle.",
-	INTERACT_REVIVE = "Relever",
+	INTERACT_REVIVE = "Relever (trousse)",
 	OBJECT_TEAMMATE = "Coéquipier",
 	INTERACT_PICKUP = "Prendre",
 	INTERACT_INSERT = "Insérer les fusibles",
@@ -2732,6 +2769,17 @@ return {
 	SPK_LINE_2 = "Station 07 à tout le personnel : ne répondez pas au canal zéro.",
 	SPK_LINE_3 = "...l'équipe au portail, répondez... l'équipe au portail...",
 	SPK_LINE_4 = "Ceci est un message enregistré. Il n'a pas encore été enregistré.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Trousse de soins",
+	REVIVE_NEED_MEDKIT = "Il te faut une trousse de soins pour le relever.",
+	CABINET_EMPTY = "L'armoire est vide.",
+	HUD_ELIMINATED = "Personne ne t'a atteint à temps. Tu reviens au prochain point de contrôle.",
+	HUD_SPECTATING = "Tu es hors-jeu pour l'instant.\nTu observes ton équipe – touche ou clique pour le suivant.",
+	HUD_DOWNED_TIMER = "Tu es à terre. Un coéquipier avec une trousse peut te relever.\n{seconds} s – ou utilise ta seringue.",
+	HELP_MARKER = "{name} · AIDE · {seconds}",
+	OBJECT_MEDCABINET = "Armoire de premiers secours",
+	INTERACT_TAKE_MEDKIT = "Prendre une trousse",
 }
 ]]></string>
             </Properties>
@@ -2900,7 +2948,7 @@ return {
 	ITEM_OBSERVER_NAME = "Kit de observador",
 	ITEM_OBSERVER_DESC = "Visão noturna com bateria recarregável. Mostra rastros recentes da criatura.",
 	ITEM_MEDIC_NAME = "Kit de socorrista",
-	ITEM_MEDIC_DESC = "Levanta colegas duas vezes mais rápido e com mais vida. Regenera mais.",
+	ITEM_MEDIC_DESC = "Começa com 2 kits médicos, levanta colegas duas vezes mais rápido e com mais vida. Itens de cura 50 % mais fortes.",
 	ITEM_FLASHLIGHT_NAME = "Melhoria da lanterna",
 	ITEM_FLASHLIGHT_DESC = "Feixe mais longo. Ofuscar a criatura recarrega mais rápido.",
 	ITEM_SKIN_OLIVE_NAME = "Rádio: oliva de campo",
@@ -2911,7 +2959,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Apoia o desenvolvimento. Inclui a carcaça vermelho sinal. Apenas cosmético.",
 	HUD_DOWNED = "Você caiu. Sua equipe pode te levantar.",
 	HUD_SIGNAL_LOST = "Sinal perdido. De volta ao último ponto de controle.",
-	INTERACT_REVIVE = "Levantar",
+	INTERACT_REVIVE = "Levantar (kit médico)",
 	OBJECT_TEAMMATE = "Colega",
 	INTERACT_PICKUP = "Pegar",
 	INTERACT_INSERT = "Colocar fusíveis",
@@ -3198,6 +3246,17 @@ return {
 	SPK_LINE_2 = "Estação 07 para todos: não respondam ao canal zero.",
 	SPK_LINE_3 = "...a equipe no portão, respondam... a equipe no portão...",
 	SPK_LINE_4 = "Esta é uma mensagem gravada. Ela ainda não foi gravada.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Kit médico",
+	REVIVE_NEED_MEDKIT = "Você precisa de um kit médico para levantar a pessoa.",
+	CABINET_EMPTY = "O armário está vazio.",
+	HUD_ELIMINATED = "Ninguém chegou a tempo. Você volta no próximo ponto de controle.",
+	HUD_SPECTATING = "Você está fora por enquanto.\nAssistindo sua equipe – toque ou clique para o próximo.",
+	HUD_DOWNED_TIMER = "Você caiu. Um colega com kit médico pode te levantar.\n{seconds} s – ou use sua seringa.",
+	HELP_MARKER = "{name} · AJUDA · {seconds}",
+	OBJECT_MEDCABINET = "Armário de primeiros socorros",
+	INTERACT_TAKE_MEDKIT = "Pegar kit médico",
 }
 ]]></string>
             </Properties>
@@ -5193,6 +5252,22 @@ local function furnish()
 		patrol(node[1], node[2])
 	end
 
+	-- First-aid cabinets (medkits for reviving teammates)
+	for _, cab in {
+		{ CFrame.new(99.3, 5, 62) * CFrame.Angles(0, math.rad(-90), 0) }, -- control room: security station
+		{ CFrame.new(-99.3, 5, 18) * CFrame.Angles(0, math.rad(90), 0) }, -- laboratories: medical corner
+		{ CFrame.new(-99.3, 5, 78) * CFrame.Angles(0, math.rad(90), 0) }, -- engineering: supply depot
+		{ CFrame.new(99.3, 5, -80) * CFrame.Angles(0, math.rad(-90), 0) }, -- quarters
+	} do
+		local cabinet = block(props, "FirstAid", Vector3.new(2.6, 3.2, 0.9), cab[1], Color3.fromRGB(226, 224, 216), Enum.Material.SmoothPlastic)
+		local crossV = block(props, "Cross", Vector3.new(0.4, 1.4, 0.05), cabinet.CFrame * CFrame.new(0, 0.2, -0.47), Color3.fromRGB(190, 40, 34), Enum.Material.Neon)
+		local crossH = block(props, "Cross", Vector3.new(1.4, 0.4, 0.05), cabinet.CFrame * CFrame.new(0, 0.2, -0.47), Color3.fromRGB(190, 40, 34), Enum.Material.Neon)
+		crossV.CanCollide = false
+		crossH.CanCollide = false
+		interactable(cabinet, "medcabinet", "INTERACT_TAKE_MEDKIT", "OBJECT_MEDCABINET", { MaxDistance = 7 })
+		CollectionService:AddTag(cabinet, "FZ_MedCabinet")
+	end
+
 	-- PA loudspeakers (the station sometimes speaks with a voice nobody recognises)
 	for _, sp in {
 		{ Vector3.new(0, 12.5, -59.2), Vector3.new(0, 0, 1) }, { Vector3.new(0, 12.5, 59.2), Vector3.new(0, 0, -1) },
@@ -5578,7 +5653,7 @@ end
 local function aliveInGame(): { Player }
 	local list = {}
 	for _, player in ctx.playersInGame() do
-		if not player:GetAttribute("FZ_Downed") then
+		if not player:GetAttribute("FZ_Downed") and not player:GetAttribute("FZ_Eliminated") then
 			table.insert(list, player)
 		end
 	end
@@ -5795,6 +5870,8 @@ completeTask = function(r: Run)
 			HealthService.Revive(player, 50)
 		end
 	end
+	HealthService.ReturnAllEliminated() -- the break brings eliminated teammates back
+	InventoryService.RefillCabinets()
 	say("SV_SHIFT_DONE", { shift = r.shift })
 	InventoryService.SpawnWorldItems(Config.Inventory.SurvivalItemsPerBreak)
 	objective("SV_BREAK", { seconds = SC.BreakSeconds })
@@ -6790,7 +6867,7 @@ end
 local function playersInGame(): { Player }
 	local list = {}
 	for _, player in Players:GetPlayers() do
-		if player:GetAttribute("FZ_InGame") and not player:GetAttribute("FZ_Downed") and not player:GetAttribute("FZ_MonsterMode") then
+		if player:GetAttribute("FZ_InGame") and not player:GetAttribute("FZ_Downed") and not player:GetAttribute("FZ_Eliminated") and not player:GetAttribute("FZ_MonsterMode") then
 			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 			if root then
 				table.insert(list, player)
@@ -8501,6 +8578,14 @@ local HealthService = {}
 local HC = Config.Health
 local lastDamage: { [Player]: number } = {}
 local downedSince: { [Player]: number } = {}
+local eliminatedAt: { [Player]: number } = {}
+local savedHipHeight: { [Player]: number } = {}
+
+-- Per-session statistics for achievements ("nobody left behind", "last survivor").
+HealthService.SessionStats = { eliminated = {} :: { [Player]: boolean } }
+function HealthService.ResetSessionStats()
+	table.clear(HealthService.SessionStats.eliminated)
+end
 
 local function humanoidOf(player: Player): Humanoid?
 	local character = player.Character
@@ -8521,6 +8606,30 @@ function HealthService.IsDowned(player: Player): boolean
 	return player:GetAttribute("FZ_Downed") == true
 end
 
+function HealthService.IsEliminated(player: Player): boolean
+	return player:GetAttribute("FZ_Eliminated") == true
+end
+
+local function standing(player: Player): boolean
+	return not HealthService.IsDowned(player) and not HealthService.IsEliminated(player)
+end
+
+local function setLowered(player: Player, lowered: boolean)
+	local humanoid = humanoidOf(player)
+	if not humanoid then
+		return
+	end
+	if lowered then
+		savedHipHeight[player] = savedHipHeight[player] or humanoid.HipHeight
+		humanoid.HipHeight = (savedHipHeight[player] :: number) * 0.35 -- crawling on the floor
+		humanoid.JumpHeight = 0
+	elseif savedHipHeight[player] then
+		humanoid.HipHeight = savedHipHeight[player] :: number
+		humanoid.JumpHeight = 7.2
+		savedHipHeight[player] = nil
+	end
+end
+
 local function clearRevivePrompt(player: Player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if root then
@@ -8534,9 +8643,22 @@ end
 
 function HealthService.Respawn(player: Player)
 	downedSince[player] = nil
+	eliminatedAt[player] = nil
+	savedHipHeight[player] = nil
 	player:SetAttribute("FZ_Downed", false)
+	player:SetAttribute("FZ_Eliminated", false)
+	player:SetAttribute("FZ_DownedUntil", nil)
 	clearRevivePrompt(player)
 	player:LoadCharacter() -- SessionService places the new character at the checkpoint
+end
+
+-- Eliminated players come back at the next checkpoint / survival break (or after a max wait).
+function HealthService.ReturnAllEliminated()
+	for player in table.clone(eliminatedAt) do
+		if player.Parent then
+			HealthService.Respawn(player)
+		end
+	end
 end
 
 -- Optional override (survival: a wipe ends the run instead of a checkpoint respawn).
@@ -8548,7 +8670,7 @@ local function checkTeamWipe()
 		return
 	end
 	for _, player in players do
-		if not HealthService.IsDowned(player) then
+		if standing(player) then
 			return
 		end
 	end
@@ -8558,7 +8680,7 @@ local function checkTeamWipe()
 	end
 	task.delay(3, function()
 		for _, player in inGamePlayers() do
-			if HealthService.IsDowned(player) then
+			if not standing(player) then
 				Net.Event("Notify"):FireClient(player, "HUD_SIGNAL_LOST")
 				HealthService.Respawn(player)
 			end
@@ -8569,7 +8691,9 @@ end
 local function setDowned(player: Player, humanoid: Humanoid)
 	humanoid.Health = 1
 	player:SetAttribute("FZ_Downed", true)
+	player:SetAttribute("FZ_DownedUntil", workspace:GetServerTimeNow() + HC.DownedTimeout)
 	downedSince[player] = os.clock()
+	setLowered(player, true)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if root then
 		root:SetAttribute("InteractId", "revive")
@@ -8584,7 +8708,7 @@ end
 
 function HealthService.Damage(player: Player, amount: number)
 	local humanoid = humanoidOf(player)
-	if not humanoid or HealthService.IsDowned(player) or player:GetAttribute("FZ_MonsterMode") then
+	if not humanoid or not standing(player) or player:GetAttribute("FZ_MonsterMode") then
 		return
 	end
 	lastDamage[player] = os.clock()
@@ -8604,6 +8728,8 @@ function HealthService.Revive(target: Player, healthValue: number)
 	clearRevivePrompt(target)
 	downedSince[target] = nil
 	target:SetAttribute("FZ_Downed", false)
+	target:SetAttribute("FZ_DownedUntil", nil)
+	setLowered(target, false)
 	humanoid.Health = math.clamp(healthValue, 1, humanoid.MaxHealth)
 	lastDamage[target] = os.clock()
 end
@@ -8630,7 +8756,13 @@ end
 function HealthService.Start()
 	InteractionService.Register("revive", function(helper, root)
 		local target = Players:GetPlayerFromCharacter(root.Parent)
-		if not target or target == helper or HealthService.IsDowned(helper) then
+		if not target or target == helper or not standing(helper) or not HealthService.IsDowned(target) then
+			return
+		end
+		-- A medkit is required for a full revive (first-aid cabinets / found in the world).
+		local InventoryService = require(script.Parent.InventoryService)
+		if not InventoryService.Take(helper, "medkit") then
+			Net.Event("Notify"):FireClient(helper, "REVIVE_NEED_MEDKIT")
 			return
 		end
 		local reviveHealth = tonumber(helper:GetAttribute("FZ_ReviveHealth")) or HC.ReviveHealth
@@ -8646,7 +8778,18 @@ function HealthService.Start()
 		humanoid.Health = HC.Max
 		humanoid.BreakJointsOnDeath = false
 		player:SetAttribute("FZ_Downed", false)
+		player:SetAttribute("FZ_DownedUntil", nil)
 		downedSince[player] = nil
+		savedHipHeight[player] = nil
+		if HealthService.IsEliminated(player) then
+			task.defer(function()
+				local root = character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root and HealthService.IsEliminated(player) then
+					character:PivotTo(CFrame.new(0, 600, 0))
+					root.Anchored = true
+				end
+			end)
+		end
 		humanoid.Died:Connect(function()
 			-- Safety net (falls, resets): never a game over, just back to the checkpoint.
 			task.delay(2, function()
@@ -8671,6 +8814,9 @@ function HealthService.Start()
 	Players.PlayerRemoving:Connect(function(player)
 		lastDamage[player] = nil
 		downedSince[player] = nil
+		eliminatedAt[player] = nil
+		savedHipHeight[player] = nil
+		HealthService.SessionStats.eliminated[player] = nil
 		task.defer(checkTeamWipe)
 	end)
 
@@ -8683,9 +8829,33 @@ function HealthService.Start()
 				local humanoid = humanoidOf(player)
 				if humanoid then
 					local since = downedSince[player]
-					if since and now - since > HC.DownedTimeout then
-						Net.Event("Notify"):FireClient(player, "HUD_SIGNAL_LOST")
-						HealthService.Respawn(player)
+					local eliminatedSince = eliminatedAt[player]
+					if eliminatedSince and now - eliminatedSince > HC.EliminatedMaxWait then
+						HealthService.Respawn(player) -- never wait forever
+					elseif since and now - since > HC.DownedTimeout then
+						if #inGamePlayers() <= 1 then
+							-- Solo: no elimination, back to the last checkpoint
+							Net.Event("Notify"):FireClient(player, "HUD_SIGNAL_LOST")
+							HealthService.Respawn(player)
+						else
+							-- Nobody came in time: out for this section / round, spectate the team
+							downedSince[player] = nil
+							clearRevivePrompt(player)
+							setLowered(player, false)
+							player:SetAttribute("FZ_Downed", false)
+							player:SetAttribute("FZ_DownedUntil", nil)
+							player:SetAttribute("FZ_Eliminated", true)
+							eliminatedAt[player] = now
+							HealthService.SessionStats.eliminated[player] = true
+							Net.Event("Notify"):FireClient(player, "HUD_ELIMINATED")
+							local character = player.Character
+							local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+							if character and root then
+								character:PivotTo(CFrame.new(0, 600, 0))
+								root.Anchored = true
+							end
+							checkTeamWipe()
+						end
 					elseif not since and humanoid.Health > 0 then
 						local cap = tonumber(player:GetAttribute("FZ_RegenCap")) or HC.RegenCap
 						if now - (lastDamage[player] or 0) > HC.RegenDelay and humanoid.Health < cap then
@@ -8762,6 +8932,9 @@ local function onTriggered(player: Player, instance: Instance, prompt: Proximity
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not root or not humanoid or humanoid.Health <= 0 then
 		return
+	end
+	if player:GetAttribute("FZ_Downed") or player:GetAttribute("FZ_Eliminated") then
+		return -- downed / eliminated players cannot do tasks
 	end
 	local position = worldPosition(instance)
 	if not position or ((root :: BasePart).Position - position).Magnitude > prompt.MaxActivationDistance + DISTANCE_TOLERANCE then
@@ -8874,8 +9047,26 @@ function InventoryService.Give(player: Player, itemId: string): boolean
 	return true
 end
 
+function InventoryService.Has(player: Player, itemId: string): boolean
+	return table.find(inventories[player] or {}, itemId) ~= nil
+end
+
+function InventoryService.Take(player: Player, itemId: string): boolean
+	local list = inventories[player]
+	local index = list and table.find(list, itemId)
+	if not index then
+		return false
+	end
+	table.remove(list :: { string }, index)
+	publish(player)
+	return true
+end
+
 function InventoryService.Reset(player: Player)
 	inventories[player] = {}
+	for _, itemId in Config.Inventory.EveryoneStart do
+		InventoryService.Give(player, itemId)
+	end
 	if player:GetAttribute("FZ_Set") == "set_medic" then
 		for _, itemId in Config.Inventory.MedicStart do
 			InventoryService.Give(player, itemId)
@@ -8913,14 +9104,15 @@ function InventoryService.SpawnWorldItems(count: number)
 	end
 	for _ = 1, math.min(count, #spots) do
 		local spot = table.remove(spots, math.random(1, #spots))
-		local itemId = if math.random() < 0.7 then "bandage" else "syringe"
+		local roll = math.random()
+		local itemId = if roll < 0.5 then "bandage" elseif roll < 0.85 then "medkit" else "syringe"
 		local part = Instance.new("Part")
 		part.Name = itemId
 		part.Anchored = true
 		part.CanCollide = false
-		part.Size = if itemId == "bandage" then Vector3.new(0.9, 0.5, 0.9) else Vector3.new(0.25, 0.25, 1.2)
-		part.Color = if itemId == "bandage" then Color3.fromRGB(226, 222, 210) else Color3.fromRGB(120, 200, 220)
-		part.Material = if itemId == "bandage" then Enum.Material.Fabric else Enum.Material.Glass
+		part.Size = if itemId == "bandage" then Vector3.new(0.9, 0.5, 0.9) elseif itemId == "medkit" then Vector3.new(1.4, 0.9, 1) else Vector3.new(0.25, 0.25, 1.2)
+		part.Color = if itemId == "bandage" then Color3.fromRGB(226, 222, 210) elseif itemId == "medkit" then Color3.fromRGB(170, 60, 54) else Color3.fromRGB(120, 200, 220)
+		part.Material = if itemId == "syringe" then Enum.Material.Glass else Enum.Material.Fabric
 		part.CFrame = spot.CFrame
 		local glow = Instance.new("PointLight")
 		glow.Range = 4
@@ -8941,7 +9133,28 @@ function InventoryService.SpawnWorldItems(count: number)
 	end
 end
 
+-- First-aid cabinets (tag FZ_MedCabinet): hold medkits, refilled per session / survival break.
+function InventoryService.RefillCabinets()
+	for _, cabinet in CollectionService:GetTagged("FZ_MedCabinet") do
+		cabinet:SetAttribute("Medkits", Config.Inventory.CabinetMedkits)
+	end
+end
+
 function InventoryService.Start()
+	InteractionService.Register("medcabinet", function(player, cabinet)
+		local left = tonumber(cabinet:GetAttribute("Medkits")) or 0
+		if left <= 0 then
+			Net.Event("Notify"):FireClient(player, "CABINET_EMPTY")
+			return
+		end
+		if InventoryService.Give(player, "medkit") then
+			cabinet:SetAttribute("Medkits", left - 1)
+			Net.Event("Sfx"):FireAllClients("door_open", (cabinet :: BasePart).Position, 0.4)
+		else
+			Net.Event("Notify"):FireClient(player, "INV_FULL")
+		end
+	end)
+
 	InteractionService.Register("item", function(player, part)
 		local itemId = part:GetAttribute("ItemId")
 		if type(itemId) ~= "string" or not part.Parent then
@@ -9763,7 +9976,11 @@ local function placeAtCheckpoint(player: Player)
 end
 
 function SessionService.SetCheckpoint(id: string)
+	local changed = SessionState.Get("Checkpoint") ~= id
 	SessionState.Set("Checkpoint", id)
+	if changed then
+		HealthService.ReturnAllEliminated() -- reaching a checkpoint brings eliminated teammates back
+	end
 end
 
 ---------------------------------------------------------------------------
@@ -9806,6 +10023,8 @@ local function start(mode: string, contentId: string): boolean
 		return false
 	end
 	cleanWorld()
+	HealthService.ResetSessionStats()
+	InventoryService.RefillCabinets()
 	session = { mode = mode, contentId = contentId, mapId = entry.map, module = module, idleSince = nil }
 	table.clear(entered)
 	SessionService.SetCheckpoint(module.StartCheckpoint or "C1_START")
@@ -9827,6 +10046,8 @@ local function leave(player: Player, respawn: boolean)
 	end)
 	player:SetAttribute("FZ_InGame", false)
 	player:SetAttribute("FZ_Downed", false)
+	player:SetAttribute("FZ_Eliminated", false)
+	player:SetAttribute("FZ_DownedUntil", nil)
 	if respawn and player.Parent and not player:GetAttribute("FZ_MonsterMode") then
 		player:LoadCharacter() -- back to the menu spawn, out of the station
 	end
@@ -12396,9 +12617,8 @@ function HealthController.Init(hudGui: ScreenGui, settings)
 		end
 	end)
 
-	player:GetAttributeChangedSignal("FZ_Downed"):Connect(function()
-		downed.Visible = player:GetAttribute("FZ_Downed") == true
-	end)
+	-- (the downed countdown is shown by RescueController)
+	downed:Destroy()
 end
 
 return HealthController
@@ -12944,6 +13164,10 @@ local function step(dt: number)
 		speed = Config.Health.CrawlSpeed
 		wantsSprint = false
 	end
+	if player:GetAttribute("FZ_Rescuing") or player:GetAttribute("FZ_Eliminated") then
+		speed = 0 -- kneeling next to a teammate: you cannot run away while helping
+		wantsSprint = false
+	end
 	if player:GetAttribute("FZ_AdminSpeed") then
 		speed *= 2
 	end
@@ -13427,6 +13651,220 @@ return RadioController
           </Item>
           <Item class="ModuleScript" referent="88">
             <Properties>
+              <string name="Name">RescueController</string>
+              <string name="Source"><![CDATA[-- RescueController: everything around being down and helping someone up.
+--   * You are down: bleed-out countdown, camera near the floor, hint about the syringe
+--   * A teammate is down: an atmospheric "help" marker with the remaining time
+--   * You are helping: you kneel (lower camera) and cannot move - you are vulnerable;
+--     taking damage cancels the rescue. The prompt only shows if you carry a medkit.
+--   * You are out: spectate your teammates (click / tap / A = next) until the team
+--     reaches the next checkpoint or the survival break
+
+local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local Components = require(script.Parent.Parent.UI.Components)
+local Theme = require(script.Parent.Parent.UI.Theme)
+
+local RescueController = {}
+
+local player = Players.LocalPlayer
+local markers: { [Player]: BillboardGui } = {}
+local activeRescue: ProximityPrompt? = nil
+local spectateIndex = 1
+
+local function humanoid(): Humanoid?
+	local character = player.Character
+	return character and character:FindFirstChildOfClass("Humanoid")
+end
+
+local function setCameraLow(depth: number)
+	local h = humanoid()
+	if h then
+		h.CameraOffset = Vector3.new(0, -depth, 0)
+	end
+end
+
+local function marker(target: Player)
+	local old = markers[target]
+	if old then
+		old:Destroy()
+		markers[target] = nil
+	end
+	if target == player or not target:GetAttribute("FZ_Downed") then
+		return
+	end
+	local head = target.Character and target.Character:FindFirstChild("Head")
+	if not head then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "FZ_HelpMarker"
+	gui.Size = UDim2.fromOffset(150, 46)
+	gui.StudsOffset = Vector3.new(0, 2.6, 0)
+	gui.AlwaysOnTop = true
+	gui.MaxDistance = 140
+	gui.LightInfluence = 0
+	gui.AutoLocalize = false
+	gui.Adornee = head :: BasePart
+	local label = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = 15, Color = Theme.Colors.Accent, XAlign = Enum.TextXAlignment.Center, Size = UDim2.fromScale(1, 1), Parent = gui })
+	label.TextStrokeTransparency = 0.3
+	gui.Parent = player:WaitForChild("PlayerGui")
+	markers[target] = gui
+	task.spawn(function()
+		while gui.Parent and target:GetAttribute("FZ_Downed") do
+			local untilTime = target:GetAttribute("FZ_DownedUntil")
+			local seconds = if type(untilTime) == "number" then math.max(0, math.ceil(untilTime - workspace:GetServerTimeNow())) else 0
+			-- slow pulse instead of a bright blinking icon
+			label.TextTransparency = 0.15 + 0.35 * (0.5 + 0.5 * math.sin(os.clock() * 3))
+			label.Text = Localization.T("HELP_MARKER", { name = target.DisplayName, seconds = seconds })
+			task.wait(0.1)
+		end
+		gui:Destroy()
+	end)
+end
+
+local function watch(target: Player)
+	target:GetAttributeChangedSignal("FZ_Downed"):Connect(function()
+		marker(target)
+	end)
+	target.CharacterAdded:Connect(function()
+		task.wait(0.5)
+		marker(target)
+	end)
+	marker(target)
+end
+
+-- Spectator camera while eliminated
+local function teammates(): { Player }
+	local list = {}
+	for _, other in Players:GetPlayers() do
+		if other ~= player and other:GetAttribute("FZ_InGame") and not other:GetAttribute("FZ_Eliminated") and other.Character then
+			table.insert(list, other)
+		end
+	end
+	return list
+end
+
+local function spectate()
+	local camera = workspace.CurrentCamera
+	local list = teammates()
+	if #list == 0 or not camera then
+		return
+	end
+	spectateIndex = ((spectateIndex - 1) % #list) + 1
+	local target = list[spectateIndex]
+	local h = target.Character and target.Character:FindFirstChildOfClass("Humanoid")
+	if h then
+		camera.CameraSubject = h
+		player.CameraMode = Enum.CameraMode.Classic
+		player.CameraMinZoomDistance = 8
+	end
+end
+
+function RescueController.Init(hudGui: ScreenGui)
+	local downedPanel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, AutoY = true, Size = UDim2.new(0.7, 0, 0, 0), Position = UDim2.fromScale(0.5, 0.5), AnchorPoint = Vector2.new(0.5, 0.5), Parent = hudGui })
+	downedPanel.TextStrokeTransparency = 0.4
+	downedPanel.Visible = false
+
+	local function refreshSelf()
+		local downed = player:GetAttribute("FZ_Downed") == true
+		local eliminated = player:GetAttribute("FZ_Eliminated") == true
+		downedPanel.Visible = downed or eliminated
+		setCameraLow(if downed then 2.2 else 0)
+		if eliminated then
+			spectateIndex = 1
+			spectate()
+		else
+			local h = humanoid()
+			local camera = workspace.CurrentCamera
+			if h and camera and camera.CameraSubject ~= h then
+				camera.CameraSubject = h
+			end
+			if player.CameraMode ~= Enum.CameraMode.LockFirstPerson and not player:GetAttribute("FZ_MonsterMode") then
+				player.CameraMode = Enum.CameraMode.LockFirstPerson
+				player.CameraMinZoomDistance = 0.5
+			end
+		end
+	end
+	player:GetAttributeChangedSignal("FZ_Downed"):Connect(refreshSelf)
+	player:GetAttributeChangedSignal("FZ_Eliminated"):Connect(refreshSelf)
+
+	RunService.Heartbeat:Connect(function()
+		if not downedPanel.Visible then
+			return
+		end
+		if player:GetAttribute("FZ_Eliminated") then
+			downedPanel.Text = Localization.T("HUD_SPECTATING")
+		else
+			local untilTime = player:GetAttribute("FZ_DownedUntil")
+			local seconds = if type(untilTime) == "number" then math.max(0, math.ceil(untilTime - workspace:GetServerTimeNow())) else 0
+			downedPanel.Text = Localization.T("HUD_DOWNED_TIMER", { seconds = seconds })
+		end
+	end)
+
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed or not player:GetAttribute("FZ_Eliminated") then
+			return
+		end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch or input.KeyCode == Enum.KeyCode.ButtonA then
+			spectateIndex += 1
+			spectate()
+		end
+	end)
+
+	-- Helping someone up: kneel, frozen, cancelled by damage
+	ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt)
+		if prompt:GetAttribute("FZ_Object") == "OBJECT_TEAMMATE" then
+			activeRescue = prompt
+			player:SetAttribute("FZ_Rescuing", true)
+			setCameraLow(1.4)
+		end
+	end)
+	ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt)
+		if prompt == activeRescue then
+			activeRescue = nil
+			player:SetAttribute("FZ_Rescuing", nil)
+			setCameraLow(0)
+		end
+	end)
+	Net.Event("Hurt").OnClientEvent:Connect(function()
+		local prompt = activeRescue
+		if prompt then
+			pcall(function()
+				prompt:InputHoldEnd()
+			end)
+			activeRescue = nil
+			player:SetAttribute("FZ_Rescuing", nil)
+			setCameraLow(0)
+		end
+	end)
+
+	for _, other in Players:GetPlayers() do
+		watch(other)
+	end
+	Players.PlayerAdded:Connect(watch)
+	Players.PlayerRemoving:Connect(function(other)
+		if markers[other] then
+			markers[other]:Destroy()
+			markers[other] = nil
+		end
+	end)
+end
+
+return RescueController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="89">
+            <Properties>
               <string name="Name">SettingsController</string>
               <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
 -- Changes apply instantly on this client and are persisted through the server.
@@ -13516,7 +13954,7 @@ return SettingsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="89">
+          <Item class="ModuleScript" referent="90">
             <Properties>
               <string name="Name">VoiceController</string>
               <string name="Source"><![CDATA[-- VoiceController: hearing voices on this client.
@@ -13759,7 +14197,7 @@ return VoiceController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="90">
+          <Item class="ModuleScript" referent="91">
             <Properties>
               <string name="Name">WorldTextController</string>
               <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
@@ -13798,6 +14236,11 @@ local function localizePrompt(prompt: Instance)
 	local character = player.Character
 	if character and prompt:IsDescendantOf(character) then
 		prompt.Enabled = false
+	elseif object == "OBJECT_TEAMMATE" then
+		-- Helping someone up needs a medkit: without one the prompt says so and stays inactive.
+		local items = player:GetAttribute("FZ_Items")
+		local hasMedkit = type(items) == "string" and string.find(items, "medkit", 1, true) ~= nil
+		prompt.Enabled = hasMedkit
 	end
 end
 
@@ -13836,6 +14279,7 @@ function WorldTextController.Init()
 	local player = Players.LocalPlayer
 	player:GetAttributeChangedSignal("FZ_HoldMultiplier"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("FZ_ReviveMultiplier"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("FZ_Items"):Connect(refreshAll)
 	refreshAll()
 end
 
@@ -13844,7 +14288,7 @@ return WorldTextController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="91">
+        <Item class="LocalScript" referent="92">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- SILENT RELAY - client bootstrap.
@@ -13892,6 +14336,7 @@ local EquipmentController = require(Controllers.EquipmentController)
 local DirectorController = require(Controllers.DirectorController)
 local InventoryController = require(Controllers.InventoryController)
 local PromptController = require(Controllers.PromptController)
+local RescueController = require(Controllers.RescueController)
 local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
@@ -14073,6 +14518,7 @@ DirectorController.Init(SettingsController, Hud.ShowSubtitle)
 DecisionPanel.Init(hudGui, InputController)
 InventoryController.Init(hudGui)
 PromptController.Init()
+RescueController.Init(hudGui)
 
 -- Forecast countdown (the prediction you can break)
 local function updateForecast()
@@ -14389,11 +14835,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="92">
+        <Item class="Folder" referent="93">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="93">
+          <Item class="ModuleScript" referent="94">
             <Properties>
               <string name="Name">Components</string>
               <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
@@ -14742,7 +15188,7 @@ return Components
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="94">
+          <Item class="ModuleScript" referent="95">
             <Properties>
               <string name="Name">DebugOverlay</string>
               <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
@@ -14822,7 +15268,7 @@ return DebugOverlay
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="95">
+          <Item class="ModuleScript" referent="96">
             <Properties>
               <string name="Name">DecisionPanel</string>
               <string name="Source"><![CDATA[-- DecisionPanel: the team vote UI. Big buttons, live vote counts, a time bar.
@@ -14975,7 +15421,7 @@ return DecisionPanel
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="96">
+          <Item class="ModuleScript" referent="97">
             <Properties>
               <string name="Name">Hud</string>
               <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
@@ -15353,7 +15799,7 @@ return Hud
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="97">
+          <Item class="ModuleScript" referent="98">
             <Properties>
               <string name="Name">Router</string>
               <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
@@ -15520,11 +15966,11 @@ return Router
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="98">
+          <Item class="Folder" referent="99">
             <Properties>
               <string name="Name">Screens</string>
             </Properties>
-            <Item class="ModuleScript" referent="99">
+            <Item class="ModuleScript" referent="100">
               <Properties>
                 <string name="Name">Admin</string>
                 <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
@@ -15636,7 +16082,7 @@ return Admin
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="100">
+            <Item class="ModuleScript" referent="101">
               <Properties>
                 <string name="Name">Archive</string>
                 <string name="Source"><![CDATA[-- Archive: everything you have found and decided, plus your titles.
@@ -15757,7 +16203,7 @@ return Archive
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="101">
+            <Item class="ModuleScript" referent="102">
               <Properties>
                 <string name="Name">Extras</string>
                 <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
@@ -15906,7 +16352,7 @@ return Extras
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="102">
+            <Item class="ModuleScript" referent="103">
               <Properties>
                 <string name="Name">LanguageSelect</string>
                 <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
@@ -16008,7 +16454,7 @@ return LanguageSelect
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="103">
+            <Item class="ModuleScript" referent="104">
               <Properties>
                 <string name="Name">Leaderboard</string>
                 <string name="Source"><![CDATA[-- Global best shifts for one survival map (top 10) + your own best.
@@ -16077,7 +16523,7 @@ return Leaderboard
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="104">
+            <Item class="ModuleScript" referent="105">
               <Properties>
                 <string name="Name">Lobby</string>
                 <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
@@ -16201,7 +16647,7 @@ return Lobby
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="105">
+            <Item class="ModuleScript" referent="106">
               <Properties>
                 <string name="Name">MainMenu</string>
                 <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
@@ -16325,7 +16771,7 @@ return MainMenu
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="106">
+            <Item class="ModuleScript" referent="107">
               <Properties>
                 <string name="Name">Play</string>
                 <string name="Source"><![CDATA[-- Play: choose a story chapter or a survival map. Everything comes from Shared/Content,
@@ -16455,7 +16901,7 @@ return Play
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="107">
+            <Item class="ModuleScript" referent="108">
               <Properties>
                 <string name="Name">Settings</string>
                 <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
@@ -16722,7 +17168,7 @@ return Settings
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="108">
+            <Item class="ModuleScript" referent="109">
               <Properties>
                 <string name="Name">Shop</string>
                 <string name="Source"><![CDATA[-- Shop: tabs (Equipment / Upgrades / Cosmetics) with large cards, Signal Mark balance,
@@ -16971,7 +17417,7 @@ return Shop
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="109">
+            <Item class="ModuleScript" referent="110">
               <Properties>
                 <string name="Name">Updates</string>
                 <string name="Source"><![CDATA[-- "What's new": optional, opened by the player from the main menu. Never a pop-up.
@@ -17025,7 +17471,7 @@ return UpdatesScreen
               </Properties>
             </Item>
           </Item>
-          <Item class="ModuleScript" referent="110">
+          <Item class="ModuleScript" referent="111">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
@@ -17083,7 +17529,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="VoiceChatService" referent="111">
+  <Item class="VoiceChatService" referent="112">
     <Properties>
       <string name="Name">VoiceChatService</string>
       <bool name="EnableDefaultVoice">false</bool>

@@ -221,10 +221,11 @@ Config.Health = {
 	RegenDelay = 10,
 	RegenCap = 50,
 	RegenPerSecond = 3,
-	DownedTimeout = 35,
-	ReviveHold = 3,
+	DownedTimeout = 35, -- first test values - tune after real playtests
+	ReviveHold = 4,
 	ReviveHealth = 35,
 	CrawlSpeed = 2,
+	EliminatedMaxWait = 60, -- an eliminated player returns at the next checkpoint / break, at the latest after this
 }
 
 ---------------------------------------------------------------------------
@@ -250,13 +251,16 @@ Config.Survival = {
 ---------------------------------------------------------------------------
 Config.Items = {
 	bandage = { name = "ITEM_BANDAGE", heal = 35, useTime = 1.5 },
-	syringe = { name = "ITEM_SYRINGE", heal = 100, useTime = 1 },
+	medkit = { name = "ITEM_MEDKIT", heal = 60, useTime = 2.5 }, -- needed to help a teammate up
+	syringe = { name = "ITEM_SYRINGE", heal = 100, useTime = 1 }, -- emergency: gets YOU back up
 }
 Config.Inventory = {
 	Slots = 3,
 	TechnicianSlots = 4,
 	MedicHealBonus = 1.5,
-	MedicStart = { "bandage", "bandage", "syringe" },
+	MedicStart = { "medkit", "medkit", "bandage" },
+	EveryoneStart = { "syringe" }, -- one emergency self-rescue per session (fair for solo players)
+	CabinetMedkits = 1, -- per first-aid cabinet and session (survival refills every break)
 	WorldItems = 4, -- placed at random FZ_ItemSpot spots when a session starts
 	SurvivalItemsPerBreak = 2,
 }

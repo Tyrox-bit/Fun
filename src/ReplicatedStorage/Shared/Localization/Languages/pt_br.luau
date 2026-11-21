@@ -159,7 +159,7 @@ return {
 	ITEM_OBSERVER_NAME = "Kit de observador",
 	ITEM_OBSERVER_DESC = "Visão noturna com bateria recarregável. Mostra rastros recentes da criatura.",
 	ITEM_MEDIC_NAME = "Kit de socorrista",
-	ITEM_MEDIC_DESC = "Levanta colegas duas vezes mais rápido e com mais vida. Regenera mais.",
+	ITEM_MEDIC_DESC = "Começa com 2 kits médicos, levanta colegas duas vezes mais rápido e com mais vida. Itens de cura 50 % mais fortes.",
 	ITEM_FLASHLIGHT_NAME = "Melhoria da lanterna",
 	ITEM_FLASHLIGHT_DESC = "Feixe mais longo. Ofuscar a criatura recarrega mais rápido.",
 	ITEM_SKIN_OLIVE_NAME = "Rádio: oliva de campo",
@@ -170,7 +170,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Apoia o desenvolvimento. Inclui a carcaça vermelho sinal. Apenas cosmético.",
 	HUD_DOWNED = "Você caiu. Sua equipe pode te levantar.",
 	HUD_SIGNAL_LOST = "Sinal perdido. De volta ao último ponto de controle.",
-	INTERACT_REVIVE = "Levantar",
+	INTERACT_REVIVE = "Levantar (kit médico)",
 	OBJECT_TEAMMATE = "Colega",
 	INTERACT_PICKUP = "Pegar",
 	INTERACT_INSERT = "Colocar fusíveis",
@@ -457,4 +457,15 @@ return {
 	SPK_LINE_2 = "Estação 07 para todos: não respondam ao canal zero.",
 	SPK_LINE_3 = "...a equipe no portão, respondam... a equipe no portão...",
 	SPK_LINE_4 = "Esta é uma mensagem gravada. Ela ainda não foi gravada.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Kit médico",
+	REVIVE_NEED_MEDKIT = "Você precisa de um kit médico para levantar a pessoa.",
+	CABINET_EMPTY = "O armário está vazio.",
+	HUD_ELIMINATED = "Ninguém chegou a tempo. Você volta no próximo ponto de controle.",
+	HUD_SPECTATING = "Você está fora por enquanto.\nAssistindo sua equipe – toque ou clique para o próximo.",
+	HUD_DOWNED_TIMER = "Você caiu. Um colega com kit médico pode te levantar.\n{seconds} s – ou use sua seringa.",
+	HELP_MARKER = "{name} · AJUDA · {seconds}",
+	OBJECT_MEDCABINET = "Armário de primeiros socorros",
+	INTERACT_TAKE_MEDKIT = "Pegar kit médico",
 }

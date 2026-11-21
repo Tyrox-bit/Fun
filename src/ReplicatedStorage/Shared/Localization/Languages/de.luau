@@ -159,7 +159,7 @@ return {
 	ITEM_OBSERVER_NAME = "Observer-Set",
 	ITEM_OBSERVER_DESC = "Nachtsicht mit aufladbarem Akku. Zeigt frische Spuren der Kreatur.",
 	ITEM_MEDIC_NAME = "Sanitäter-Set",
-	ITEM_MEDIC_DESC = "Hilft Teammitgliedern doppelt so schnell und mit mehr Gesundheit auf. Regeneriert weiter.",
+	ITEM_MEDIC_DESC = "Startet mit 2 Medkits, hilft doppelt so schnell und mit mehr Gesundheit auf. Heilgegenstände wirken 50 % stärker.",
 	ITEM_FLASHLIGHT_NAME = "Taschenlampen-Upgrade",
 	ITEM_FLASHLIGHT_DESC = "Längerer Lichtkegel. Das Blenden der Kreatur lädt schneller nach.",
 	ITEM_SKIN_OLIVE_NAME = "Funkgerät: Feldoliv",
@@ -170,7 +170,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Unterstützt die Entwicklung. Enthält das signalrote Funkgerät-Gehäuse. Rein kosmetisch.",
 	HUD_DOWNED = "Du bist am Boden. Dein Team kann dir aufhelfen.",
 	HUD_SIGNAL_LOST = "Signal verloren. Zurück zum letzten Kontrollpunkt.",
-	INTERACT_REVIVE = "Aufhelfen",
+	INTERACT_REVIVE = "Aufhelfen (Medkit)",
 	OBJECT_TEAMMATE = "Teammitglied",
 	INTERACT_PICKUP = "Nehmen",
 	INTERACT_INSERT = "Sicherungen einsetzen",
@@ -457,4 +457,15 @@ return {
 	SPK_LINE_2 = "Station 07 an alle Mitarbeiter: Kanal Null nicht beantworten.",
 	SPK_LINE_3 = "… das Team am Tor, bitte melden … das Team am Tor …",
 	SPK_LINE_4 = "Dies ist eine aufgezeichnete Nachricht. Sie wurde noch nicht aufgezeichnet.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Medkit",
+	REVIVE_NEED_MEDKIT = "Du brauchst ein Medkit, um aufzuhelfen.",
+	CABINET_EMPTY = "Der Schrank ist leer.",
+	HUD_ELIMINATED = "Niemand hat dich rechtzeitig erreicht. Du kehrst am nächsten Kontrollpunkt zurück.",
+	HUD_SPECTATING = "Du bist vorerst raus.\nDu beobachtest dein Team – tippen oder klicken für den Nächsten.",
+	HUD_DOWNED_TIMER = "Du bist am Boden. Ein Teammitglied mit Medkit kann dir aufhelfen.\n{seconds} s – oder benutze deine Spritze.",
+	HELP_MARKER = "{name} · HILFE · {seconds}",
+	OBJECT_MEDCABINET = "Erste-Hilfe-Schrank",
+	INTERACT_TAKE_MEDKIT = "Medkit nehmen",
 }

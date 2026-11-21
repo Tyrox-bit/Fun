@@ -664,6 +664,22 @@ local function furnish()
 		patrol(node[1], node[2])
 	end
 
+	-- First-aid cabinets (medkits for reviving teammates)
+	for _, cab in {
+		{ CFrame.new(99.3, 5, 62) * CFrame.Angles(0, math.rad(-90), 0) }, -- control room: security station
+		{ CFrame.new(-99.3, 5, 18) * CFrame.Angles(0, math.rad(90), 0) }, -- laboratories: medical corner
+		{ CFrame.new(-99.3, 5, 78) * CFrame.Angles(0, math.rad(90), 0) }, -- engineering: supply depot
+		{ CFrame.new(99.3, 5, -80) * CFrame.Angles(0, math.rad(-90), 0) }, -- quarters
+	} do
+		local cabinet = block(props, "FirstAid", Vector3.new(2.6, 3.2, 0.9), cab[1], Color3.fromRGB(226, 224, 216), Enum.Material.SmoothPlastic)
+		local crossV = block(props, "Cross", Vector3.new(0.4, 1.4, 0.05), cabinet.CFrame * CFrame.new(0, 0.2, -0.47), Color3.fromRGB(190, 40, 34), Enum.Material.Neon)
+		local crossH = block(props, "Cross", Vector3.new(1.4, 0.4, 0.05), cabinet.CFrame * CFrame.new(0, 0.2, -0.47), Color3.fromRGB(190, 40, 34), Enum.Material.Neon)
+		crossV.CanCollide = false
+		crossH.CanCollide = false
+		interactable(cabinet, "medcabinet", "INTERACT_TAKE_MEDKIT", "OBJECT_MEDCABINET", { MaxDistance = 7 })
+		CollectionService:AddTag(cabinet, "FZ_MedCabinet")
+	end
+
 	-- PA loudspeakers (the station sometimes speaks with a voice nobody recognises)
 	for _, sp in {
 		{ Vector3.new(0, 12.5, -59.2), Vector3.new(0, 0, 1) }, { Vector3.new(0, 12.5, 59.2), Vector3.new(0, 0, -1) },

@@ -93,9 +93,8 @@ function HealthController.Init(hudGui: ScreenGui, settings)
 		end
 	end)
 
-	player:GetAttributeChangedSignal("FZ_Downed"):Connect(function()
-		downed.Visible = player:GetAttribute("FZ_Downed") == true
-	end)
+	-- (the downed countdown is shown by RescueController)
+	downed:Destroy()
 end
 
 return HealthController

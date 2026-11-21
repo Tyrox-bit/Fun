@@ -56,6 +56,9 @@ local function onTriggered(player: Player, instance: Instance, prompt: Proximity
 	if not root or not humanoid or humanoid.Health <= 0 then
 		return
 	end
+	if player:GetAttribute("FZ_Downed") or player:GetAttribute("FZ_Eliminated") then
+		return -- downed / eliminated players cannot do tasks
+	end
 	local position = worldPosition(instance)
 	if not position or ((root :: BasePart).Position - position).Magnitude > prompt.MaxActivationDistance + DISTANCE_TOLERANCE then
 		return

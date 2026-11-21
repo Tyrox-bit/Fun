@@ -159,7 +159,7 @@ return {
 	ITEM_OBSERVER_NAME = "Ensemble observateur",
 	ITEM_OBSERVER_DESC = "Vision nocturne avec batterie rechargeable. Révèle les traces récentes de la créature.",
 	ITEM_MEDIC_NAME = "Ensemble secouriste",
-	ITEM_MEDIC_DESC = "Relève les coéquipiers deux fois plus vite et avec plus de santé. Régénère davantage.",
+	ITEM_MEDIC_DESC = "Commence avec 2 trousses, relève deux fois plus vite et avec plus de santé. Les soins sont 50 % plus efficaces.",
 	ITEM_FLASHLIGHT_NAME = "Lampe améliorée",
 	ITEM_FLASHLIGHT_DESC = "Faisceau plus long. L'éblouissement de la créature se recharge plus vite.",
 	ITEM_SKIN_OLIVE_NAME = "Radio : olive de campagne",
@@ -170,7 +170,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Soutient le développement. Inclut le boîtier rouge signal. Purement cosmétique.",
 	HUD_DOWNED = "Tu es à terre. Ton équipe peut te relever.",
 	HUD_SIGNAL_LOST = "Signal perdu. Retour au dernier point de contrôle.",
-	INTERACT_REVIVE = "Relever",
+	INTERACT_REVIVE = "Relever (trousse)",
 	OBJECT_TEAMMATE = "Coéquipier",
 	INTERACT_PICKUP = "Prendre",
 	INTERACT_INSERT = "Insérer les fusibles",
@@ -457,4 +457,15 @@ return {
 	SPK_LINE_2 = "Station 07 à tout le personnel : ne répondez pas au canal zéro.",
 	SPK_LINE_3 = "...l'équipe au portail, répondez... l'équipe au portail...",
 	SPK_LINE_4 = "Ceci est un message enregistré. Il n'a pas encore été enregistré.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Trousse de soins",
+	REVIVE_NEED_MEDKIT = "Il te faut une trousse de soins pour le relever.",
+	CABINET_EMPTY = "L'armoire est vide.",
+	HUD_ELIMINATED = "Personne ne t'a atteint à temps. Tu reviens au prochain point de contrôle.",
+	HUD_SPECTATING = "Tu es hors-jeu pour l'instant.\nTu observes ton équipe – touche ou clique pour le suivant.",
+	HUD_DOWNED_TIMER = "Tu es à terre. Un coéquipier avec une trousse peut te relever.\n{seconds} s – ou utilise ta seringue.",
+	HELP_MARKER = "{name} · AIDE · {seconds}",
+	OBJECT_MEDCABINET = "Armoire de premiers secours",
+	INTERACT_TAKE_MEDKIT = "Prendre une trousse",
 }

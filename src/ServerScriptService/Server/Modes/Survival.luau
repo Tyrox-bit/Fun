@@ -103,7 +103,7 @@ end
 local function aliveInGame(): { Player }
 	local list = {}
 	for _, player in ctx.playersInGame() do
-		if not player:GetAttribute("FZ_Downed") then
+		if not player:GetAttribute("FZ_Downed") and not player:GetAttribute("FZ_Eliminated") then
 			table.insert(list, player)
 		end
 	end
@@ -320,6 +320,8 @@ completeTask = function(r: Run)
 			HealthService.Revive(player, 50)
 		end
 	end
+	HealthService.ReturnAllEliminated() -- the break brings eliminated teammates back
+	InventoryService.RefillCabinets()
 	say("SV_SHIFT_DONE", { shift = r.shift })
 	InventoryService.SpawnWorldItems(Config.Inventory.SurvivalItemsPerBreak)
 	objective("SV_BREAK", { seconds = SC.BreakSeconds })

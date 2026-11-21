@@ -46,8 +46,26 @@ function InventoryService.Give(player: Player, itemId: string): boolean
 	return true
 end
 
+function InventoryService.Has(player: Player, itemId: string): boolean
+	return table.find(inventories[player] or {}, itemId) ~= nil
+end
+
+function InventoryService.Take(player: Player, itemId: string): boolean
+	local list = inventories[player]
+	local index = list and table.find(list, itemId)
+	if not index then
+		return false
+	end
+	table.remove(list :: { string }, index)
+	publish(player)
+	return true
+end
+
 function InventoryService.Reset(player: Player)
 	inventories[player] = {}
+	for _, itemId in Config.Inventory.EveryoneStart do
+		InventoryService.Give(player, itemId)
+	end
 	if player:GetAttribute("FZ_Set") == "set_medic" then
 		for _, itemId in Config.Inventory.MedicStart do
 			InventoryService.Give(player, itemId)
@@ -85,14 +103,15 @@ function InventoryService.SpawnWorldItems(count: number)
 	end
 	for _ = 1, math.min(count, #spots) do
 		local spot = table.remove(spots, math.random(1, #spots))
-		local itemId = if math.random() < 0.7 then "bandage" else "syringe"
+		local roll = math.random()
+		local itemId = if roll < 0.5 then "bandage" elseif roll < 0.85 then "medkit" else "syringe"
 		local part = Instance.new("Part")
 		part.Name = itemId
 		part.Anchored = true
 		part.CanCollide = false
-		part.Size = if itemId == "bandage" then Vector3.new(0.9, 0.5, 0.9) else Vector3.new(0.25, 0.25, 1.2)
-		part.Color = if itemId == "bandage" then Color3.fromRGB(226, 222, 210) else Color3.fromRGB(120, 200, 220)
-		part.Material = if itemId == "bandage" then Enum.Material.Fabric else Enum.Material.Glass
+		part.Size = if itemId == "bandage" then Vector3.new(0.9, 0.5, 0.9) elseif itemId == "medkit" then Vector3.new(1.4, 0.9, 1) else Vector3.new(0.25, 0.25, 1.2)
+		part.Color = if itemId == "bandage" then Color3.fromRGB(226, 222, 210) elseif itemId == "medkit" then Color3.fromRGB(170, 60, 54) else Color3.fromRGB(120, 200, 220)
+		part.Material = if itemId == "syringe" then Enum.Material.Glass else Enum.Material.Fabric
 		part.CFrame = spot.CFrame
 		local glow = Instance.new("PointLight")
 		glow.Range = 4
@@ -113,7 +132,28 @@ function InventoryService.SpawnWorldItems(count: number)
 	end
 end
 
+-- First-aid cabinets (tag FZ_MedCabinet): hold medkits, refilled per session / survival break.
+function InventoryService.RefillCabinets()
+	for _, cabinet in CollectionService:GetTagged("FZ_MedCabinet") do
+		cabinet:SetAttribute("Medkits", Config.Inventory.CabinetMedkits)
+	end
+end
+
 function InventoryService.Start()
+	InteractionService.Register("medcabinet", function(player, cabinet)
+		local left = tonumber(cabinet:GetAttribute("Medkits")) or 0
+		if left <= 0 then
+			Net.Event("Notify"):FireClient(player, "CABINET_EMPTY")
+			return
+		end
+		if InventoryService.Give(player, "medkit") then
+			cabinet:SetAttribute("Medkits", left - 1)
+			Net.Event("Sfx"):FireAllClients("door_open", (cabinet :: BasePart).Position, 0.4)
+		else
+			Net.Event("Notify"):FireClient(player, "INV_FULL")
+		end
+	end)
+
 	InteractionService.Register("item", function(player, part)
 		local itemId = part:GetAttribute("ItemId")
 		if type(itemId) ~= "string" or not part.Parent then

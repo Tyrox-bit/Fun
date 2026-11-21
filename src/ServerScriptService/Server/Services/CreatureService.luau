@@ -110,7 +110,7 @@ end
 local function playersInGame(): { Player }
 	local list = {}
 	for _, player in Players:GetPlayers() do
-		if player:GetAttribute("FZ_InGame") and not player:GetAttribute("FZ_Downed") and not player:GetAttribute("FZ_MonsterMode") then
+		if player:GetAttribute("FZ_InGame") and not player:GetAttribute("FZ_Downed") and not player:GetAttribute("FZ_Eliminated") and not player:GetAttribute("FZ_MonsterMode") then
 			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 			if root then
 				table.insert(list, player)

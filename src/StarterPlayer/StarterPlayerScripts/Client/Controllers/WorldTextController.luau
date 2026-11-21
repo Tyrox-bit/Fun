@@ -34,6 +34,11 @@ local function localizePrompt(prompt: Instance)
 	local character = player.Character
 	if character and prompt:IsDescendantOf(character) then
 		prompt.Enabled = false
+	elseif object == "OBJECT_TEAMMATE" then
+		-- Helping someone up needs a medkit: without one the prompt says so and stays inactive.
+		local items = player:GetAttribute("FZ_Items")
+		local hasMedkit = type(items) == "string" and string.find(items, "medkit", 1, true) ~= nil
+		prompt.Enabled = hasMedkit
 	end
 end
 
@@ -72,6 +77,7 @@ function WorldTextController.Init()
 	local player = Players.LocalPlayer
 	player:GetAttributeChangedSignal("FZ_HoldMultiplier"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("FZ_ReviveMultiplier"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("FZ_Items"):Connect(refreshAll)
 	refreshAll()
 end
 

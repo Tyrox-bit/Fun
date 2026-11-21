@@ -159,7 +159,7 @@ return {
 	ITEM_OBSERVER_NAME = "Set de observador",
 	ITEM_OBSERVER_DESC = "Visión nocturna con batería recargable. Muestra las huellas recientes de la criatura.",
 	ITEM_MEDIC_NAME = "Set de médico",
-	ITEM_MEDIC_DESC = "Levanta a tus compañeros el doble de rápido y con más salud. Regenera más.",
+	ITEM_MEDIC_DESC = "Empieza con 2 botiquines, levanta compañeros el doble de rápido y con más salud. La curación funciona un 50 % mejor.",
 	ITEM_FLASHLIGHT_NAME = "Mejora de linterna",
 	ITEM_FLASHLIGHT_DESC = "Haz más largo. Cegar a la criatura se recarga más rápido.",
 	ITEM_SKIN_OLIVE_NAME = "Radio: oliva de campaña",
@@ -170,7 +170,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Apoya el desarrollo. Incluye la carcasa roja señal. Solo cosmético.",
 	HUD_DOWNED = "Estás en el suelo. Tu equipo puede levantarte.",
 	HUD_SIGNAL_LOST = "Señal perdida. De vuelta al último punto de control.",
-	INTERACT_REVIVE = "Levantar",
+	INTERACT_REVIVE = "Levantar (botiquín)",
 	OBJECT_TEAMMATE = "Compañero",
 	INTERACT_PICKUP = "Tomar",
 	INTERACT_INSERT = "Colocar fusibles",
@@ -457,4 +457,15 @@ return {
 	SPK_LINE_2 = "Estación 07 a todo el personal: no respondan al canal cero.",
 	SPK_LINE_3 = "...el equipo del portón, repórtense... el equipo del portón...",
 	SPK_LINE_4 = "Este es un mensaje grabado. Todavía no se ha grabado.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Botiquín",
+	REVIVE_NEED_MEDKIT = "Necesitas un botiquín para levantarlo.",
+	CABINET_EMPTY = "El armario está vacío.",
+	HUD_ELIMINATED = "Nadie llegó a tiempo. Vuelves en el próximo punto de control.",
+	HUD_SPECTATING = "Por ahora estás fuera.\nObservas a tu equipo: toca o haz clic para el siguiente.",
+	HUD_DOWNED_TIMER = "Estás en el suelo. Un compañero con botiquín puede levantarte.\n{seconds} s, o usa tu jeringa.",
+	HELP_MARKER = "{name} · AYUDA · {seconds}",
+	OBJECT_MEDCABINET = "Botiquín de primeros auxilios",
+	INTERACT_TAKE_MEDKIT = "Tomar botiquín",
 }

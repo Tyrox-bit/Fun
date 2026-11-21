@@ -159,7 +159,7 @@ return {
 	ITEM_OBSERVER_NAME = "Observer set",
 	ITEM_OBSERVER_DESC = "Night vision with a rechargeable battery. Shows fresh tracks of the creature.",
 	ITEM_MEDIC_NAME = "Medic set",
-	ITEM_MEDIC_DESC = "Helps teammates up twice as fast and with more health. Regenerates further.",
+	ITEM_MEDIC_DESC = "Starts with 2 medkits, helps teammates up twice as fast and with more health. Healing items work 50 % better.",
 	ITEM_FLASHLIGHT_NAME = "Flashlight upgrade",
 	ITEM_FLASHLIGHT_DESC = "Longer beam. Blinding the creature recharges faster.",
 	ITEM_SKIN_OLIVE_NAME = "Radio: Field olive",
@@ -170,7 +170,7 @@ return {
 	ITEM_SUPPORTER_DESC = "Supports development. Includes the signal-red radio housing. Purely cosmetic.",
 	HUD_DOWNED = "You are down. Your team can help you up.",
 	HUD_SIGNAL_LOST = "Signal lost. Back to the last checkpoint.",
-	INTERACT_REVIVE = "Help up",
+	INTERACT_REVIVE = "Help up (medkit)",
 	OBJECT_TEAMMATE = "Teammate",
 	INTERACT_PICKUP = "Take",
 	INTERACT_INSERT = "Insert fuses",
@@ -457,4 +457,15 @@ return {
 	SPK_LINE_2 = "Station 07 to all personnel: do not answer channel zero.",
 	SPK_LINE_3 = "...the team at the gate, please report... the team at the gate...",
 	SPK_LINE_4 = "This is a recorded message. It has not been recorded yet.",
+
+	-- 0.5: rescue
+	ITEM_MEDKIT = "Medkit",
+	REVIVE_NEED_MEDKIT = "You need a medkit to help them up.",
+	CABINET_EMPTY = "The cabinet is empty.",
+	HUD_ELIMINATED = "Nobody reached you in time. You return at the next checkpoint.",
+	HUD_SPECTATING = "You are out for now.\nWatching your team – tap or click for the next one.",
+	HUD_DOWNED_TIMER = "You are down. A teammate with a medkit can help you up.\n{seconds} s – or use your syringe.",
+	HELP_MARKER = "{name} · HELP · {seconds}",
+	OBJECT_MEDCABINET = "First-aid cabinet",
+	INTERACT_TAKE_MEDKIT = "Take medkit",
 }

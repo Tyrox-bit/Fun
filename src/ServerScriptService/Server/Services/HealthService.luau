@@ -17,6 +17,14 @@ local HealthService = {}
 local HC = Config.Health
 local lastDamage: { [Player]: number } = {}
 local downedSince: { [Player]: number } = {}
+local eliminatedAt: { [Player]: number } = {}
+local savedHipHeight: { [Player]: number } = {}
+
+-- Per-session statistics for achievements ("nobody left behind", "last survivor").
+HealthService.SessionStats = { eliminated = {} :: { [Player]: boolean } }
+function HealthService.ResetSessionStats()
+	table.clear(HealthService.SessionStats.eliminated)
+end
 
 local function humanoidOf(player: Player): Humanoid?
 	local character = player.Character
@@ -37,6 +45,30 @@ function HealthService.IsDowned(player: Player): boolean
 	return player:GetAttribute("FZ_Downed") == true
 end
 
+function HealthService.IsEliminated(player: Player): boolean
+	return player:GetAttribute("FZ_Eliminated") == true
+end
+
+local function standing(player: Player): boolean
+	return not HealthService.IsDowned(player) and not HealthService.IsEliminated(player)
+end
+
+local function setLowered(player: Player, lowered: boolean)
+	local humanoid = humanoidOf(player)
+	if not humanoid then
+		return
+	end
+	if lowered then
+		savedHipHeight[player] = savedHipHeight[player] or humanoid.HipHeight
+		humanoid.HipHeight = (savedHipHeight[player] :: number) * 0.35 -- crawling on the floor
+		humanoid.JumpHeight = 0
+	elseif savedHipHeight[player] then
+		humanoid.HipHeight = savedHipHeight[player] :: number
+		humanoid.JumpHeight = 7.2
+		savedHipHeight[player] = nil
+	end
+end
+
 local function clearRevivePrompt(player: Player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if root then
@@ -50,9 +82,22 @@ end
 
 function HealthService.Respawn(player: Player)
 	downedSince[player] = nil
+	eliminatedAt[player] = nil
+	savedHipHeight[player] = nil
 	player:SetAttribute("FZ_Downed", false)
+	player:SetAttribute("FZ_Eliminated", false)
+	player:SetAttribute("FZ_DownedUntil", nil)
 	clearRevivePrompt(player)
 	player:LoadCharacter() -- SessionService places the new character at the checkpoint
+end
+
+-- Eliminated players come back at the next checkpoint / survival break (or after a max wait).
+function HealthService.ReturnAllEliminated()
+	for player in table.clone(eliminatedAt) do
+		if player.Parent then
+			HealthService.Respawn(player)
+		end
+	end
 end
 
 -- Optional override (survival: a wipe ends the run instead of a checkpoint respawn).
@@ -64,7 +109,7 @@ local function checkTeamWipe()
 		return
 	end
 	for _, player in players do
-		if not HealthService.IsDowned(player) then
+		if standing(player) then
 			return
 		end
 	end
@@ -74,7 +119,7 @@ local function checkTeamWipe()
 	end
 	task.delay(3, function()
 		for _, player in inGamePlayers() do
-			if HealthService.IsDowned(player) then
+			if not standing(player) then
 				Net.Event("Notify"):FireClient(player, "HUD_SIGNAL_LOST")
 				HealthService.Respawn(player)
 			end
@@ -85,7 +130,9 @@ end
 local function setDowned(player: Player, humanoid: Humanoid)
 	humanoid.Health = 1
 	player:SetAttribute("FZ_Downed", true)
+	player:SetAttribute("FZ_DownedUntil", workspace:GetServerTimeNow() + HC.DownedTimeout)
 	downedSince[player] = os.clock()
+	setLowered(player, true)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if root then
 		root:SetAttribute("InteractId", "revive")
@@ -100,7 +147,7 @@ end
 
 function HealthService.Damage(player: Player, amount: number)
 	local humanoid = humanoidOf(player)
-	if not humanoid or HealthService.IsDowned(player) or player:GetAttribute("FZ_MonsterMode") then
+	if not humanoid or not standing(player) or player:GetAttribute("FZ_MonsterMode") then
 		return
 	end
 	lastDamage[player] = os.clock()
@@ -120,6 +167,8 @@ function HealthService.Revive(target: Player, healthValue: number)
 	clearRevivePrompt(target)
 	downedSince[target] = nil
 	target:SetAttribute("FZ_Downed", false)
+	target:SetAttribute("FZ_DownedUntil", nil)
+	setLowered(target, false)
 	humanoid.Health = math.clamp(healthValue, 1, humanoid.MaxHealth)
 	lastDamage[target] = os.clock()
 end
@@ -146,7 +195,13 @@ end
 function HealthService.Start()
 	InteractionService.Register("revive", function(helper, root)
 		local target = Players:GetPlayerFromCharacter(root.Parent)
-		if not target or target == helper or HealthService.IsDowned(helper) then
+		if not target or target == helper or not standing(helper) or not HealthService.IsDowned(target) then
+			return
+		end
+		-- A medkit is required for a full revive (first-aid cabinets / found in the world).
+		local InventoryService = require(script.Parent.InventoryService)
+		if not InventoryService.Take(helper, "medkit") then
+			Net.Event("Notify"):FireClient(helper, "REVIVE_NEED_MEDKIT")
 			return
 		end
 		local reviveHealth = tonumber(helper:GetAttribute("FZ_ReviveHealth")) or HC.ReviveHealth
@@ -162,7 +217,18 @@ function HealthService.Start()
 		humanoid.Health = HC.Max
 		humanoid.BreakJointsOnDeath = false
 		player:SetAttribute("FZ_Downed", false)
+		player:SetAttribute("FZ_DownedUntil", nil)
 		downedSince[player] = nil
+		savedHipHeight[player] = nil
+		if HealthService.IsEliminated(player) then
+			task.defer(function()
+				local root = character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root and HealthService.IsEliminated(player) then
+					character:PivotTo(CFrame.new(0, 600, 0))
+					root.Anchored = true
+				end
+			end)
+		end
 		humanoid.Died:Connect(function()
 			-- Safety net (falls, resets): never a game over, just back to the checkpoint.
 			task.delay(2, function()
@@ -187,6 +253,9 @@ function HealthService.Start()
 	Players.PlayerRemoving:Connect(function(player)
 		lastDamage[player] = nil
 		downedSince[player] = nil
+		eliminatedAt[player] = nil
+		savedHipHeight[player] = nil
+		HealthService.SessionStats.eliminated[player] = nil
 		task.defer(checkTeamWipe)
 	end)
 
@@ -199,9 +268,33 @@ function HealthService.Start()
 				local humanoid = humanoidOf(player)
 				if humanoid then
 					local since = downedSince[player]
-					if since and now - since > HC.DownedTimeout then
-						Net.Event("Notify"):FireClient(player, "HUD_SIGNAL_LOST")
-						HealthService.Respawn(player)
+					local eliminatedSince = eliminatedAt[player]
+					if eliminatedSince and now - eliminatedSince > HC.EliminatedMaxWait then
+						HealthService.Respawn(player) -- never wait forever
+					elseif since and now - since > HC.DownedTimeout then
+						if #inGamePlayers() <= 1 then
+							-- Solo: no elimination, back to the last checkpoint
+							Net.Event("Notify"):FireClient(player, "HUD_SIGNAL_LOST")
+							HealthService.Respawn(player)
+						else
+							-- Nobody came in time: out for this section / round, spectate the team
+							downedSince[player] = nil
+							clearRevivePrompt(player)
+							setLowered(player, false)
+							player:SetAttribute("FZ_Downed", false)
+							player:SetAttribute("FZ_DownedUntil", nil)
+							player:SetAttribute("FZ_Eliminated", true)
+							eliminatedAt[player] = now
+							HealthService.SessionStats.eliminated[player] = true
+							Net.Event("Notify"):FireClient(player, "HUD_ELIMINATED")
+							local character = player.Character
+							local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+							if character and root then
+								character:PivotTo(CFrame.new(0, 600, 0))
+								root.Anchored = true
+							end
+							checkTeamWipe()
+						end
 					elseif not since and humanoid.Health > 0 then
 						local cap = tonumber(player:GetAttribute("FZ_RegenCap")) or HC.RegenCap
 						if now - (lastDamage[player] or 0) > HC.RegenDelay and humanoid.Health < cap then

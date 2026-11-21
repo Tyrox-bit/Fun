@@ -82,6 +82,10 @@ local function step(dt: number)
 		speed = Config.Health.CrawlSpeed
 		wantsSprint = false
 	end
+	if player:GetAttribute("FZ_Rescuing") or player:GetAttribute("FZ_Eliminated") then
+		speed = 0 -- kneeling next to a teammate: you cannot run away while helping
+		wantsSprint = false
+	end
 	if player:GetAttribute("FZ_AdminSpeed") then
 		speed *= 2
 	end

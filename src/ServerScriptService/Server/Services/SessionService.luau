@@ -83,7 +83,11 @@ local function placeAtCheckpoint(player: Player)
 end
 
 function SessionService.SetCheckpoint(id: string)
+	local changed = SessionState.Get("Checkpoint") ~= id
 	SessionState.Set("Checkpoint", id)
+	if changed then
+		HealthService.ReturnAllEliminated() -- reaching a checkpoint brings eliminated teammates back
+	end
 end
 
 ---------------------------------------------------------------------------
@@ -126,6 +130,8 @@ local function start(mode: string, contentId: string): boolean
 		return false
 	end
 	cleanWorld()
+	HealthService.ResetSessionStats()
+	InventoryService.RefillCabinets()
 	session = { mode = mode, contentId = contentId, mapId = entry.map, module = module, idleSince = nil }
 	table.clear(entered)
 	SessionService.SetCheckpoint(module.StartCheckpoint or "C1_START")
@@ -147,6 +153,8 @@ local function leave(player: Player, respawn: boolean)
 	end)
 	player:SetAttribute("FZ_InGame", false)
 	player:SetAttribute("FZ_Downed", false)
+	player:SetAttribute("FZ_Eliminated", false)
+	player:SetAttribute("FZ_DownedUntil", nil)
 	if respawn and player.Parent and not player:GetAttribute("FZ_MonsterMode") then
 		player:LoadCharacter() -- back to the menu spawn, out of the station
 	end
