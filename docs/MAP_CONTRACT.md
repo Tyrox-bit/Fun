@@ -21,3 +21,17 @@ Die Spielsysteme kennen keine festen Positionen, nur **Tags** und **Attribute**.
 | `FZ_AmbientSource` | Part mit Dauergeräusch | `SoundLoop` (z. B. `generator_loop`) |
 
 Für deinen Lageplan (Damm, See, Kirche, Mine, Fabrikruine) gilt dasselbe. Diese Orte sind als Schauplätze für Kapitel 2–4 vorgesehen.
+
+## Ergänzungen ab 0.4.0 (Kapitel 2–4)
+
+| Tag / Attribut | Wofür |
+|---|---|
+| `FZ_FloodWater` | Sichtbares Wasser, das ein Kapitel bei eingetretener Flut-Prognose einblendet (blockiert nie die Bewegung) |
+| `FZ_Layer` + `Layer` (`now`/`2009`), `BaseTransparency`, `BaseCollide` | Teile, die nur in einer Zeitschicht existieren (Kapitel 4) |
+| Tür-Attribute `Canteen`, `Gallery`, `YardGate`, `Hidden`, `ArchiveGate`, `Sealed`, `MineGate`, `LoopDoor`, `PumpDoor`, `BlastDoor` | Türen, die ein Kapitel gezielt sperrt/öffnet |
+| `LockedAtStart` (automatisch) | Ausgangszustand einer Tür; wird bei jedem Session-Start wiederhergestellt |
+| `FZ_Tags` (Attribut) | Gespeicherte Karten in `ServerStorage.Maps` tragen ihre Tags hier, damit nichts in die laufende Karte „leakt“. MapService setzt sie beim Laden zurück – eigene Karten dort werden beim Start automatisch so umgestellt. |
+| `FZ_Builder` (Attribut am Kartenmodell) | Name des Bau-Moduls, das beim Laden Terrain und Licht liefert |
+
+Überlebens-Karten brauchen einen Eintrag in `PROFILES` (`Server/Modes/Survival.luau`): Sektoren, Stationen, Uplink, Ausstieg, Sicherungsziel.
+

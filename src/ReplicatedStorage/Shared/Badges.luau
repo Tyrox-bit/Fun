@@ -4,6 +4,10 @@
 return {
 	ch1_complete = 0, -- finished chapter 1
 	ch1_archive = 0, -- found every find on Relay Station 07
+	ch2_complete = 0, -- finished chapter 2
+	ch3_complete = 0, -- finished chapter 3
+	ch4_complete = 0, -- finished chapter 4 (any ending)
+	ending_counter = 0, -- the secret ending
 	forecast_breaker = 0, -- broke a forecast
 	survival_5 = 0, -- survived 5 shifts
 	survival_10 = 0, -- survived 10 shifts
@@ -19,4 +23,8 @@ return {
 	night_shift_10 = 0,
 	decoder = 0,
 	rescuer = 0,
+	storm_chaser = 0,
+	run_0007 = 0,
+	ending_answer = 0,
+	ending_silence = 0,
 }

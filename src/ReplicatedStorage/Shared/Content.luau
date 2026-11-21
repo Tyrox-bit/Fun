@@ -19,21 +19,21 @@ Content.ModeOrder = { "story", "survival" }
 -- Studio model named after `model` in ServerStorage/Maps). One map can serve several modes.
 Content.Maps = {
 	relay07 = { id = "relay07", name = "MAP_RELAY07", builder = "RelayStation07", model = "Relay07" },
-	dam03 = { id = "dam03", name = "MAP_DAM03", builder = nil, model = "Dam03" },
-	mine = { id = "mine", name = "MAP_MINE", builder = nil, model = "Mine" },
-	church = { id = "church", name = "MAP_CHURCH", builder = nil, model = "Church" },
+	dam03 = { id = "dam03", name = "MAP_DAM03", builder = "Dam03", model = "Dam03" },
+	mine = { id = "mine", name = "MAP_MINE", builder = "Mine", model = "Mine" },
+	church = { id = "church", name = "MAP_CHURCH", builder = "Chapel", model = "Church" },
 }
 
 Content.Chapters = {
 	{ id = "ch1", number = 1, title = "CHAPTER_01_TITLE", description = "CHAPTER_01_DESC", map = "relay07", status = "available", since = "0.2.0" },
-	{ id = "ch2", number = 2, title = "CHAPTER_02_TITLE", description = "CHAPTER_02_DESC", map = "dam03", status = "planned", requires = "ch1" },
-	{ id = "ch3", number = 3, title = "CHAPTER_03_TITLE", description = "CHAPTER_03_DESC", map = "church", status = "planned", requires = "ch2" },
-	{ id = "ch4", number = 4, title = "CHAPTER_04_TITLE", description = "CHAPTER_04_DESC", map = "mine", status = "planned", requires = "ch3" },
+	{ id = "ch2", number = 2, title = "CHAPTER_02_TITLE", description = "CHAPTER_02_DESC", map = "dam03", status = "available", since = "0.4.0", requires = "ch1" },
+	{ id = "ch3", number = 3, title = "CHAPTER_03_TITLE", description = "CHAPTER_03_DESC", map = "church", status = "available", since = "0.4.0", requires = "ch2" },
+	{ id = "ch4", number = 4, title = "CHAPTER_04_TITLE", description = "CHAPTER_04_DESC", map = "mine", status = "available", since = "0.4.0", requires = "ch3" },
 }
 
 Content.SurvivalMaps = {
 	{ id = "sv_relay07", title = "SV_MAP_RELAY07", description = "SV_MAP_RELAY07_DESC", map = "relay07", status = "available", since = "0.3.0", requires = nil },
-	{ id = "sv_dam03", title = "SV_MAP_DAM03", description = "SV_MAP_DAM03_DESC", map = "dam03", status = "planned", requires = "ch2" },
+	{ id = "sv_dam03", title = "SV_MAP_DAM03", description = "SV_MAP_DAM03_DESC", map = "dam03", status = "available", since = "0.4.0", requires = "ch2" },
 }
 
 -- Roblox places inside this experience (Creator Hub -> Places). 0 = not created yet:
@@ -42,6 +42,8 @@ Content.Places = {
 	hub = 0, -- start place with the menu (optional; the main place works as hub)
 	relay07 = 0, -- a dedicated place for the Relay Station 07 map
 	dam03 = 0,
+	church = 0,
+	mine = 0,
 }
 
 function Content.Chapter(id: string)

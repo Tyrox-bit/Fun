@@ -58,9 +58,17 @@ function DoorService.SetLocked(panel: BasePart, locked: boolean)
 	end
 end
 
+-- Closes every door and restores its locked state from the map (a chapter may have
+-- unlocked a door in an earlier run - maps are reused between sessions).
 function DoorService.CloseAll()
 	for _, panel in CollectionService:GetTagged("FZ_Door") do
 		if panel:IsA("BasePart") then
+			if panel:GetAttribute("LockedAtStart") == nil then
+				panel:SetAttribute("LockedAtStart", panel:GetAttribute("Locked") == true)
+			end
+			if (panel:GetAttribute("PowerSector") or "") == "" then
+				DoorService.SetLocked(panel, panel:GetAttribute("LockedAtStart") == true)
+			end
 			setOpen(panel, false)
 		end
 	end

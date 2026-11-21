@@ -485,6 +485,77 @@ def light_click():
     return normalize(s, -14)
 
 
+def thunder(seed):
+    """Distant crack, then a long rolling rumble."""
+    local = np.random.default_rng(seed)
+    seconds = 6.0
+    n = int(seconds * SR)
+    crack_ = highpass(local.uniform(-1, 1, n), 800) * decay(n, 0.08) * 0.6
+    roll = lowpass(local.uniform(-1, 1, n), 140) * env(n, 0.15, 3.5) * 2.5
+    roll *= 0.6 + 0.4 * lowpass(local.uniform(0, 1, n), 3)
+    return normalize(crack_ + roll, -8)
+
+
+def rain_loop():
+    seconds = 6.0
+    n = int(seconds * SR)
+    hiss = bandpass(rng.uniform(-1, 1, n), 900, 7000) * 0.5
+    drops = crackle(seconds, 120) * 0.4
+    return make_loop(normalize(hiss + bandpass(drops, 1500, 8000), -18), 0.5)
+
+
+def bell_toll():
+    """A chapel bell: inharmonic partials, long decay."""
+    seconds = 7.0
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    s = np.zeros(n)
+    for ratio, amp, d in ((0.5, 0.6, 4.0), (1.0, 1.0, 3.0), (1.19, 0.5, 2.2), (1.5, 0.35, 1.8), (2.0, 0.3, 1.2), (2.74, 0.2, 0.8)):
+        s += np.sin(2 * np.pi * 220 * ratio * x) * amp * np.exp(-x / d)
+    s[: int(0.01 * SR)] *= np.linspace(0, 1, int(0.01 * SR))
+    return normalize(s, -10)
+
+
+def tape_play():
+    """Reel-to-reel: motor start, hiss, a muffled voice underneath."""
+    seconds = 3.5
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    motor = np.sin(2 * np.pi * (40 + 30 * np.minimum(x, 0.4)) * x) * 0.3 * env(n, 0.05, 0.3)
+    hiss = bandpass(rng.uniform(-1, 1, n), 2000, 9000) * 0.12
+    voice = lowpass(glottal(seconds, 120, 0.1, rng), 900) * lowpass((np.sin(2 * np.pi * 3.7 * x) > 0).astype(float), 10) * 0.6
+    return normalize(motor + hiss + voice * (x > 0.6), -14)
+
+
+def water_rush_loop():
+    seconds = 5.0
+    n = int(seconds * SR)
+    s = lowpass(rng.uniform(-1, 1, n), 900) * 0.8 + bandpass(rng.uniform(-1, 1, n), 200, 2500) * 0.3
+    s *= 0.8 + 0.2 * lowpass(rng.uniform(0, 1, n), 2)
+    return make_loop(normalize(s, -14), 0.5)
+
+
+def metal_crash():
+    """A lift cage hitting the bottom of a shaft."""
+    seconds = 3.0
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    hit = rng.uniform(-1, 1, n) * decay(n, 0.25)
+    ring = sum(np.sin(2 * np.pi * f * x) * np.exp(-x / d) for f, d in ((310, 1.2), (523, 0.8), (877, 0.5), (1240, 0.3)))
+    boom = np.sin(2 * np.pi * 45 * x) * np.exp(-x / 0.4)
+    return normalize(hit * 0.7 + ring * 0.25 + boom, -6)
+
+
+def array_pulse():
+    """The Echo-Array shifting time layers: a deep swell with a reversed tail."""
+    seconds = 4.0
+    n = int(seconds * SR)
+    x = np.arange(n) / SR
+    swell = np.sin(2 * np.pi * (38 + 8 * x) * x) * np.sin(np.pi * x / seconds) ** 2
+    shimmer = bandpass(rng.uniform(-1, 1, n), 2000, 6000) * np.linspace(0, 1, n) ** 3 * 0.3
+    return normalize(swell + shimmer, -8)
+
+
 SOUNDS = {
     "radio_static_loop": radio_static_loop,
     "radio_squelch_on": radio_squelch_on,
@@ -540,6 +611,15 @@ SOUNDS = {
     "approach_corridor": approach,
     "glass_tap": glass_tap,
     "light_click": light_click,
+    # chapters 2-4 (appended: earlier sounds stay byte-identical)
+    "thunder_1": lambda: thunder(701),
+    "thunder_2": lambda: thunder(702),
+    "rain_loop": rain_loop,
+    "bell_toll": bell_toll,
+    "tape_play": tape_play,
+    "water_rush_loop": water_rush_loop,
+    "metal_crash": metal_crash,
+    "array_pulse": array_pulse,
 }
 
 

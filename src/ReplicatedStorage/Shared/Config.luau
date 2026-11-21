@@ -3,7 +3,7 @@
 
 local Config = {}
 
-Config.Version = "0.3.0"
+Config.Version = "0.4.0"
 Config.MaxPartySize = 4
 
 ---------------------------------------------------------------------------

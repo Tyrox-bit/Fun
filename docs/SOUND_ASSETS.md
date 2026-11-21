@@ -69,6 +69,13 @@ Alle Sounds sind **selbst synthetisiert** (`tools/generate_sounds.py`, keine fre
 | `approach_corridor` | Schritte nähern sich, werden schneller | 6.5 s | einmalig | Täuschung: etwas kommt den Gang entlang |
 | `glass_tap` | Klopfen an Glas | 0.5 s | einmalig | Gestalt hinter der Scheibe |
 | `light_click` | Relaisklick | 0.2 s | einmalig | Licht im Nebenraum geht an |
+| `thunder_1`, `thunder_2` | Donner (Krachen + Grollen) | 6 s | einmalig | Kapitel 2, Sturm auf der Staumauer |
+| `rain_loop` | Regen | 5.5 s | Loop | Kapitel 2, draußen |
+| `bell_toll` | Kapellenglocke | 7 s | einmalig | Kapitel 3 |
+| `tape_play` | Tonbandmaschine startet | 3.5 s | einmalig | Kapitel 3, Tonband-Rätsel |
+| `water_rush_loop` | Rauschendes Wasser | 4.5 s | Loop | Kapitel 2 Galerie, Kapitel 4 Pumpe |
+| `metal_crash` | Förderkorb schlägt auf | 3 s | einmalig | Kapitel 4 |
+| `array_pulse` | Das Echo-Array verschiebt die Zeitschicht | 4 s | einmalig | Kapitel 4 |
 
 ## Später echte Aufnahmen (optional)
 Wenn ihr Sprecher oder Foley aufnehmt, gilt: dieselben Namen, gleiche Länge (±30 %), mono, 44,1 kHz/24 Bit Quelle, als Ogg q5 hochladen. Die IDs ersetzt ihr in `Assets.luau`, und der Code bleibt unverändert.

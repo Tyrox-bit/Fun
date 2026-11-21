@@ -43,6 +43,8 @@ Einführung Funkgerät, erste Prognose, erster Kontakt mit dem Lauscher (nur And
 *Offenbarung 1:* Die Signale stammen nicht nur aus der Vergangenheit – manche sagen voraus. Beweis: Die Überwachungskamera zeigt die Spieler 20 Sekunden in der Zukunft.
 *Cliffhanger:* Das Relais nennt einen Spieler beim Namen: „Diesmal nicht die linke Tür.“ – *diesmal?*
 
+> **Umsetzung 0.4.0:** Die Kapitel 2–4 spielen auf eigenen Karten des großen Lageplans: Kapitel 2 auf der **Staumauer 3** (Mannschaftstrakt/Kantine im Tal, Antennenhof auf der Krone im Sturm), Kapitel 3 in der **Kapelle** (Archiv und Tonbandraum in einem Bunker im Hügel, der Operatorraum ist das Echo-Array-Kontrollzimmer von 2009), Kapitel 4 in der **Mine** (Array-Kern tief im Stollen). Die Crew von 2009: June Okafor, Mara Venn, Tobias Ehle, Ida Kessler, Paul Marek – der sechste Name auf dem Gedenkstein ist weggekratzt. Prognose-Arten: Strom, Maschine, Wasser, Tür.
+
 **Kapitel 2 – Die falsche Stimme** (Mannschaftstrakt, Kantine, Antennenhof bei Sturm)
 Prognosen werden persönlicher. Die Spieler entdecken, dass gebrochene Prognosen die Station real verändern (Räume, Wege, Begegnungen). Der Lauscher jagt aktiv.
 *Offenbarung 2:* Entscheidungen verändern, was geschieht. Die 2009-Crew hat genau das versucht – mit Korrekturprotokollen, die zeigen, dass jede Korrektur eine andere Katastrophe auslöste.

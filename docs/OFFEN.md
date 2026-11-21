@@ -1,4 +1,4 @@
-# Abhakliste – Wünsche vs. Stand (v0.5)
+# Abhakliste – Wünsche vs. Stand (v0.6 · Spielversion 0.4.0)
 
 Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Assets, IDs, Studio)
 
@@ -12,8 +12,11 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 - ✅ Optionale Hinweise beim Feststecken
 - ✅ Kalender/Kaffee + 4 Geisterprotokolle, Archiv
 - 🟡 Reaktive Umgebung: Strom, Türen, Licht ✅ · Aufzüge/Lautsprecher ⬜
-- ⬜ Kapitel 2–4 (Staumauer, Kapelle, Mine), Offenbarungen 2+3, Enden, Neues Spiel+
-- ⬜ Rätsel: Tonband-Rekonstruktion (Kap. 3), Sicherheitsschleuse
+- ✅ Kapitel 2 „Die falsche Stimme“ (Staumauer im Sturm): persönliche Prognose mit Spielernamen, gebrochene Prognosen verändern den Weg (Galerie geflutet → Rampe außen), aktiv jagender Lauscher, Entscheidung „Wem glaubt ihr?“, Uplink im Antennenhof halten
+- ✅ Kapitel 3 „Das Protokoll“ (Kapelle + Archiv im Hügel): Tonband-Rekonstruktion (hören + ordnen, keine Codes, zufällig pro Durchlauf), Twist mit eurem Funkgerät-Design, euren Namen und DURCHLAUF 0007, Entscheidung „Rekorder mitnehmen/zerstören“
+- ✅ Kapitel 4 „Frequenz Null“ (Mine): Zeitschichten heute ↔ 2009 (Wege nur in einer Schicht offen), alle 4 Prognose-Arten, drei Enden: Antworten · Schweigen · geheime Gegenfrequenz (alle 6 Geisterprotokolle + jede Prognose-Art gebrochen)
+- ✅ Neues Spiel+: nach „Antworten“ begrüßt Kapitel 1 euch mit „Ihr seid zurück.“ · Entscheidungen aus Kap. 2/3 ändern Funksprüche in Kap. 4
+- ⬜ Sicherheitsschleuse
 - ⬜ Funkgerät-Peilmechanik (von dir zurückgestellt)
 - ⬜ Rätsel-Skalierung mit Spielerzahl (bisher nur Kreatur-Tempo solo)
 
@@ -32,7 +35,11 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 
 ## Karten
 - 🟡 Relaisanlage 07 (Blockout aus Bauteilen) · 👤 deine Kartenteile
-- ⬜ Staumauer, See, Kirche, Mine, Fabrikruine · zweite Überlebenskarte
+- ✅ Staumauer 3 (Tal, Mannschaftstrakt, Turbinenhalle, Galerie in der Mauer, Schrägstollen, Serpentinen-Rampe, Krone mit Antennenhof über dem Stausee)
+- ✅ Kapelle (Friedhof, Glockenturm, Kirchenschiff, Sakristei, Archiv-Bunker im Hügel, versiegelter Operatorraum)
+- ✅ Mine (Förderturm, Maschinenhaus, Stollennetz mit Holzausbau, Pumpen-/Schachtraum, verschütteter Gang, Rundweg, Echo-Array-Kaverne)
+- ✅ Zweite Überlebenskarte: Staumauer 3 – Schleusentor (Überleben ist jetzt kartenunabhängig über Profile)
+- ⬜ Fabrikruine
 
 ## Kreatur, Modelle, Animationen
 - ✅ KI, Platzhalter-Kreatur, prozedurale Animation, mehrere Kreaturen gleichzeitig
@@ -57,6 +64,12 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 - ✅ Private Sitzung mit Einladung · ✅ Zurück zum Team nach Verbindungsabbruch · ✅ Speed-Schutz · ✅ Analytics · ✅ Grafik „Automatisch“ nach FPS
 - 🟡 Ganzes Team gemeinsam in andere Places teleportieren (privat ✅, Inhalts-Places nur einzeln)
 - ✅ Owner-Tools: Monster per Blick, Checkpoints, Prognose-/Licht-/Schreck-/Soundtests, dauerhaftes Protokoll
+
+## Qualitätssicherung (läuft ohne Studio)
+- ✅ `lune run tools/check_syntax.luau` – echter Luau-Compiler über alle Skripte
+- ✅ `lune run tools/ui_smoke.luau` – alle Menüs + HUD gegen die Roblox-API (auch Handy-Größe)
+- ✅ `lune run tools/server_smoke.luau` – spielt Kapitel 1–4 (mehrere Entscheidungswege), Überleben auf beiden Karten und den Kartenwechsel komplett durch
+- ✅ `lune run tools/bake_map.luau` – baut alle 4 Karten headless und legt sie in die Datei
 
 ## Nur du kannst
 - 👤 In Studio testen und Output-Meldungen schicken

@@ -37,6 +37,46 @@ local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
 
+-- Map profiles: which tagged objects / sectors a survival map uses. A new survival map
+-- only needs an entry here (plus its objects in the map, see docs/MAP_CONTRACT.md).
+local PROFILES = {
+	relay07 = {
+		start = "C1_CONTROL",
+		sectors = { "A", "C", "D", "E" },
+		breakerFor = { A = "c1_breaker_a" },
+		stations = { "c1_terminal", "c1_breaker_a", "c1_core" },
+		uplink = "c1_core",
+		extract = "c1_antenna",
+		fuseTarget = "c1_relay_b",
+		fuseObjective = "OBJECTIVE_RELAY_B",
+		evacObjective = "SV_EVAC",
+		evacLine = "SV_EVAC_LINE",
+		powerOn = { "B", "HALLS" },
+		cameras = true,
+	},
+	dam03 = {
+		start = "CP_SV_DAM",
+		sectors = { "CREW", "POWER", "GALLERY", "CREST" },
+		breakerFor = {},
+		stations = { "dam_station_1", "dam_station_2", "dam_station_3" },
+		uplink = "c2_uplink",
+		extract = "dam_extract",
+		fuseTarget = "dam_relay",
+		fuseObjective = "SV_OBJ_DAM_RELAY",
+		evacObjective = "SV_EVAC_DAM",
+		evacLine = "SV_EVAC_LINE_DAM",
+		powerOn = {},
+		openDoors = { "YardGate" }, -- the antenna yard is open in survival
+		cameras = false,
+	},
+}
+local function profileFor(entry): any
+	return PROFILES[entry and entry.map or "relay07"] or PROFILES.relay07
+end
+function Survival.StartCheckpointFor(entry): string
+	return profileFor(entry).start
+end
+
 local SC = Config.Survival
 local TASKS = { "fuses", "uplink", "generators", "stations" }
 local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm", "forecast" }
@@ -48,7 +88,6 @@ local SURVIVAL_BEATS = {
 	{ id = "sv_footsteps", kind = "footsteps", condition = function(_p, info) return info.alone end },
 	{ id = "sv_apparition", kind = "apparition", condition = function(_p, info) return info.area == "HALL" end },
 }
-local STATIONS = { "c1_terminal", "c1_breaker_a", "c1_core" }
 local UPLINK_SECONDS = 40
 local UPLINK_RADIUS = 17
 
@@ -58,6 +97,7 @@ local token = 0 -- invalidates timers of an older run
 
 type Run = {
 	entry: any,
+	profile: any,
 	shift: number,
 	completed: number,
 	phase: string, -- "intro" | "task" | "break" | "ended"
@@ -148,7 +188,7 @@ local function startEvent(r: Run)
 	r.event = event
 	r.lastEvent = event
 	if event == "blackout" then
-		local sector = pick({ "A", "C", "D", "E" }, nil)
+		local sector = pick(r.profile.sectors, nil)
 		r.blackoutSector = sector
 		PowerService.Set(sector, false)
 		StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
@@ -156,13 +196,14 @@ local function startEvent(r: Run)
 		SessionState.Set("SvStatic", true)
 	elseif event == "forecast" then
 		-- A prediction you can break: hold the right breaker before the deadline.
-		local sector = pick({ "A", "C", "D", "E" }, nil)
+		local sector = pick(r.profile.sectors, nil)
 		ForecastService.Start({
 			id = "sv_blackout_" .. string.lower(sector),
+			kind = "power",
 			text = "SV_FORECAST_" .. sector,
 			hud = "FORECAST_BLACKOUT_" .. sector,
 			seconds = 35,
-			breakWith = if sector == "A" then "c1_breaker_a" else "breaker",
+			breakWith = r.profile.breakerFor[sector] or "breaker",
 			breakFilter = function(instance)
 				return instance:GetAttribute("Sector") == sector
 			end,
@@ -183,7 +224,8 @@ local function startEvent(r: Run)
 	elseif event == "lockdown" then
 		local candidates = {}
 		for _, panel in CollectionService:GetTagged("FZ_Door") do
-			if panel:IsA("BasePart") and (panel:GetAttribute("PowerSector") or "") == "" then
+			-- never the doors the map profile keeps open (e.g. the antenna yard on the dam)
+			if panel:IsA("BasePart") and (panel:GetAttribute("PowerSector") or "") == "" and not table.find(r.profile.openDoors or {}, panel.Name) then
 				table.insert(candidates, panel)
 			end
 		end
@@ -269,7 +311,7 @@ local function beginTask(r: Run)
 		objective("SV_TASK_GENERATORS", { count = 0, total = 2 })
 	elseif taskName == "stations" then
 		r.progress.done = {}
-		objective("SV_TASK_STATIONS", { count = 0, total = #STATIONS })
+		objective("SV_TASK_STATIONS", { count = 0, total = #r.profile.stations })
 	end
 end
 
@@ -447,7 +489,7 @@ end
 -- Evacuation: the team has 75 s to reach the antenna. The creature keeps hunting (with
 -- the current difficulty, no new events) - a real but fair chance to get out.
 local function antennaPosition(): Vector3?
-	return interactablePosition("c1_antenna")
+	return run and interactablePosition(run.profile.extract) or nil
 end
 
 local function playersAtAntenna(): { [Player]: boolean }
@@ -468,8 +510,8 @@ end
 startEvacuation = function(r: Run)
 	r.phase = "evac"
 	CreatureService.SetAIEnabled(true)
-	say("SV_EVAC_LINE")
-	objective("SV_EVAC")
+	say(r.profile.evacLine)
+	objective(r.profile.evacObjective)
 	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + EVAC_SECONDS)
 	publish()
 	local current = token
@@ -488,6 +530,7 @@ function Survival.Begin(entry)
 	active = true
 	run = {
 		entry = entry,
+		profile = profileFor(entry),
 		shift = 0,
 		completed = 0,
 		phase = "intro",
@@ -505,9 +548,17 @@ function Survival.Begin(entry)
 		overloadAnnounced = false,
 	}
 	local r = run :: Run
-	PowerService.Set("B", true) -- the core is reachable in survival
-	PowerService.Set("HALLS", true)
-	SessionState.Set("Cameras", true)
+	for _, sector in r.profile.powerOn do
+		PowerService.Set(sector, true) -- e.g. the Relay 07 core is reachable in survival
+	end
+	SessionState.Set("Cameras", r.profile.cameras or nil)
+	for _, name in r.profile.openDoors or {} do
+		for _, panel in CollectionService:GetTagged("FZ_Door") do
+			if panel:IsA("BasePart") and panel.Name == name then
+				DoorService.SetLocked(panel, false)
+			end
+		end
+	end
 	DirectorService.Configure(HorrorEvents.With(SURVIVAL_BEATS), {}, ctx.playersInGame)
 	HealthService.TeamWipeHandler = function()
 		if run == r and active then
@@ -536,7 +587,7 @@ function Survival.Begin(entry)
 			end
 			local now = os.clock()
 			if rr.task == "uplink" then
-				local center = interactablePosition("c1_core")
+				local center = interactablePosition(rr.profile.uplink)
 				if center then
 					local inside = false
 					for _, player in aliveInGame() do
@@ -629,20 +680,33 @@ function Survival.Init(context)
 		fuse:Destroy()
 		r.progress.found += 1
 		if r.progress.found >= 3 then
-			objective("OBJECTIVE_RELAY_B")
+			objective(r.profile.fuseObjective)
 		else
 			objective("OBJECTIVE_FIND_FUSES", { count = r.progress.found, total = 3 })
 		end
 	end)
 
-	InteractionService.Register("c1_relay_b", function(_player, panel)
+	local registered = {}
+	local function registerOnce(id: string, handler)
+		registered[id] = registered[id] or {}
+		if registered[id][handler] then
+			return
+		end
+		registered[id][handler] = true
+		InteractionService.Register(id, handler)
+	end
+
+	local function deliverFuses(_player, panel)
 		local r = run
-		if not active or not r or r.task ~= "fuses" or (r.progress.found or 0) < 3 then
+		if not active or not r or r.task ~= "fuses" or (r.progress.found or 0) < 3 or panel:GetAttribute("InteractId") ~= r.profile.fuseTarget then
 			return
 		end
 		Net.Event("Sfx"):FireAllClients("relay_activate", (panel :: BasePart).Position)
 		completeTask(r)
-	end)
+	end
+	for _, profile in PROFILES do
+		registerOnce(profile.fuseTarget, deliverFuses)
+	end
 
 	InteractionService.Register("generator", function(_player, generator)
 		local r = run
@@ -666,10 +730,18 @@ function Survival.Init(context)
 		end
 	end)
 
-	for _, stationId in STATIONS do
+	local stationIds = {}
+	for _, profile in PROFILES do
+		for _, id in profile.stations do
+			if not table.find(stationIds, id) then
+				table.insert(stationIds, id)
+			end
+		end
+	end
+	for _, stationId in stationIds do
 		InteractionService.Register(stationId, function(_player, station)
 			local r = run
-			if not active or not r or r.task ~= "stations" or r.progress.done[stationId] then
+			if not active or not r or r.task ~= "stations" or r.progress.done[stationId] or not table.find(r.profile.stations, stationId) then
 				return
 			end
 			r.progress.done[stationId] = true
@@ -678,8 +750,8 @@ function Survival.Init(context)
 			for _ in r.progress.done do
 				count += 1
 			end
-			objective("SV_TASK_STATIONS", { count = count, total = #STATIONS })
-			if count >= #STATIONS then
+			objective("SV_TASK_STATIONS", { count = count, total = #r.profile.stations })
+			if count >= #r.profile.stations then
 				completeTask(r)
 			end
 		end)
@@ -687,9 +759,9 @@ function Survival.Init(context)
 
 	-- Antenna: during an evacuation the whole standing team leaves together; during a shift a
 	-- single player may leave alone with their share (nobody is held hostage by the vote).
-	InteractionService.Register("c1_antenna", function(player)
+	local function extract(player, instance)
 		local r = run
-		if not active or not r then
+		if not active or not r or instance:GetAttribute("InteractId") ~= r.profile.extract then
 			return
 		end
 		if r.phase == "evac" then
@@ -708,7 +780,10 @@ function Survival.Init(context)
 			Net.Event("Notify"):FireClient(player, "SV_LEFT_ALONE", { marks = share })
 			ctx.leave(player)
 		end
-	end)
+	end
+	for _, profile in PROFILES do
+		registerOnce(profile.extract, extract)
+	end
 
 	Players.PlayerRemoving:Connect(function(player)
 		if run then

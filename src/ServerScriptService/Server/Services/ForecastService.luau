@@ -23,6 +23,8 @@ local ForecastService = {}
 export type Forecast = {
 	id: string, -- permanent id (saved when broken)
 	text: string, -- Relay line announcing it
+	params: { [string]: any }?, -- e.g. { name = "..." } for personal forecasts
+	kind: string?, -- power | machine | water | door (secret ending: break every kind once)
 	hud: string, -- short HUD label
 	seconds: number,
 	breakWith: string, -- InteractId that breaks it
@@ -51,7 +53,7 @@ function ForecastService.Start(forecast: Forecast)
 	ForecastService.Cancel()
 	active = forecast
 	local current = token
-	StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = forecast.text, channel = "radio", duration = 5, critical = true })
+	StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = forecast.text, params = forecast.params, channel = "radio", duration = 5, critical = true })
 	SessionState.Set("Forecast", forecast.hud)
 	SessionState.Set("ForecastEnds", workspace:GetServerTimeNow() + forecast.seconds)
 	task.delay(forecast.seconds, function()
@@ -82,6 +84,9 @@ local function tryBreak(player: Player, instance: Instance, interactId: string)
 			DataService.Grant(p, Config.Rewards.ForecastBroken)
 			DataService.Mutate(p, function(data)
 				data.secrets.forecastsBroken[forecast.id] = true
+				if forecast.kind then
+					data.secrets.forecastsBroken["kind:" .. forecast.kind] = true
+				end
 			end)
 			BadgeTracker.Award(p, "forecast_breaker")
 			AchievementService.Award(p, "forecast_breaker")

@@ -124,7 +124,8 @@ python3 tools/build_place.py          # erzeugt build/SilentRelay.rbxlx (ohne Ro
 lune run tools/check_syntax.luau      # echter Luau-Compiler: Syntaxfehler in allen Skripten
 lune run tools/ui_smoke.luau          # baut alle Menüs + HUD headless auf, prüft jede Property gegen die Roblox-API
                                       # (FZ_VIEWPORT=844x390 simuliert ein Handy im Querformat)
-lune run tools/bake_map.luau build/SilentRelay.rbxlx   # führt den Kartenbauer aus und backt Workspace.FZ_Map in die Datei
+lune run tools/server_smoke.luau      # spielt Kapitel 1-4, Überleben und Kartenwechsel headless komplett durch
+lune run tools/bake_map.luau build/SilentRelay.rbxlx   # baut alle Karten: Relais 07 -> Workspace.FZ_Map, Staumauer/Kapelle/Mine -> ServerStorage.Maps
 ```
 
 Das ersetzt **keinen** Studio-Test: Typfehler und API-Fehler findet nur Studio bzw. `luau-analyze`.

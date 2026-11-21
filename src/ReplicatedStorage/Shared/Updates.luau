@@ -3,6 +3,11 @@
 
 return {
 	{
+		id = "0.4.0",
+		title = "UPD_040_TITLE",
+		lines = { "UPD_040_1", "UPD_040_2", "UPD_040_3", "UPD_040_4", "UPD_040_5" },
+	},
+	{
 		id = "0.3.0",
 		title = "UPD_030_TITLE",
 		lines = { "UPD_030_1", "UPD_030_2", "UPD_030_3", "UPD_030_4" },

@@ -278,6 +278,7 @@ end
 local function forecastLightsA()
 	ForecastService.Start({
 		id = "c1_lights_a",
+		kind = "power",
 		text = "RADIO_C1_FORECAST",
 		hud = "FORECAST_LIGHTS_A",
 		seconds = 30,
@@ -300,6 +301,7 @@ end
 local function forecastGenerator()
 	ForecastService.Start({
 		id = "c1_generator_e",
+		kind = "machine",
 		text = "RADIO_C1_FORECAST_GEN",
 		hud = "FORECAST_GENERATOR_E",
 		seconds = 40,
@@ -666,7 +668,13 @@ function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
 	end
 	if state.stage == "arrival" then
 		AnalyticsTracker.ChapterStep(player, "Chapter1", "Gate")
-		StoryService.Sequence(player, ARRIVAL)
+		-- New Game+: after the "Answer" ending the station greets you back
+		local lines = table.clone(ARRIVAL)
+		local profile = DataService.Get(player)
+		if profile and profile.Data.storyChoices.c4_ending == 1 then
+			table.insert(lines, 2, { delay = 1.0, speaker = "SPEAKER_RELAY", text = "RADIO_C1_RETURN", channel = "radio", duration = 4 })
+		end
+		StoryService.Sequence(player, lines)
 		task.delay(12, function()
 			if player.Parent then
 				LoreService.Unlock(player, "rec_c1_arrival", true)

@@ -44,6 +44,7 @@ local DirectorController = require(Controllers.DirectorController)
 local InventoryController = require(Controllers.InventoryController)
 local PromptController = require(Controllers.PromptController)
 local RescueController = require(Controllers.RescueController)
+local AtmosphereController = require(Controllers.AtmosphereController)
 local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
@@ -263,6 +264,7 @@ local function setMenuBlur(on: boolean)
 end
 
 GraphicsController.Init(SettingsController)
+AtmosphereController.Init(SettingsController)
 WorldTextController.Init()
 Hud.Init(hudGui, SettingsController, InputController, {
 	onOpen = function()

@@ -1361,6 +1361,8 @@ local function buildLighting()
 	sky.Parent = Lighting
 end
 
+Map.ApplyLighting = buildLighting
+
 function Map.Build(): Model
 	root = Instance.new("Model")
 	root.Name = "FZ_RelayStation07"

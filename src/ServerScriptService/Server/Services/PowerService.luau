@@ -55,6 +55,12 @@ function PowerService.Set(sector: string, on: boolean)
 end
 
 function PowerService.Reset()
+	-- sectors a chapter switched off that have no default come back on
+	for sector in table.clone(powered) do
+		if DEFAULT[sector] == nil then
+			PowerService.Set(sector, true)
+		end
+	end
 	for sector, on in DEFAULT do
 		PowerService.Set(sector, on)
 	end

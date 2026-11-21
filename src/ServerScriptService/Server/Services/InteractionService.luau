@@ -103,9 +103,13 @@ local function setup(instance: Instance)
 	p:SetAttribute("FZ_Action", instance:GetAttribute("ActionKey"))
 	p:SetAttribute("FZ_Object", instance:GetAttribute("ObjectKey"))
 	CollectionService:AddTag(p, PROMPT_TAG)
-	p.Triggered:Connect(function(player)
-		onTriggered(player, instance, p)
-	end)
+	-- a map that is parked and loaded again re-adds its tags: connect only once per prompt
+	if not p:GetAttribute("FZ_Connected") then
+		p:SetAttribute("FZ_Connected", true)
+		p.Triggered:Connect(function(player)
+			onTriggered(player, instance, p)
+		end)
+	end
 end
 
 function InteractionService.Start()

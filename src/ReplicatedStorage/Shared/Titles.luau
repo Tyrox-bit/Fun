@@ -42,6 +42,16 @@ Titles.List = {
 	{ id = "silent", name = "TITLE_SILENT", hint = "TITLE_SILENT_HINT", earned = function(data)
 		return data.storyChoices.c1_answer == 2
 	end },
+	-- the three endings of chapter 4
+	{ id = "loop", name = "TITLE_LOOP", hint = "TITLE_LOOP_HINT", earned = function(data)
+		return data.storyChoices.c4_ending == 1
+	end },
+	{ id = "dawn", name = "TITLE_DAWN", hint = "TITLE_DAWN_HINT", earned = function(data)
+		return data.storyChoices.c4_ending == 2
+	end },
+	{ id = "june", name = "TITLE_JUNE", hint = "TITLE_JUNE_HINT", earned = function(data)
+		return data.storyChoices.c4_ending == 3
+	end },
 	-- exclusive cosmetic badge for members of the official community
 	{ id = "relay_member", name = "TITLE_RELAY_MEMBER", hint = "TITLE_RELAY_MEMBER_HINT", earned = function(data)
 		return data.community ~= nil and data.community.claimed ~= nil

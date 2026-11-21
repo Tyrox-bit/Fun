@@ -37,9 +37,13 @@ local SessionService = {}
 local MODULES = {
 	story = {
 		ch1 = require(script.Parent.Parent.Chapters.Chapter1),
+		ch2 = require(script.Parent.Parent.Chapters.Chapter2),
+		ch3 = require(script.Parent.Parent.Chapters.Chapter3),
+		ch4 = require(script.Parent.Parent.Chapters.Chapter4),
 	},
 	survival = {
 		sv_relay07 = require(script.Parent.Parent.Modes.Survival),
+		sv_dam03 = require(script.Parent.Parent.Modes.Survival), -- same mode, other map profile
 	},
 }
 
@@ -135,7 +139,7 @@ local function start(mode: string, contentId: string): boolean
 	InventoryService.RefillCabinets()
 	session = { mode = mode, contentId = contentId, mapId = entry.map, module = module, idleSince = nil }
 	table.clear(entered)
-	SessionService.SetCheckpoint(module.StartCheckpoint or "C1_START")
+	SessionService.SetCheckpoint((module.StartCheckpointFor and module.StartCheckpointFor(entry)) or module.StartCheckpoint or "C1_START")
 	SessionState.Set("Mode", mode)
 	SessionState.Set("ContentId", contentId)
 	module.Begin(entry)
@@ -288,9 +292,13 @@ function SessionService.Start()
 			leave(player, true)
 		end,
 	}
+	local initialised = {}
 	for _, modules in MODULES do
 		for _, module in modules do
-			module.Init(context)
+			if not initialised[module] then -- one module can serve several entries
+				initialised[module] = true
+				module.Init(context)
+			end
 		end
 	end
 
