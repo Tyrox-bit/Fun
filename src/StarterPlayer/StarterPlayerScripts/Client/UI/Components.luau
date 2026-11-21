@@ -329,7 +329,12 @@ function Components.Button(props: ButtonProps): Button
 	tag.Visible = props.TagKey ~= nil
 	chevron.Visible = not centered
 	if tag.Visible then
-		label.Size = UDim2.new(0.6, -textLeft, 1, 0)
+		-- the tag only takes what its text needs; the title gets the rest
+		tag.AutomaticSize = Enum.AutomaticSize.X
+		tag.Size = UDim2.new(0, 0, 1, 0)
+		tag.AnchorPoint = Vector2.new(1, 0)
+		tag.Position = UDim2.new(1, -14, 0, 0)
+		label.Size = UDim2.new(0.68, -textLeft, 1, 0)
 		chevron.Visible = false
 	end
 

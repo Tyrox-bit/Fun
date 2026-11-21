@@ -676,6 +676,13 @@ local function furnish()
 	crate(CFrame.new(96, 0, 66) * CFrame.Angles(0, math.rad(12), 0))
 	crate(CFrame.new(96.5, 2.4, 66.2) * CFrame.Angles(0, math.rad(-7), 0), 1.8)
 	checkpoint("C1_CONTROL", CFrame.new(75, 0.5, 52))
+	-- security lock keys (survival task "keys"): control room + sector A
+	for index, cf in { CFrame.new(99.3, 4.5, 36) * CFrame.Angles(0, math.rad(-90), 0), CFrame.new(99.3, 4.5, -8) * CFrame.Angles(0, math.rad(-90), 0) } do
+		local key = block(props, "SyncKey" .. index, Vector3.new(2.4, 3, 0.8), cf, Color3.fromRGB(214, 170, 40), Enum.Material.Metal)
+		local lamp = block(props, "SyncLamp", Vector3.new(0.5, 0.5, 0.2), key.CFrame * CFrame.new(0, 1.9, -0.3), C.Emergency, Enum.Material.Neon)
+		lamp.CanCollide = false
+		interactable(key, "sync_key", "INTERACT_TURN_KEY", "OBJECT_SYNC_KEY", { MaxDistance = 8, KeyIndex = index })
+	end
 
 	-- Sector A: administration
 	for x = 58, 92, 11 do

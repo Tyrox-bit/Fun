@@ -333,8 +333,31 @@ local function build()
 		end
 	end
 	-- an old car at the end of the forest path (start)
-	block(outside, "Car", Vector3.new(6, 4.4, 12), CFrame.new(-7, 2.4, 205) * CFrame.Angles(0, math.rad(8), 0), Color3.fromRGB(80, 30, 28), Enum.Material.Metal)
+	local car = block(outside, "Car", Vector3.new(6, 4.4, 12), CFrame.new(-7, 2.4, 205) * CFrame.Angles(0, math.rad(8), 0), Color3.fromRGB(80, 30, 28), Enum.Material.Metal)
+	kit.interactable(car, "church_extract", "INTERACT_LEAVE", "OBJECT_CAR", { HoldDuration = 2, MaxDistance = 10 })
 	kit.bulb(Vector3.new(-7, 2.5, 198.5), C.Warm, 26, 1.4, nil, true)
+
+	---------------------------------------------------------------------------
+	-- Survival ("Kapelle - Nachtwache"): generator shed, stations, breakers, keys
+	---------------------------------------------------------------------------
+	kit.slab("ShedFloor", -44, -22, -24, 6, 0, 1, Color3.fromRGB(70, 64, 56))
+	block(structure, "ShedRoof", Vector3.new(22, 0.8, 30), CFrame.new(-34, 10, -8) * CFrame.Angles(0, 0, math.rad(-8)), ROOF, Enum.Material.CorrodedMetal)
+	for _, p in { Vector3.new(-43, 0, -21), Vector3.new(-25, 0, -21), Vector3.new(-43, 0, 5), Vector3.new(-25, 0, 5) } do
+		block(structure, "ShedPost", Vector3.new(0.6, 10, 0.6), CFrame.new(p + Vector3.new(0, 5, 0)), C.WoodDark, Enum.Material.Wood)
+	end
+	kit.generator(CFrame.new(-34, 0, -14) * CFrame.Angles(0, math.rad(90), 0), 1)
+	kit.generator(CFrame.new(-34, 0, -1) * CFrame.Angles(0, math.rad(90), 0), 2)
+	kit.bulb(Vector3.new(-34, 9, -8), C.Sodium, 24, 1.4, "CEMETERY", true)
+	kit.station(CFrame.new(-14, 1.5, -46), "church_station_1")
+	kit.station(CFrame.new(64, 1.5, -58), "church_station_2")
+	kit.station(CFrame.new(76, 1.5, -64), "church_station_3")
+	kit.panel(CFrame.new(-16.4, 5, 10) * CFrame.Angles(0, math.rad(90), 0), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "NAVE" })
+	kit.panel(CFrame.new(33.4, 5, -26) * CFrame.Angles(0, math.rad(-90), 0), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "SACRISTY" })
+	kit.panel(CFrame.new(139.4, 5, -16) * CFrame.Angles(0, math.rad(-90), 0), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "TAPES" })
+	kit.panel(CFrame.new(28, 5, -10.6), "church_relay", "INTERACT_INSERT", "OBJECT_FUSE_PANEL", { HoldDuration = 3 }, C.Steel)
+	kit.syncKey(CFrame.new(60.6, 4.5, -30) * CFrame.Angles(0, math.rad(90), 0), 1)
+	kit.syncKey(CFrame.new(139.4, 4.5, -36) * CFrame.Angles(0, math.rad(-90), 0), 2)
+	kit.checkpoint("CP_SV_CHURCH", CFrame.new(0, 0.5, 20))
 
 	---------------------------------------------------------------------------
 	-- Markers

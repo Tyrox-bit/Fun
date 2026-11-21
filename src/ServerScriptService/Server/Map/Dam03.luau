@@ -376,6 +376,10 @@ local function build()
 	kit.sign(Vector3.new(75, 15, 90.7), Vector3.new(0, 0, 1), "SIGN_POWERHOUSE")
 	kit.floodLight(Vector3.new(42, 17, 92), Vector3.new(20, 0, 130), C.Sodium, 70)
 
+	-- security lock keys (survival): turbine control booth + valve room
+	kit.syncKey(CFrame.new(129.4, 4.5, 84) * CFrame.Angles(0, math.rad(-90), 0), 1)
+	kit.syncKey(CFrame.new(129.4, 4.5, 34) * CFrame.Angles(0, math.rad(-90), 0), 2)
+
 	-- station 3 + breaker in the gallery (survival)
 	kit.interactable(block(props, "StationGallery", Vector3.new(2, 3, 2), CFrame.new(-60, 1.5, -13), C.Steel, Enum.Material.Metal), "dam_station_3", "INTERACT_ACTIVATE", "OBJECT_STATION", { MaxDistance = 8 })
 	kit.panel(CFrame.new(-90, 4.5, -13.4), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "GALLERY" })

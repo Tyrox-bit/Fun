@@ -49,8 +49,21 @@ function ForecastService.Cancel()
 	SessionState.Set("ForecastEnds", nil)
 end
 
+local function teamSize(): number
+	local count = 0
+	for _, p in Players:GetPlayers() do
+		if p:GetAttribute("FZ_InGame") then
+			count += 1
+		end
+	end
+	return math.max(1, count)
+end
+
 function ForecastService.Start(forecast: Forecast)
 	ForecastService.Cancel()
+	-- smaller teams get more time to reach the object that breaks the forecast
+	forecast = table.clone(forecast)
+	forecast.seconds = math.floor(forecast.seconds * Config.TeamValue("ForecastTime", teamSize()) + 0.5)
 	active = forecast
 	local current = token
 	StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = forecast.text, params = forecast.params, channel = "radio", duration = 5, critical = true })

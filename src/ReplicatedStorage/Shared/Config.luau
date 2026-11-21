@@ -3,7 +3,7 @@
 
 local Config = {}
 
-Config.Version = "0.4.0"
+Config.Version = "0.5.0"
 Config.MaxPartySize = 4
 
 ---------------------------------------------------------------------------
@@ -264,6 +264,22 @@ Config.Inventory = {
 	WorldItems = 4, -- placed at random FZ_ItemSpot spots when a session starts
 	SurvivalItemsPerBreak = 2,
 }
+
+---------------------------------------------------------------------------
+-- Team size scaling: solo stays fair, four players get the full challenge.
+-- Index = number of players in the session (1-4).
+---------------------------------------------------------------------------
+Config.Team = {
+	ForecastTime = { 1.35, 1.15, 1, 1 }, -- forecast deadlines (time to reach the breaker)
+	HoldTime = { 0.7, 0.85, 1, 1.1 }, -- "hold the zone" timers (uplinks)
+	Fuses = { 2, 3, 3, 4 }, -- fuses per survival shift
+	KeyWindow = { 12, 3, 2.5, 2.5 }, -- seconds between the two keys of a dual-key lock
+}
+
+function Config.TeamValue(name: string, players: number): number
+	local list = Config.Team[name]
+	return list[math.clamp(players, 1, #list)]
+end
 
 Config.Rewards = {
 	Fuse = 60,

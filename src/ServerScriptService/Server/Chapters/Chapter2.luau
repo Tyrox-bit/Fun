@@ -394,8 +394,8 @@ function Chapter2.Init(context)
 				NoiseService.Emit(center, 90, nil)
 				CreatureService.Alert(center)
 			end
-			k.objective("OBJ_C2_UPLINK_HOLD", { percent = math.floor(state.uplink / UPLINK_SECONDS * 100) })
-			if state.uplink >= UPLINK_SECONDS then
+			k.objective("OBJ_C2_UPLINK_HOLD", { percent = math.min(100, math.floor(state.uplink / k.scaled("HoldTime", UPLINK_SECONDS) * 100)) })
+			if state.uplink >= k.scaled("HoldTime", UPLINK_SECONDS) then
 				finishChapter()
 			end
 		end)

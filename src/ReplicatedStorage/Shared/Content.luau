@@ -34,6 +34,8 @@ Content.Chapters = {
 Content.SurvivalMaps = {
 	{ id = "sv_relay07", title = "SV_MAP_RELAY07", description = "SV_MAP_RELAY07_DESC", map = "relay07", status = "available", since = "0.3.0", requires = nil },
 	{ id = "sv_dam03", title = "SV_MAP_DAM03", description = "SV_MAP_DAM03_DESC", map = "dam03", status = "available", since = "0.4.0", requires = "ch2" },
+	{ id = "sv_church", title = "SV_MAP_CHURCH", description = "SV_MAP_CHURCH_DESC", map = "church", status = "available", since = "0.5.0", requires = "ch3" },
+	{ id = "sv_mine", title = "SV_MAP_MINE", description = "SV_MAP_MINE_DESC", map = "mine", status = "available", since = "0.5.0", requires = "ch4" },
 }
 
 -- Roblox places inside this experience (Creator Hub -> Places). 0 = not created yet:

@@ -349,6 +349,33 @@ local function build()
 	kit.patrol(Vector3.new(70, 0, 30), "SURFACE")
 
 	---------------------------------------------------------------------------
+	-- Survival ("Mine - Tiefschicht"): generators, stations, breakers, keys, fuses
+	---------------------------------------------------------------------------
+	kit.generator(CFrame.new(-50, 0, -142) * CFrame.Angles(0, math.rad(90), 0), 1)
+	kit.generator(CFrame.new(50, 0, -117), 2)
+	kit.station(CFrame.new(16, 1.5, -122), "mine_station_1")
+	kit.station(CFrame.new(76, 1.5, -112), "mine_station_2")
+	kit.station(CFrame.new(-36, 1.5, -336), "mine_station_3")
+	kit.panel(CFrame.new(79.4, 5, -126) * CFrame.Angles(0, math.rad(-90), 0), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "PUMP" })
+	kit.panel(CFrame.new(-79.4, 5, -112) * CFrame.Angles(0, math.rad(90), 0), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "LIFT" })
+	kit.panel(CFrame.new(89.4, 5, 62) * CFrame.Angles(0, math.rad(-90), 0), "breaker", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { Sector = "SURFACE" })
+	kit.panel(CFrame.new(-19.4, 5, -123) * CFrame.Angles(0, math.rad(90), 0), "mine_relay", "INTERACT_INSERT", "OBJECT_FUSE_PANEL", { HoldDuration = 3 }, C.Steel)
+	kit.syncKey(CFrame.new(-4.4, 4.5, -56) * CFrame.Angles(0, math.rad(90), 0), 1)
+	kit.syncKey(CFrame.new(-79.4, 4.5, -128) * CFrame.Angles(0, math.rad(90), 0), 2)
+	for _, f in {
+		{ CFrame.new(3.5, 0.4, -30), "MINE" }, { CFrame.new(-3.5, 0.4, -90), "MINE" },
+		{ CFrame.new(18, 0.4, -138), "MINE" }, { CFrame.new(74, 0.4, -146), "PUMP" },
+		{ CFrame.new(-76, 0.4, -146), "LIFT" }, { CFrame.new(-61, 0.4, -230), "LIFT" },
+		{ CFrame.new(16, 0.4, -256), "TRANSFORMER" }, { CFrame.new(-40, 0.4, -300), "ARRAY" },
+		{ CFrame.new(86.5, 3.45, 66.5), "SURFACE" },
+	} do
+		kit.fuseSpot(f[1], f[2])
+	end
+	local truck = block(outside, "Truck", Vector3.new(8, 7, 16), CFrame.new(-22, 3.6, 105) * CFrame.Angles(0, math.rad(-10), 0), Color3.fromRGB(150, 120, 40), Enum.Material.Metal)
+	kit.interactable(truck, "mine_extract", "INTERACT_LEAVE", "OBJECT_TRUCK", { HoldDuration = 2, MaxDistance = 11 })
+	kit.checkpoint("CP_SV_MINE", CFrame.new(20, 0.5, 70))
+
+	---------------------------------------------------------------------------
 	-- Markers
 	---------------------------------------------------------------------------
 	kit.checkpoint("C4_START", CFrame.new(0, 0.5, 115))

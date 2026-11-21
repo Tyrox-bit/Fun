@@ -41,6 +41,11 @@ function ChapterKit.new(chapterName: string, chapterId: string)
 		return list
 	end
 
+	-- A base value scaled by team size (see Config.Team).
+	function k.scaled(name: string, base: number): number
+		return math.floor(base * Config.TeamValue(name, math.max(1, #k.players())) + 0.5)
+	end
+
 	function k.reset()
 		k.token += 1
 		table.clear(stepped)

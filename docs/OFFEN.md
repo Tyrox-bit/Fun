@@ -1,4 +1,4 @@
-# Abhakliste – Wünsche vs. Stand (v0.6 · Spielversion 0.4.0)
+# Abhakliste – Wünsche vs. Stand (v0.7 · Spielversion 0.5.0)
 
 Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Assets, IDs, Studio)
 
@@ -16,9 +16,9 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 - ✅ Kapitel 3 „Das Protokoll“ (Kapelle + Archiv im Hügel): Tonband-Rekonstruktion (hören + ordnen, keine Codes, zufällig pro Durchlauf), Twist mit eurem Funkgerät-Design, euren Namen und DURCHLAUF 0007, Entscheidung „Rekorder mitnehmen/zerstören“
 - ✅ Kapitel 4 „Frequenz Null“ (Mine): Zeitschichten heute ↔ 2009 (Wege nur in einer Schicht offen), alle 4 Prognose-Arten, drei Enden: Antworten · Schweigen · geheime Gegenfrequenz (alle 6 Geisterprotokolle + jede Prognose-Art gebrochen)
 - ✅ Neues Spiel+: nach „Antworten“ begrüßt Kapitel 1 euch mit „Ihr seid zurück.“ · Entscheidungen aus Kap. 2/3 ändern Funksprüche in Kap. 4
-- ⬜ Sicherheitsschleuse
+- ✅ Sicherheitsschleuse: zwei Schlüssel weit auseinander, gleichzeitig drehen (zu zweit 2,5–3 s Fenster, solo 12 s zum Hinüberrennen) – als Überlebensaufgabe auf allen 4 Karten
 - ⬜ Funkgerät-Peilmechanik (von dir zurückgestellt)
-- ⬜ Rätsel-Skalierung mit Spielerzahl (bisher nur Kreatur-Tempo solo)
+- ✅ Skalierung nach Spielerzahl (`Config.Team`): Prognose-Fristen (solo +35 %), Halte-Zeiten (Uplinks), Sicherungen pro Schicht (2/3/3/4), Schleusen-Fenster – plus langsamere Kreatur solo
 
 ## v0.5 (Erweiterungsprompt)
 - ✅ HorrorDirector mit Gewichtungen, Abklingzeiten, Seltenheit: Gestalt hinter Glas, Gestalt im leeren Raum, Lautsprecherstimme, Licht im Nebenraum, Schritte hinter dir, Schatten, Monster-Täuschungsgeräusche hinter Wänden, Annäherung im Gang, gedämpfte Stimmen, nur-für-dich-sichtbares Objekt
@@ -38,7 +38,7 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 - ✅ Staumauer 3 (Tal, Mannschaftstrakt, Turbinenhalle, Galerie in der Mauer, Schrägstollen, Serpentinen-Rampe, Krone mit Antennenhof über dem Stausee)
 - ✅ Kapelle (Friedhof, Glockenturm, Kirchenschiff, Sakristei, Archiv-Bunker im Hügel, versiegelter Operatorraum)
 - ✅ Mine (Förderturm, Maschinenhaus, Stollennetz mit Holzausbau, Pumpen-/Schachtraum, verschütteter Gang, Rundweg, Echo-Array-Kaverne)
-- ✅ Zweite Überlebenskarte: Staumauer 3 – Schleusentor (Überleben ist jetzt kartenunabhängig über Profile)
+- ✅ Überleben auf allen vier Karten: Relaisanlage 07 · Staumauer 3 – Schleusentor · Kapelle – Nachtwache · Mine – Tiefschicht (kartenunabhängig über Profile, eigene Bestenlisten)
 - ⬜ Fabrikruine
 
 ## Kreatur, Modelle, Animationen

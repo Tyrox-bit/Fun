@@ -69,6 +69,36 @@ local PROFILES = {
 		openDoors = { "YardGate" }, -- the antenna yard is open in survival
 		cameras = false,
 	},
+	church = {
+		start = "CP_SV_CHURCH",
+		sectors = { "NAVE", "SACRISTY", "ARCHIVE", "TAPES" },
+		breakerFor = { ARCHIVE = "c3_breaker" },
+		stations = { "church_station_1", "church_station_2", "church_station_3" },
+		uplink = "c3_deck",
+		extract = "church_extract",
+		fuseTarget = "church_relay",
+		fuseObjective = "SV_OBJ_CHURCH_RELAY",
+		evacObjective = "SV_EVAC_CHURCH",
+		evacLine = "SV_EVAC_LINE_CHURCH",
+		powerOn = {},
+		openDoors = { "HiddenPassage", "SealedDoor" },
+		cameras = false,
+	},
+	mine = {
+		start = "CP_SV_MINE",
+		sectors = { "PUMP", "LIFT", "TRANSFORMER", "SURFACE" },
+		breakerFor = { TRANSFORMER = "c4_breaker" },
+		stations = { "mine_station_1", "mine_station_2", "mine_station_3" },
+		uplink = "c4_core",
+		extract = "mine_extract",
+		fuseTarget = "mine_relay",
+		fuseObjective = "SV_OBJ_MINE_RELAY",
+		evacObjective = "SV_EVAC_MINE",
+		evacLine = "SV_EVAC_LINE_MINE",
+		powerOn = {},
+		openDoors = { "MineGate", "BlastDoor" },
+		cameras = false,
+	},
 }
 local function profileFor(entry): any
 	return PROFILES[entry and entry.map or "relay07"] or PROFILES.relay07
@@ -78,7 +108,7 @@ function Survival.StartCheckpointFor(entry): string
 end
 
 local SC = Config.Survival
-local TASKS = { "fuses", "uplink", "generators", "stations" }
+local TASKS = { "fuses", "uplink", "generators", "stations", "keys" }
 local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm", "forecast" }
 local EVENT_NAMES = { blackout = "SV_EVN_BLACKOUT", static = "SV_EVN_STATIC", hunt = "SV_EVN_HUNT", lockdown = "SV_EVN_LOCKDOWN", calm = "SV_EVN_CALM", forecast = "SV_EVN_FORECAST" }
 
@@ -254,7 +284,11 @@ local completeTask: (r: Run) -> ()
 local startEvacuation: (r: Run) -> ()
 local EVAC_SECONDS = 75
 
-local function spawnFuses(r: Run)
+local function teamSize(): number
+	return math.max(1, #ctx.playersInGame())
+end
+
+local function spawnFuses(r: Run, total: number)
 	if r.fuses then
 		r.fuses:Destroy()
 	end
@@ -268,7 +302,7 @@ local function spawnFuses(r: Run)
 			table.insert(spots, spot)
 		end
 	end
-	for _ = 1, math.min(3, #spots) do
+	for _ = 1, math.min(total, #spots) do
 		local spot = table.remove(spots, math.random(1, #spots))
 		local fuse = Instance.new("Part")
 		fuse.Name = "Fuse"
@@ -293,7 +327,7 @@ local function spawnFuses(r: Run)
 end
 
 local function beginTask(r: Run)
-	local taskName = pick(TASKS, r.lastTask)
+	local taskName = pick(r.profile.tasks or TASKS, r.lastTask)
 	r.task = taskName
 	r.lastTask = taskName
 	r.taskStarted = os.clock()
@@ -301,11 +335,18 @@ local function beginTask(r: Run)
 	r.progress = {}
 	if taskName == "fuses" then
 		r.progress.found = 0
-		spawnFuses(r)
-		objective("OBJECTIVE_FIND_FUSES", { count = 0, total = 3 })
+		r.progress.total = Config.TeamValue("Fuses", teamSize())
+		spawnFuses(r, r.progress.total)
+		objective("OBJECTIVE_FIND_FUSES", { count = 0, total = r.progress.total })
 	elseif taskName == "uplink" then
 		r.progress.seconds = 0
+		r.progress.need = math.floor(UPLINK_SECONDS * Config.TeamValue("HoldTime", teamSize()) + 0.5)
 		objective("SV_TASK_UPLINK", { percent = 0 })
+	elseif taskName == "keys" then
+		-- the security lock: two keys far apart, turned at (almost) the same time
+		r.progress.keys = {}
+		r.progress.window = Config.TeamValue("KeyWindow", #aliveInGame())
+		objective("SV_TASK_KEYS", { seconds = r.progress.window })
 	elseif taskName == "generators" then
 		r.progress.done = {}
 		objective("SV_TASK_GENERATORS", { count = 0, total = 2 })
@@ -601,8 +642,8 @@ function Survival.Begin(entry)
 						if rr.progress.seconds % 6 == 0 then
 							NoiseService.Emit(center, 80, nil) -- the uplink is loud
 						end
-						objective("SV_TASK_UPLINK", { percent = math.floor(rr.progress.seconds / UPLINK_SECONDS * 100) })
-						if rr.progress.seconds >= UPLINK_SECONDS then
+						objective("SV_TASK_UPLINK", { percent = math.min(100, math.floor(rr.progress.seconds / rr.progress.need * 100)) })
+						if rr.progress.seconds >= rr.progress.need then
 							completeTask(rr)
 							continue
 						end
@@ -679,10 +720,10 @@ function Survival.Init(context)
 		Net.Event("Sfx"):FireAllClients("fuse_pickup", (fuse :: BasePart).Position)
 		fuse:Destroy()
 		r.progress.found += 1
-		if r.progress.found >= 3 then
+		if r.progress.found >= r.progress.total then
 			objective(r.profile.fuseObjective)
 		else
-			objective("OBJECTIVE_FIND_FUSES", { count = r.progress.found, total = 3 })
+			objective("OBJECTIVE_FIND_FUSES", { count = r.progress.found, total = r.progress.total })
 		end
 	end)
 
@@ -698,7 +739,7 @@ function Survival.Init(context)
 
 	local function deliverFuses(_player, panel)
 		local r = run
-		if not active or not r or r.task ~= "fuses" or (r.progress.found or 0) < 3 or panel:GetAttribute("InteractId") ~= r.profile.fuseTarget then
+		if not active or not r or r.task ~= "fuses" or (r.progress.found or 0) < (r.progress.total or 3) or panel:GetAttribute("InteractId") ~= r.profile.fuseTarget then
 			return
 		end
 		Net.Event("Sfx"):FireAllClients("relay_activate", (panel :: BasePart).Position)
@@ -784,6 +825,36 @@ function Survival.Init(context)
 	for _, profile in PROFILES do
 		registerOnce(profile.extract, extract)
 	end
+
+	-- Security lock: both keys within the window (solo: enough time to run between them).
+	InteractionService.Register("sync_key", function(_player, key)
+		local r = run
+		if not active or not r or r.task ~= "keys" then
+			return
+		end
+		local index = tonumber(key:GetAttribute("KeyIndex")) or 1
+		local now = os.clock()
+		r.progress.keys[index] = now
+		Net.Event("Sfx"):FireAllClients("relay_activate", (key :: BasePart).Position)
+		local other = r.progress.keys[if index == 1 then 2 else 1]
+		if other and now - other <= r.progress.window then
+			completeTask(r)
+			return
+		end
+		for _, player in ctx.playersInGame() do
+			Net.Event("Notify"):FireClient(player, "SV_KEY_FIRST", { seconds = r.progress.window })
+		end
+		local turnedAt = now
+		task.delay(r.progress.window, function()
+			if run == r and r.task == "keys" and r.progress.keys[index] == turnedAt then
+				r.progress.keys[index] = nil
+				Net.Event("Sfx"):FireAllClients("door_locked", (key :: BasePart).Position)
+				for _, player in ctx.playersInGame() do
+					Net.Event("Notify"):FireClient(player, "SV_KEY_MISSED")
+				end
+			end
+		end)
+	end)
 
 	Players.PlayerRemoving:Connect(function(player)
 		if run then

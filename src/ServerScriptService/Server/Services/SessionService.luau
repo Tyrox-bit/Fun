@@ -44,6 +44,8 @@ local MODULES = {
 	survival = {
 		sv_relay07 = require(script.Parent.Parent.Modes.Survival),
 		sv_dam03 = require(script.Parent.Parent.Modes.Survival), -- same mode, other map profile
+		sv_church = require(script.Parent.Parent.Modes.Survival),
+		sv_mine = require(script.Parent.Parent.Modes.Survival),
 	},
 }
 

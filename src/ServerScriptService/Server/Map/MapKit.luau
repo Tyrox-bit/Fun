@@ -717,6 +717,34 @@ function MapKit.new(modelName: string, builderName: string, seed: number)
 		return post
 	end
 
+	-- One of the two keys of a security lock (survival task "keys"): yellow/black housing,
+	-- a key with a lamp. Index 1 and 2 belong together.
+	function kit.syncKey(cf: CFrame, index: number)
+		local box = block(props(), "SyncKey" .. index, Vector3.new(2.4, 3, 0.8), cf, C.Hazard, Enum.Material.Metal)
+		for i = 0, 3 do
+			local stripe = block(props(), "SyncStripe", Vector3.new(0.35, 3.1, 0.05), box.CFrame * CFrame.new(-0.9 + i * 0.6, 0, -0.42) * CFrame.Angles(0, 0, math.rad(30)), C.SteelDark, Enum.Material.SmoothPlastic)
+			stripe.CanCollide = false
+		end
+		local lamp = block(props(), "SyncLamp", Vector3.new(0.5, 0.5, 0.2), box.CFrame * CFrame.new(0, 1.9, -0.3), C.Emergency, Enum.Material.Neon)
+		lamp.CanCollide = false
+		local glow = Instance.new("PointLight")
+		glow.Range = 6
+		glow.Brightness = 0.8
+		glow.Color = C.Emergency
+		glow.Parent = lamp
+		kit.interactable(box, "sync_key", "INTERACT_TURN_KEY", "OBJECT_SYNC_KEY", { MaxDistance = 8, KeyIndex = index })
+		return box
+	end
+
+	-- Small box used as a survival station / relay target.
+	function kit.station(cf: CFrame, id: string, object: string?)
+		local box = block(props(), "Station_" .. id, Vector3.new(2, 3, 2), cf, C.Steel, Enum.Material.Metal)
+		local screen = block(props(), "StationScreen", Vector3.new(1.4, 0.9, 0.05), box.CFrame * CFrame.new(0, 0.7, -1.03), C.Screen, Enum.Material.Neon)
+		screen.CanCollide = false
+		kit.interactable(box, id, "INTERACT_ACTIVATE", object or "OBJECT_STATION", { MaxDistance = 8 })
+		return box
+	end
+
 	function kit.firstAid(cf: CFrame)
 		local cabinet = block(props(), "FirstAid", Vector3.new(2.6, 3.2, 0.9), cf, Color3.fromRGB(226, 224, 216), Enum.Material.SmoothPlastic)
 		for _, size in { Vector3.new(0.4, 1.4, 0.05), Vector3.new(1.4, 0.4, 0.05) } do

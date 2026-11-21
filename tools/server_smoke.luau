@@ -787,6 +787,15 @@ local function doorLocked(attr)
 	assert(panel, "no door with attribute " .. attr)
 	return panel:GetAttribute("Locked") == true, panel
 end
+-- lets a running forecast run out (deadlines scale with the team size)
+local function letForecastHappen()
+	local waited = 0
+	while sessionState.Forecast ~= nil and waited < 90 do
+		advance(1)
+		waited += 1
+	end
+	advance(1)
+end
 local function has(list, value)
 	return table.find(list, value) ~= nil
 end
@@ -963,7 +972,7 @@ scenario("ch2_kept_unknown", function()
 	use(players[1], "lore", "LogId", "c2_keeper_log")
 	advance(12)
 	assert(sessionState.Forecast == "FORECAST_CANTEEN", "door forecast missing")
-	advance(32) -- kept
+	letForecastHappen() -- kept
 	assert(doorLocked("Canteen"), "canteen doors should be locked")
 	advance(30)
 	assert(not doorLocked("Canteen"), "canteen doors should unlock again")
@@ -971,7 +980,7 @@ scenario("ch2_kept_unknown", function()
 	use(players[1], "generator", "GeneratorId", 1)
 	advance(5)
 	assert(sessionState.Forecast == "FORECAST_FLOOD", "flood forecast missing")
-	advance(36) -- kept
+	letForecastHappen() -- kept
 	assert(doorLocked("Gallery"), "gallery should be closed after the flood")
 	use(players[2], "generator", "GeneratorId", 2)
 	advance(3)
@@ -1092,11 +1101,11 @@ scenario("ch4_kept_silence", function()
 	moveAll(roblox.Vector3.new(0, 0, -130))
 	advance(7)
 	assert(sessionState.Forecast == "FORECAST_CAGE", "cage forecast missing")
-	advance(31) -- kept
+	letForecastHappen() -- kept
 	assert(doorLocked("LoopDoor"), "the crash must jam the loop")
 	advance(21)
 	assert(sessionState.Forecast == "FORECAST_MINE_FLOOD", "flood forecast missing")
-	advance(36)
+	letForecastHappen()
 	-- wait for a 2009 layer and walk through the old passage
 	local waited = 0
 	while sessionState.TimeLayer ~= "2009" and waited < 60 do
@@ -1111,10 +1120,10 @@ scenario("ch4_kept_silence", function()
 	moveAll(roblox.Vector3.new(0, 0, -240))
 	advance(4)
 	assert(sessionState.Forecast == "FORECAST_TRANSFORMER", "power forecast missing")
-	advance(31) -- kept
+	letForecastHappen() -- kept
 	advance(7)
 	assert(sessionState.Forecast == "FORECAST_BLAST", "blast forecast missing")
-	advance(41) -- kept: sealed until the next 2009 pulse
+	letForecastHappen() -- kept
 	assert(sessionState.Objective == "OBJ_C4_BLAST_WAIT", "wait objective: " .. tostring(sessionState.Objective))
 	waited = 0
 	while doorLocked("BlastDoor") and waited < 70 do
@@ -1176,6 +1185,8 @@ end)
 local SV_MAPS = {
 	dam03 = { builder = "Dam03", start = "CP_SV_DAM", relay = "dam_relay", relayObjective = "SV_OBJ_DAM_RELAY", stations = { "dam_station_1", "dam_station_2", "dam_station_3" }, uplink = "c2_uplink" },
 	relay07 = { builder = "RelayStation07", start = "C1_CONTROL", relay = "c1_relay_b", relayObjective = "OBJECTIVE_RELAY_B", stations = { "c1_terminal", "c1_breaker_a", "c1_core" }, uplink = "c1_core" },
+	church = { builder = "Chapel", start = "CP_SV_CHURCH", relay = "church_relay", relayObjective = "SV_OBJ_CHURCH_RELAY", stations = { "church_station_1", "church_station_2", "church_station_3" }, uplink = "c3_deck" },
+	mine = { builder = "Mine", start = "CP_SV_MINE", relay = "mine_relay", relayObjective = "SV_OBJ_MINE_RELAY", stations = { "mine_station_1", "mine_station_2", "mine_station_3" }, uplink = "c4_core" },
 }
 local function survivalRun(mapId)
 	local m = SV_MAPS[mapId]
@@ -1192,7 +1203,7 @@ local function survivalRun(mapId)
 	for _ = 1, 6 do
 		local objective = sessionState.Objective
 		if objective == "OBJECTIVE_FIND_FUSES" then
-			for _ = 1, 3 do
+			for _ = 1, 3 do -- two players: three fuses (Config.Team.Fuses)
 				local fuse = interactable("sv_fuse")
 				assert(fuse, "fuse missing")
 				use(players[1], "sv_fuse")
@@ -1206,6 +1217,13 @@ local function survivalRun(mapId)
 			for _, id in m.stations do
 				use(players[1], id)
 			end
+		elseif objective == "SV_TASK_KEYS" then
+			-- first alone and too slow (the lock resets), then together
+			use(players[1], "sync_key", "KeyIndex", 1)
+			advance(4)
+			assert(has(record.notify, "SV_KEY_MISSED"), "lock did not reset")
+			use(players[1], "sync_key", "KeyIndex", 1)
+			use(players[2], "sync_key", "KeyIndex", 2)
 		elseif objective == "SV_TASK_UPLINK" then
 			local uplink = interactable(m.uplink)
 			moveAll(uplink.CFrame.Position)
@@ -1237,6 +1255,12 @@ end)
 scenario("sv_relay07", function()
 	survivalRun("relay07")
 end)
+scenario("sv_church", function()
+	survivalRun("church")
+end)
+scenario("sv_mine", function()
+	survivalRun("mine")
+end)
 
 ---------------------------------------------------------------------------
 -- Run
@@ -1245,7 +1269,7 @@ end)
 for seed = 1, 12 do
 	scenario("sv_dam03_seed" .. seed, function()
 		math.randomseed(seed)
-		SCENARIOS.sv_dam03()
+		SCENARIOS[({ "sv_dam03", "sv_relay07", "sv_church", "sv_mine" })[seed % 4 + 1]]()
 	end)
 end
 
