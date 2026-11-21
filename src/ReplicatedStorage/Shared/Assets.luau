@@ -10,6 +10,29 @@
 -- animation is used for the placeholder creature.
 
 return {
+	-- Photo-scanned PBR textures (assets/textures/<Material>/*.jpg). Upload the images, paste
+	-- the IMAGE ids as "rbxassetid://<id>" (see docs/TEXTURES.md). Empty = Roblox default material.
+	Textures = {
+		Concrete = { color = "", normal = "", roughness = "" },
+		Plaster = { color = "", normal = "", roughness = "" },
+		CeramicTiles = { color = "", normal = "", roughness = "" },
+		Metal = { color = "", normal = "", roughness = "" },
+		DiamondPlate = { color = "", normal = "", roughness = "", metalness = "" },
+		CorrodedMetal = { color = "", normal = "", roughness = "" },
+		Wood = { color = "", normal = "", roughness = "" },
+		WoodPlanks = { color = "", normal = "", roughness = "" },
+		Asphalt = { color = "", normal = "", roughness = "" },
+		Cobblestone = { color = "", normal = "", roughness = "" },
+		Slate = { color = "", normal = "", roughness = "" },
+		Rock = { color = "", normal = "", roughness = "" },
+		Brick = { color = "", normal = "", roughness = "" },
+		Fabric = { color = "", normal = "", roughness = "" },
+		Carpet = { color = "", normal = "", roughness = "" },
+		RoofShingles = { color = "", normal = "", roughness = "" },
+		Pebble = { color = "", normal = "", roughness = "" },
+		Pavement = { color = "", normal = "", roughness = "" },
+		Ground = { color = "", normal = "", roughness = "" },
+	},
 	Sounds = {
 		creature_breath_deep_1 = "",
 		creature_breath_deep_2 = "",

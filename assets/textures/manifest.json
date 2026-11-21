@@ -1,0 +1,258 @@
+{
+ "Concrete": {
+  "source": "concrete_wall_003",
+  "name": "Concrete Wall 003",
+  "authors": [
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 10.7,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Plaster": {
+  "source": "grey_plaster_02",
+  "name": "Grey Plaster 02",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 3.6,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "CeramicTiles": {
+  "source": "dirty_tiles",
+  "name": "Dirty Tiles",
+  "authors": [
+   "Jenelle van Heerden",
+   "Matterfield"
+  ],
+  "studsPerTile": 8.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Metal": {
+  "source": "blue_metal_plate",
+  "name": "Blue Metal Plate",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 8.9,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "DiamondPlate": {
+  "source": "metal_plate",
+  "name": "Metal Plate",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 3,
+  "maps": [
+   "color",
+   "normal",
+   "roughness",
+   "metalness"
+  ]
+ },
+ "CorrodedMetal": {
+  "source": "rusty_metal_02",
+  "name": "Rusty Metal 02",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 3.6,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Wood": {
+  "source": "wood_table_worn",
+  "name": "Wood Table Worn",
+  "authors": [
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 3,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "WoodPlanks": {
+  "source": "weathered_brown_planks",
+  "name": "Weathered Brown Planks",
+  "authors": [
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 6.4,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Asphalt": {
+  "source": "worn_asphalt",
+  "name": "Worn Asphalt",
+  "authors": [
+   "Amal Kumar"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Cobblestone": {
+  "source": "rustic_stone_wall_02",
+  "name": "Rustic Stone Wall 02",
+  "authors": [
+   "Amal Kumar"
+  ],
+  "studsPerTile": 5.4,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Slate": {
+  "source": "slate_floor",
+  "name": "Slate Floor",
+  "authors": [
+   "Dimitrios Savva"
+  ],
+  "studsPerTile": 8.2,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Rock": {
+  "source": "rock_face_03",
+  "name": "Rock Face 03",
+  "authors": [
+   "Dario Barresi",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 9.6,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Brick": {
+  "source": "red_brick_03",
+  "name": "Red Brick 03",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 3.6,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Fabric": {
+  "source": "rough_linen",
+  "name": "Rough Linen",
+  "authors": [
+   "Rico Cilliers",
+   "colormass"
+  ],
+  "studsPerTile": 3,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Carpet": {
+  "source": "dirty_carpet",
+  "name": "Dirty Carpet",
+  "authors": [
+   "Rohit Seervi"
+  ],
+  "studsPerTile": 3,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "RoofShingles": {
+  "source": "roof_slates_02",
+  "name": "Roof Slates 02",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 10.7,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Pebble": {
+  "source": "gravel_floor",
+  "name": "Gravel Floor",
+  "authors": [
+   "Jenelle van Heerden",
+   "Matterfield"
+  ],
+  "studsPerTile": 8.0,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Pavement": {
+  "source": "concrete_pavement",
+  "name": "Concrete Pavement",
+  "authors": [
+   "Charlotte Baglioni"
+  ],
+  "studsPerTile": 6.4,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Ground": {
+  "source": "forest_ground_04",
+  "name": "Forest Ground 04",
+  "authors": [
+   "Rico Cilliers",
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 11.3,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ }
+}

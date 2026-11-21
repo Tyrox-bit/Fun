@@ -163,5 +163,43 @@ for _, entry in { { "Dam03", "Dam03" }, { "Chapel", "Church" }, { "Mine", "Mine"
 end
 relay.ApplyLighting()
 
+-- 3. Photo-scanned textures: MaterialVariants + base material overrides (MaterialService
+--    "<Material>Name"), so the maps look real in edit mode too. Only materials whose image
+--    ids are filled in Shared/Assets.luau. FZ_TEXTURE_TEST=1 uses placeholder ids (format test).
+local function loadModule(path)
+	return luau.load(fs.readFile(path), { debugName = path, environment = env })()
+end
+local assets = loadModule("src/ReplicatedStorage/Shared/Assets.luau")
+local textures = loadModule("src/ReplicatedStorage/Shared/Textures.luau")
+local materialService = game:GetService("MaterialService")
+local PROPERTY = { color = "ColorMap", normal = "NormalMap", roughness = "RoughnessMap", metalness = "MetalnessMap" }
+local baked = 0
+for material, spec in textures do
+	local set = (assets.Textures or {})[material] or {}
+	local test = process.env.FZ_TEXTURE_TEST == "1"
+	if test or (type(set.color) == "string" and set.color ~= "") then
+		local name = "SR_" .. material
+		local old = materialService:FindFirstChild(name)
+		if old then
+			old:Destroy()
+		end
+		local variant = roblox.Instance.new("MaterialVariant")
+		variant.Name = name
+		variant.BaseMaterial = roblox.Enum.Material[material]
+		variant.StudsPerTile = spec.studsPerTile
+		variant.MaterialPattern = roblox.Enum.MaterialPattern[spec.pattern]
+		for _, map in spec.maps do
+			local id = if test then "rbxassetid://1" else set[map]
+			if type(id) == "string" and id ~= "" then
+				variant[PROPERTY[map]] = id
+			end
+		end
+		variant.Parent = materialService
+		materialService[material .. "Name"] = name
+		baked += 1
+	end
+end
+print(string.format("baked %d textured materials into MaterialService", baked))
+
 fs.writeFile(placePath, roblox.serializePlace(game, true))
 print("wrote " .. placePath)

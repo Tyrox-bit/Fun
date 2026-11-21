@@ -176,6 +176,9 @@ function INTERCEPT.GetPivot(real)
 	end
 	return real.CFrame
 end
+function INTERCEPT.SetBaseMaterialOverride(real, material, name)
+	real[material.Name .. "Name"] = name
+end
 function INTERCEPT.Destroy(real)
 	local list = real:GetDescendants()
 	table.insert(list, real)
@@ -651,6 +654,7 @@ local SERVICES = {
 	CollectionService = CollectionServiceShim,
 	Players = PlayersShim,
 	Lighting = wrap(realLighting),
+	MaterialService = wrap(dataModel:GetService("MaterialService")),
 	Workspace = wrap(realWorkspace),
 	ReplicatedStorage = pathProxy(ROOT .. "/ReplicatedStorage"),
 	ServerStorage = wrap(roblox.Instance.new("Folder")),
@@ -921,6 +925,29 @@ scenario("map_switching", function()
 	end
 	assert(MapService.Load("relay07"))
 	assert(count("FZ_Door") == relayDoors, "relay07 doors changed after a round trip")
+end)
+
+-- Photo textures: with ids filled, every material gets a variant + base material override.
+scenario("textures", function()
+	setup("Mine", 1)
+	local assets = requireModule(pathProxy(ROOT .. "/ReplicatedStorage/Shared/Assets.luau"))
+	local textures = requireModule(pathProxy(ROOT .. "/ReplicatedStorage/Shared/Textures.luau"))
+	local expected = 0
+	for material, spec in textures do
+		expected += 1
+		for _, map in spec.maps do
+			assets.Textures[material][map] = "rbxassetid://" .. (100 + expected)
+		end
+	end
+	requireModule(SERVER.Services.TextureService).Start()
+	local ms = dataModel:GetService("MaterialService")
+	assert(#ms:GetChildren() == expected, "variants: " .. #ms:GetChildren())
+	assert(ms.ConcreteName == "SR_Concrete" and ms.RockName == "SR_Rock" and ms.DiamondPlateName == "SR_DiamondPlate", "overrides missing")
+	for material in textures do
+		for map in pairs(assets.Textures[material]) do
+			assets.Textures[material][map] = ""
+		end
+	end
 end)
 
 -- Chapter 1 (regression), as a returning team after the "Answer" ending (New Game+)

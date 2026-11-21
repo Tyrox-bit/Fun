@@ -9,6 +9,7 @@ require(Shared.SessionState).Init()
 
 local SERVICES = {
 	"DataService",
+	"TextureService", -- first: the maps are built with their final materials
 	"MapService",
 	"SettingsService",
 	"AdminService",

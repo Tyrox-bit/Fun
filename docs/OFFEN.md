@@ -41,6 +41,10 @@ Legende: ✅ eingebaut · 🟡 teilweise · ⬜ offen · 👤 braucht dich (Asse
 - ✅ Überleben auf allen vier Karten: Relaisanlage 07 · Staumauer 3 – Schleusentor · Kapelle – Nachtwache · Mine – Tiefschicht (kartenunabhängig über Profile, eigene Bestenlisten)
 - ⬜ Fabrikruine
 
+## Texturen
+- ✅ 19 fotorealistische PBR-Texturen (CC0-Foto-Scans von Poly Haven) als MaterialVariants für alle Grundmaterialien und das Terrain · `docs/TEXTURES.md`
+- 👤 einmal hochladen (Weg A: API-Schlüssel → ich lade alles hoch · Weg B: Studio Asset Manager)
+
 ## Kreatur, Modelle, Animationen
 - ✅ KI, Platzhalter-Kreatur, prozedurale Animation, mehrere Kreaturen gleichzeitig
 - 👤 dein Monster-Modell (Einbau vorbereitet: `docs/CREATURE.md`)
