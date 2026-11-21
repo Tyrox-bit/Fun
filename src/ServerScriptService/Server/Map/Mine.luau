@@ -16,6 +16,7 @@
 local CollectionService = game:GetService("CollectionService")
 
 local MapKit = require(script.Parent.MapKit)
+local MapDress = require(script.Parent.MapDress)
 local C = MapKit.C
 
 local Map = {}
@@ -391,6 +392,24 @@ local function build()
 	kit.menuCamera(1, Vector3.new(-30, 5, 100), Vector3.new(20, 18, 10), 7)
 	kit.menuCamera(2, Vector3.new(0, 5, -112), Vector3.new(0, 4, -30), 4)
 	kit.menuCamera(3, Vector3.new(-35, 10, -270), Vector3.new(0, 12, -300), 6)
+
+	-- finishing pass: only the winding house gets painted walls (tunnels stay raw rock)
+	local model = kit.root
+	MapDress.Walls(model, { lower = Color3.fromRGB(70, 60, 50), rail = Color3.fromRGB(50, 40, 30), skirting = Color3.fromRGB(26, 24, 22), skip = { Enum.Material.Rock } })
+	MapDress.LightCones(model, { "FloodLight" }, 50)
+	MapDress.Mist(model, Vector3.new(0, 0, 60), Vector3.new(160, 0, 110), Color3.fromRGB(160, 160, 168), 1.1)
+	MapDress.Mist(model, Vector3.new(0, 0, -300), Vector3.new(80, 0, 70), Color3.fromRGB(150, 190, 220), 1.6) -- cold mist on the Array floor
+	MapDress.Mist(model, Vector3.new(0, 0, -200), Vector3.new(8, 0, 60), Color3.fromRGB(140, 140, 140), 0.6)
+	MapDress.Steam(model, Vector3.new(-74, 13, -122), Vector3.yAxis) -- out of the lift shaft
+	MapDress.Steam(model, Vector3.new(0, 26, -300), Vector3.yAxis, Color3.fromRGB(170, 210, 240)) -- the Array breathes
+	MapDress.Steam(model, Vector3.new(66, 3, -130), Vector3.new(0, 1, 0.2))
+	MapDress.Puddles(model, { { 2, -40, 4, 3 }, { -2, -95, 5, 3 }, { 0, -132, 7, 4 }, { 56, -138, 6, 5 }, { -60, -205, 4, 6 }, { 12, 40, 6, 4 } })
+	MapDress.Flicker(model, 0.2, 55)
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d.Name == "Roof" and d.CFrame.Position.Y > 10 and d.CFrame.Position.Z > 30 then
+			d.Material = Enum.Material.RoofShingles -- winding house
+		end
+	end
 	return kit.finish()
 end
 
@@ -413,6 +432,13 @@ function Map.BuildTerrain(model: Instance?)
 		end
 	end
 	MapKit.ApplyClouds("mine")
+	MapDress.TerrainLook({
+		Grass = Color3.fromRGB(62, 70, 50),
+		LeafyGrass = Color3.fromRGB(56, 64, 46),
+		Ground = Color3.fromRGB(74, 66, 56),
+		Mud = Color3.fromRGB(54, 48, 42),
+		Rock = Color3.fromRGB(84, 80, 76),
+	})
 	MapKit.RemovePreview(model)
 end
 

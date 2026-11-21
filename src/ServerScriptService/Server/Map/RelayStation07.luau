@@ -15,6 +15,8 @@
 local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 
+local MapDress = require(script.Parent.MapDress)
+
 local Map = {}
 
 local H = 14 -- wall height
@@ -377,7 +379,7 @@ local function roomDetail(x0: number, x1: number, z0: number, z1: number, floorC
 		cable.CanCollide = false
 	end
 	if floorColor then
-		local overlay = block(props, "FloorFinish", Vector3.new(w - 1, 0.04, d - 1), CFrame.new(cx, 0.03, cz), floorColor, Enum.Material.Plastic)
+		local overlay = block(props, "FloorFinish", Vector3.new(w - 1, 0.04, d - 1), CFrame.new(cx, 0.03, cz), floorColor, Enum.Material.CeramicTiles)
 		overlay.CanCollide = false
 		for x = x0 + 5, x1 - 1, 5 do
 			local seam = block(props, "Seam", Vector3.new(0.06, 0.05, d - 1), CFrame.new(x, 0.04, cz), floorColor:Lerp(Color3.new(0, 0, 0), 0.25), Enum.Material.Plastic)
@@ -1324,6 +1326,7 @@ function Map.BuildTerrain(model: Instance?)
 		terrain:FillBall(Vector3.new(math.cos(a) * 470, -30, 80 + math.sin(a) * 470), 70 + (i % 3) * 18, if i % 2 == 0 then Enum.Material.Grass else Enum.Material.Rock)
 	end
 	terrain.WaterWaveSize = 0.05
+	MapDress.TerrainLook()
 	local clouds = terrain:FindFirstChildOfClass("Clouds") or Instance.new("Clouds")
 	clouds.Cover = 0.62
 	clouds.Density = 0.45
@@ -1353,6 +1356,7 @@ local function buildLighting()
 	Lighting.EnvironmentSpecularScale = 0.85
 	Lighting.ShadowSoftness = 0.25
 	Lighting.GlobalShadows = true
+	MapDress.LightingQuality()
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
 	atmosphere.Density = 0.27
 	atmosphere.Offset = 0.04
@@ -1377,6 +1381,16 @@ function Map.Build(): Model
 	furnish()
 	buildOutside()
 	buildLighting()
+	-- finishing pass: painted wall bands, lamp light cones, mist at the forest edge, wet yard
+	MapDress.Walls(root, { lower = Color3.fromRGB(66, 82, 78), rail = Color3.fromRGB(70, 52, 38), skirting = Color3.fromRGB(28, 28, 28) })
+	MapDress.LightCones(root, { "LampHead", "CanopyLamp" })
+	for _, m in { { Vector3.new(-60, 0, 170), Vector3.new(160, 0, 90) }, { Vector3.new(110, 0, 180), Vector3.new(80, 0, 120) }, { Vector3.new(75, 0, 300), Vector3.new(120, 0, 100) }, { Vector3.new(-170, 0, 40), Vector3.new(60, 0, 200) } } do
+		MapDress.Mist(root, m[1], m[2])
+	end
+	MapDress.Steam(root, Vector3.new(-98, 12.5, 60), Vector3.new(0, -1, 0.3))
+	MapDress.Steam(root, Vector3.new(0, 15, 0), Vector3.yAxis, Color3.fromRGB(190, 200, 215))
+	MapDress.Puddles(root, { { 60, 100, 6, 4 }, { 30, 92, 9, 5 }, { 78, 160, 5, 3 }, { 72, 210, 7, 4 }, { 90, 120, 4, 3 } })
+	MapDress.Flicker(root, 0.12, 7)
 	root:SetAttribute("FZ_Builder", "RelayStation07")
 	root.Parent = workspace
 	if not Map.SkipTerrain then

@@ -13,6 +13,7 @@
 local CollectionService = game:GetService("CollectionService")
 
 local MapKit = require(script.Parent.MapKit)
+local MapDress = require(script.Parent.MapDress)
 local C = MapKit.C
 
 local Map = {}
@@ -461,6 +462,33 @@ local function build()
 	kit.menuCamera(3, Vector3.new(100, 8, 86), Vector3.new(60, 4, 58), 5)
 	kit.menuCamera(4, Vector3.new(160, 30, 70), Vector3.new(60, 22, 0), 9)
 
+	-- finishing pass
+	local model = kit.root
+	MapDress.Walls(model, { lower = Color3.fromRGB(78, 88, 84), rail = Color3.fromRGB(60, 64, 66), skirting = Color3.fromRGB(26, 26, 26) })
+	MapDress.LightCones(model, { "FloodLight" }, 46)
+	MapDress.Mist(model, Vector3.new(0, LAKE, -90), Vector3.new(300, 0, 90), Color3.fromRGB(150, 160, 175), 1.4) -- over the lake
+	MapDress.Mist(model, Vector3.new(-10, 0, 140), Vector3.new(220, 0, 120))
+	MapDress.Mist(model, Vector3.new(0, 0, 30), Vector3.new(260, 0, 40), nil, 0.7) -- spray at the foot of the dam
+	MapDress.Steam(model, Vector3.new(60, 16, 31.6), Vector3.new(0, 0, 1))
+	MapDress.Steam(model, Vector3.new(90, 16, 31.6), Vector3.new(0, 0, 1))
+	MapDress.Steam(model, Vector3.new(0, 8.5, -6), Vector3.new(0, -0.2, 1), Color3.fromRGB(180, 190, 200)) -- breath of the gallery
+	MapDress.Puddles(model, {
+		{ -20, -10, 8, 3, CREST }, { 40, -6, 6, 4, CREST }, { -90, -12, 9, 3, CREST }, { 0, -30, 7, 5, CREST },
+		{ 4, 60, 6, 4 }, { -6, 120, 8, 5 }, { 5, 175, 5, 3 }, { -40, 30, 9, 4 }, { 75, 98, 7, 4 }, { 95, 20, 6, 3 },
+	})
+	MapDress.Flicker(model, 0.15, 33)
+	-- materials: tiled canteen, wet crest
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") then
+			if d.Name == "CrewFloor" then
+				d.Material = Enum.Material.CeramicTiles
+				d.Color = Color3.fromRGB(150, 146, 134)
+			elseif d.Name == "Crest" or d.Name == "YardPlatform" or d.Name == "Landing1" or d.Name == "Landing2" or d.Name == "Landing3" then
+				d.Material = Enum.Material.Pavement
+			end
+		end
+	end
+
 	return kit.finish()
 end
 
@@ -487,6 +515,13 @@ function Map.BuildTerrain(model: Instance?)
 	terrain.WaterWaveSpeed = 14
 	terrain.WaterColor = Color3.fromRGB(26, 40, 46)
 	terrain.WaterTransparency = 0.6
+	MapDress.TerrainLook({
+		Grass = Color3.fromRGB(56, 70, 50),
+		LeafyGrass = Color3.fromRGB(50, 64, 44),
+		Ground = Color3.fromRGB(70, 62, 52),
+		Mud = Color3.fromRGB(46, 42, 36),
+		Rock = Color3.fromRGB(86, 88, 86),
+	})
 	MapKit.ApplyClouds("storm")
 	MapKit.RemovePreview(model)
 end

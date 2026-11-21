@@ -13,6 +13,7 @@
 local CollectionService = game:GetService("CollectionService")
 
 local MapKit = require(script.Parent.MapKit)
+local MapDress = require(script.Parent.MapDress)
 local C = MapKit.C
 
 local Map = {}
@@ -384,6 +385,41 @@ local function build()
 	kit.menuCamera(2, Vector3.new(0, 6, 34), Vector3.new(0, 6, -42), 5)
 	kit.menuCamera(3, Vector3.new(-50, 5, 118), Vector3.new(0, 18, 50), 7)
 	kit.menuCamera(4, Vector3.new(63, 8, -30), Vector3.new(108, 3, -28), 4)
+
+	-- finishing pass: wood panelling in the nave, painted bunker walls, cemetery mist,
+	-- moonlight falling through the stained glass
+	local model = kit.root
+	MapDress.Walls(model, { lower = Color3.fromRGB(70, 50, 36), rail = Color3.fromRGB(52, 36, 24), skirting = Color3.fromRGB(30, 24, 20), height = 5, material = Enum.Material.Wood })
+	MapDress.Mist(model, Vector3.new(0, 0, 92), Vector3.new(120, 0, 76), Color3.fromRGB(176, 184, 200), 1.8)
+	MapDress.Mist(model, Vector3.new(0, 0, 175), Vector3.new(60, 0, 80), Color3.fromRGB(176, 184, 200), 1.2)
+	MapDress.Mist(model, Vector3.new(-120, 0, 40), Vector3.new(120, 0, 200), nil, 0.8)
+	for _, pane in model:GetDescendants() do
+		if pane:IsA("BasePart") and pane.Name == "StainedGlass" then
+			local p = pane.CFrame.Position
+			local inward = if p.X < 0 then 1 else -1
+			MapDress.Shaft(pane, Vector3.new(p.X + inward * 12, 0, p.Z + 3), 6, Color3.fromRGB(170, 190, 230))
+		end
+	end
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") then
+			if d.Name == "RoofPlane" then
+				d.Material = Enum.Material.RoofShingles
+			elseif d.Name == "Floor" then
+				local p = d.CFrame.Position
+				if p.X > 60 and p.X < 110 and p.Z > -60 and p.Z < 0 then
+					d.Material = Enum.Material.Carpet -- archive
+					d.Color = Color3.fromRGB(84, 40, 36)
+				elseif p.X > 110 then
+					d.Material = Enum.Material.Carpet -- tape room
+					d.Color = Color3.fromRGB(60, 58, 70)
+				elseif p.Z < -60 then
+					d.Material = Enum.Material.CeramicTiles -- operator room
+					d.Color = Color3.fromRGB(150, 156, 156)
+				end
+			end
+		end
+	end
+	MapDress.Flicker(model, 0.2, 44)
 	return kit.finish()
 end
 
@@ -406,6 +442,13 @@ function Map.BuildTerrain(model: Instance?)
 		end
 	end
 	MapKit.ApplyClouds("chapel")
+	MapDress.TerrainLook({
+		Grass = Color3.fromRGB(58, 68, 52),
+		LeafyGrass = Color3.fromRGB(52, 62, 46),
+		Ground = Color3.fromRGB(72, 64, 54),
+		Mud = Color3.fromRGB(52, 46, 40),
+		Rock = Color3.fromRGB(92, 92, 90),
+	})
 	MapKit.RemovePreview(model)
 end
 

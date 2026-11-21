@@ -4,6 +4,7 @@
 -- Uses only built-in textures (no uploaded assets). Respects "reduce flicker" and the
 -- particle budget of the graphics profile.
 
+local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -96,9 +97,81 @@ local function applyLayer()
 	end
 end
 
+-- Map dressing (MapDress): light cones follow their lamp (power cuts switch them off) and
+-- the graphics profile; mist/steam rates follow the particle budget; some tubes flicker.
+local function updateDressing()
+	local profile = GraphicsController.GetProfileName()
+	local particleScale = GraphicsController.GetParticleScale()
+	for _, beam in CollectionService:GetTagged("FZ_LightCone") do
+		if beam:IsA("Beam") then
+			local lamp = beam.Parent
+			local light = lamp and lamp:FindFirstChildWhichIsA("Light")
+			local powered = lamp ~= nil and lamp:GetAttribute("Powered") ~= false and (light == nil or light.Enabled)
+			beam.Enabled = profile ~= "low" and powered
+		end
+	end
+	for _, emitter in CollectionService:GetTagged("FZ_Mist") do
+		if emitter:IsA("ParticleEmitter") then
+			local base = emitter:GetAttribute("BaseRate")
+			if type(base) == "number" then
+				emitter.Rate = if profile == "low" then 0 else base * particleScale
+			end
+		end
+	end
+end
+
+local flickering: { [Instance]: boolean } = {}
+local function flickerOnce(fixture: BasePart)
+	if flickering[fixture] or fixture:GetAttribute("Powered") == false then
+		return
+	end
+	local light = fixture:FindFirstChildWhichIsA("Light")
+	if not light or not light.Enabled then
+		return
+	end
+	flickering[fixture] = true
+	local color = fixture.Color
+	task.spawn(function()
+		for _ = 1, math.random(2, 5) do
+			light.Enabled = false
+			fixture.Color = color:Lerp(Color3.new(0, 0, 0), 0.7)
+			task.wait(math.random(3, 9) / 100)
+			local powered = fixture:GetAttribute("Powered") ~= false
+			light.Enabled = powered
+			if powered then
+				fixture.Color = color
+			end
+			task.wait(math.random(5, 25) / 100)
+		end
+		flickering[fixture] = nil
+	end)
+end
+
 function AtmosphereController.Init(settingsController)
 	settings = settingsController
 	ensureEffects()
+	task.spawn(function()
+		while true do
+			pcall(updateDressing)
+			task.wait(0.5)
+		end
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(math.random(30, 80) / 10)
+			if not (settings and settings.Get("reduceFlicker")) then
+				local list = CollectionService:GetTagged("FZ_Flicker")
+				local camera = workspace.CurrentCamera
+				if #list > 0 and camera then
+					-- only tubes near the player flicker (nobody sees the others anyway)
+					local fixture = list[math.random(1, #list)]
+					if fixture:IsA("BasePart") and (fixture.Position - camera.CFrame.Position).Magnitude < 90 then
+						flickerOnce(fixture)
+					end
+				end
+			end
+		end
+	end)
 	SessionState.Observe("TimeLayer", applyLayer)
 	applyLayer()
 

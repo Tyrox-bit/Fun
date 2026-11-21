@@ -464,16 +464,24 @@ local fakeGame = {
 	end,
 }
 
+-- task.spawn runs code in a coroutine; task.wait parks it for good (the UI test has no
+-- clock), so background loops of controllers simply stop instead of spinning forever.
+local mainThread = coroutine.running()
 local taskShim = {
 	spawn = function(fn, ...)
-		local ok, err = pcall(fn, ...)
+		local thread = coroutine.create(fn)
+		local ok, err = coroutine.resume(thread, ...)
 		if not ok then
 			error(err, 2)
 		end
+		return thread
 	end,
 	defer = function() end,
 	delay = function() end,
 	wait = function()
+		if coroutine.running() ~= mainThread and coroutine.isyieldable() then
+			coroutine.yield()
+		end
 		return 0
 	end,
 	cancel = function() end,
@@ -513,6 +521,9 @@ env = setmetatable({
 	Rect = roblox.Rect,
 	TweenInfo = { new = function(...)
 		return { args = table.pack(...) }
+	end },
+	RaycastParams = { new = function()
+		return {}
 	end },
 	DateTime = { now = function()
 		return { UnixTimestamp = os.time() }
@@ -795,7 +806,7 @@ check("Hud elements", function()
 	exercise(hudGui, false)
 	Hud.CloseDocument()
 end)
-for _, name in { "InventoryController", "HealthController", "PromptController", "RescueController" } do
+for _, name in { "InventoryController", "HealthController", "PromptController", "RescueController", "AtmosphereController" } do
 	check("controller " .. name, function()
 		local controller = requireModule(CLIENT.Controllers[name])
 		if controller.Init then

@@ -102,6 +102,10 @@ function MapKit.ApplyLighting(name: string)
 		end
 	end
 	Lighting.GlobalShadows = true
+	pcall(function()
+		(Lighting :: any).LightingStyle = Enum.LightingStyle.Realistic
+		;(Lighting :: any).PrioritizeLightingQuality = true
+	end)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
 	for key, value in preset.Atmosphere do
 		(atmosphere :: any)[key] = value
@@ -301,7 +305,7 @@ function MapKit.new(modelName: string, builderName: string, seed: number)
 
 	-- A closed room: floor, roof and four walls. gaps = { n = {...}, s = {...}, w = {...}, e = {...} }
 	-- (n = wall at z0, s = wall at z1, w = wall at x0, e = wall at x1)
-	function kit.room(x0: number, z0: number, x1: number, z1: number, o: { y: number?, h: number?, gaps: any?, floor: Color3?, floorMaterial: Enum.Material?, wall: Color3?, wallMaterial: Enum.Material?, roof: Color3?, noRoof: boolean?, noFloor: boolean?, doorH: number? }?)
+	function kit.room(x0: number, z0: number, x1: number, z1: number, o: { y: number?, h: number?, gaps: any?, floor: Color3?, floorMaterial: Enum.Material?, wall: Color3?, wallMaterial: Enum.Material?, roof: Color3?, roofMaterial: Enum.Material?, noRoof: boolean?, noFloor: boolean?, doorH: number? }?)
 		o = o or {}
 		local y, h = o.y or 0, o.h or kit.H
 		local gaps = o.gaps or {}
@@ -309,7 +313,7 @@ function MapKit.new(modelName: string, builderName: string, seed: number)
 			kit.slab("Floor", x0, z0, x1, z1, y, 1, o.floor or C.Floor, o.floorMaterial or Enum.Material.Concrete)
 		end
 		if not o.noRoof then
-			kit.slab("Roof", x0 - 0.5, z0 - 0.5, x1 + 0.5, z1 + 0.5, y + h + 1.2, 1.2, o.roof or C.ConcreteDark, Enum.Material.Concrete)
+			kit.slab("Roof", x0 - 0.5, z0 - 0.5, x1 + 0.5, z1 + 0.5, y + h + 1.2, 1.2, o.roof or C.ConcreteDark, o.roofMaterial or Enum.Material.Concrete)
 		end
 		local wo = { y = y, h = h, color = o.wall, material = o.wallMaterial, doorH = o.doorH }
 		kit.wallZ(z0, x0, x1, gaps.n, wo)

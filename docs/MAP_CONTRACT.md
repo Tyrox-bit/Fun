@@ -35,3 +35,7 @@ Für deinen Lageplan (Damm, See, Kirche, Mine, Fabrikruine) gilt dasselbe. Diese
 
 Überlebens-Karten brauchen einen Eintrag in `PROFILES` (`Server/Modes/Survival.luau`): Sektoren, Stationen, Uplink, Ausstieg, Sicherungsziel.
 
+## Optik-Durchgang (`Server/Map/MapDress.luau`, ab 0.5.1)
+
+Läuft nach jedem Kartenbau und fügt nur Optik hinzu: zweifarbige Wände mit Handlauf und Sockelleiste (`WallTrim`), Lichtkegel unter Laternen/Flutlichtern und Mondlicht durch Kirchenfenster (Tag `FZ_LightCone`, folgt der Lampe – Stromausfall schaltet ihn mit aus), Bodennebel und Dampf (Tag `FZ_Mist`, Rate nach Grafikprofil, auf „Niedrig“ aus), Pfützen, flackernde Röhren (Tag `FZ_Flicker`, respektiert „Flackern reduzieren“), Gras-Halme und Bodenfarben beim Terrain sowie `Lighting.LightingStyle = Realistic`. Alles nur mit eingebauten Roblox-Materialien und -Texturen.
+
