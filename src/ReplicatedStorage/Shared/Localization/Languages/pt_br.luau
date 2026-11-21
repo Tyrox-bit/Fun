@@ -396,4 +396,14 @@ return {
 	ITEM_BANDAGE = "Atadura",
 	ITEM_SYRINGE = "Seringa",
 	INV_FULL = "Suas mãos estão cheias.",
+
+	-- 0.4: admin tools, rejoin
+	MENU_REJOIN = "Voltar para sua equipe",
+	ADMIN_SPAWN_AIM = "Fazer a criatura surgir onde estou olhando",
+	ADMIN_SPAWN_AIM_ADD = "Adicionar outra criatura onde estou olhando",
+	ADMIN_TP_CHECKPOINT = "Teleporte: {id}",
+	ADMIN_FORECAST_TEST = "Testar uma previsão (20 s)",
+	ADMIN_LIGHT_TEST = "Teste de luzes (todos os setores)",
+	ADMIN_SCARE_TEST = "Teste de susto: {kind}",
+	ADMIN_SOUND_TEST = "Teste de som: {name}",
 }

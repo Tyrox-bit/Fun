@@ -396,6 +396,11 @@ function app.Resume()
 	end
 end
 
+function app.Rejoin()
+	local result = callSession("rejoin")
+	Hud.Notify(if result.status == "teleport" then "SESSION_TELEPORT" else "SESSION_ERROR")
+end
+
 function app.Leave()
 	leaving = true
 	callSession("leave")

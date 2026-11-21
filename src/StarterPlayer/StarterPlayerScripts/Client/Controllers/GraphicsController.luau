@@ -46,11 +46,18 @@ local function ensureEffects()
 	end
 end
 
+local ORDER = { "low", "medium", "high" }
+local autoLevel: string? = nil
+
 local function resolve(name: string): string
 	if name ~= "auto" then
 		return name
 	end
-	-- Conservative default: phones/tablets start at medium, everything else at high.
+	if autoLevel then
+		return autoLevel
+	end
+	-- Conservative start: phones/tablets at medium, everything else at high. The measured
+	-- frame rate then adjusts it (see startAutoTuning).
 	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
 		return "medium"
 	end
@@ -96,7 +103,42 @@ local function apply()
 	end
 end
 
+-- "Automatic": measured FPS steps the profile down (< 28 fps for 10 s) or up
+-- (> 55 fps for 30 s), never above "high". Roblox's own quality slider stays untouched.
+local function startAutoTuning(settings)
+	local RunService = game:GetService("RunService")
+	local frames, elapsed, goodFor = 0, 0, 0
+	RunService.Heartbeat:Connect(function(dt)
+		if settings.Get("graphics") ~= "auto" then
+			return
+		end
+		frames += 1
+		elapsed += dt
+		if elapsed < 10 then
+			return
+		end
+		local fps = frames / elapsed
+		frames, elapsed = 0, 0
+		local level = table.find(ORDER, resolve("auto")) or 2
+		if fps < 28 and level > 1 then
+			autoLevel = ORDER[level - 1]
+			goodFor = 0
+			apply()
+		elseif fps > 55 then
+			goodFor += 10
+			if goodFor >= 30 and level < #ORDER then
+				autoLevel = ORDER[level + 1]
+				goodFor = 0
+				apply()
+			end
+		else
+			goodFor = 0
+		end
+	end)
+end
+
 function GraphicsController.Init(settings)
+	startAutoTuning(settings)
 	current = settings.Get("graphics") or "auto"
 	brightness = settings.Get("brightness") or 5
 	apply()

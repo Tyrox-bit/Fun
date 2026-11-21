@@ -396,4 +396,14 @@ return {
 	ITEM_BANDAGE = "Venda",
 	ITEM_SYRINGE = "Jeringa",
 	INV_FULL = "Tienes las manos llenas.",
+
+	-- 0.4: admin tools, rejoin
+	MENU_REJOIN = "Volver con tu equipo",
+	ADMIN_SPAWN_AIM = "Hacer aparecer la criatura donde miro",
+	ADMIN_SPAWN_AIM_ADD = "Añadir otra criatura donde miro",
+	ADMIN_TP_CHECKPOINT = "Teletransporte: {id}",
+	ADMIN_FORECAST_TEST = "Probar un pronóstico (20 s)",
+	ADMIN_LIGHT_TEST = "Prueba de luces (todos los sectores)",
+	ADMIN_SCARE_TEST = "Prueba de susto: {kind}",
+	ADMIN_SOUND_TEST = "Prueba de sonido: {name}",
 }

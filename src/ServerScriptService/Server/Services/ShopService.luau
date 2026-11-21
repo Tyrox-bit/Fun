@@ -13,6 +13,7 @@ local Net = require(Shared.Net)
 
 local DataService = require(script.Parent.DataService)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
 
 local ShopService = {}
 
@@ -70,6 +71,7 @@ local function buy(player: Player, itemId: string)
 		data.inventory[itemId] = true
 	end)
 	DataService.SaveNow(player)
+	AnalyticsTracker.Economy(player, item.price, profile.Data.signalMarks, false, itemId)
 	return { ok = true }
 end
 

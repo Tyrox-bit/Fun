@@ -41,6 +41,14 @@ function MainMenu.new(router, args)
 			app.Resume()
 		end })
 	else
+		-- Lost connection a moment ago? Offer the way back to the team first.
+		if game:GetService("Players").LocalPlayer:GetAttribute("FZ_RejoinAvailable") then
+			local rejoin = Components.Button({ Key = "MENU_REJOIN", LayoutOrder = 8, Parent = column, OnActivated = function()
+				app.Rejoin()
+			end })
+			rejoin.Label.TextColor3 = Theme.Colors.Relay
+			primary = rejoin
+		end
 		-- "Continue" only when the team in this server is already playing something.
 		if type(SessionState.Get("Mode")) == "string" then
 			primary = Components.Button({ Key = "MENU_CONTINUE", LayoutOrder = 9, Parent = column, OnActivated = function()

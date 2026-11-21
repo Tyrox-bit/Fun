@@ -16,6 +16,7 @@
 local CollectionService = game:GetService("CollectionService")
 
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
 
 local TAG = "FZ_Interactable"
 local PROMPT_TAG = "FZ_Prompt"
@@ -64,6 +65,9 @@ local function onTriggered(player: Player, instance: Instance, prompt: Proximity
 	if not list then
 		warn("[FZ-Interact] No handler for InteractId " .. tostring(id) .. " on " .. instance:GetFullName())
 		return
+	end
+	if player:GetAttribute("FZ_NewPlayer") then
+		AnalyticsTracker.Onboarding(player, 4, "FirstInteraction")
 	end
 	for _, handler in list do
 		local ok, err = pcall(handler, player, instance, prompt)

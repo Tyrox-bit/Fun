@@ -21,6 +21,7 @@ local Signal = require(Shared.Signal)
 local Net = require(Shared.Net)
 
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
 
 local DataService = {}
 DataService.ProfileLoaded = Signal.new() -- (player, profile)
@@ -81,6 +82,7 @@ local function defaultData(): { [string]: any }
 			logs = {}, -- [logId] = unix time (archive entries)
 		},
 		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
+		lastSession = {}, -- { placeId, jobId, code?, time } for "back to your team" after a disconnect
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
 		inventory = {}, -- [itemId] = true
 		equipped = {}, -- { set = itemId?, radioSkin = itemId? }
@@ -339,6 +341,8 @@ function DataService.Grant(player: Player, amount: number): boolean
 	end)
 	if ok then
 		Net.Event("Notify"):FireClient(player, "REWARD_MARKS", { amount = math.floor(amount) })
+		local profile = profiles[player]
+		AnalyticsTracker.Economy(player, amount, if profile then profile.Data.signalMarks else 0, true, "Gameplay")
 	end
 	return ok
 end
@@ -367,6 +371,10 @@ function DataService.Start()
 		end
 		profiles[player] = profile
 		publishAttributes(profile)
+		player:SetAttribute("FZ_NewPlayer", profile.Data.stats.sessions <= 1)
+		if profile.Data.stats.sessions <= 1 then
+			AnalyticsTracker.Onboarding(player, 1, "ProfileLoaded")
+		end
 		player:SetAttribute("FZ_DataReady", true)
 		DataService.ProfileLoaded:Fire(player, profile)
 	end
@@ -382,6 +390,7 @@ function DataService.Start()
 			saveProfile(profile, true)
 			profiles[player] = nil
 		end
+		AnalyticsTracker.Forget(player)
 	end)
 
 	game:BindToClose(function()

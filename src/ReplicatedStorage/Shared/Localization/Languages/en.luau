@@ -396,4 +396,14 @@ return {
 	ITEM_BANDAGE = "Bandage",
 	ITEM_SYRINGE = "Syringe",
 	INV_FULL = "Your hands are full.",
+
+	-- 0.4: admin tools, rejoin
+	MENU_REJOIN = "Back to your team",
+	ADMIN_SPAWN_AIM = "Spawn creature where I look",
+	ADMIN_SPAWN_AIM_ADD = "Add another creature where I look",
+	ADMIN_TP_CHECKPOINT = "Teleport: {id}",
+	ADMIN_FORECAST_TEST = "Test a forecast (20 s)",
+	ADMIN_LIGHT_TEST = "Light test (all sectors)",
+	ADMIN_SCARE_TEST = "Scare test: {kind}",
+	ADMIN_SOUND_TEST = "Sound test: {name}",
 }

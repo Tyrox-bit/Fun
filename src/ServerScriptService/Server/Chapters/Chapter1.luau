@@ -35,6 +35,7 @@ local DecisionService = require(Services.DecisionService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local DoorService = require(Services.DoorService)
+local AnalyticsTracker = require(Services.AnalyticsTracker)
 
 local Chapter1 = {}
 Chapter1.StartCheckpoint = "C1_START"
@@ -75,6 +76,17 @@ local HINTS = {
 ---------------------------------------------------------------------------
 -- Helpers
 ---------------------------------------------------------------------------
+local stepped: { [string]: boolean } = {}
+local function step(name: string)
+	if stepped[name] then
+		return
+	end
+	stepped[name] = true
+	for _, player in ctx.playersInGame() do
+		AnalyticsTracker.ChapterStep(player, "Chapter1", name)
+	end
+end
+
 local function rewardAll(amount: number)
 	for _, player in ctx.playersInGame() do
 		DataService.Grant(player, amount)
@@ -232,6 +244,7 @@ local function askAnswer()
 					return
 				end
 				state.answered = index == 1
+				step("Decision")
 				if state.answered then
 					unknown("RADIO_C1_ANSWERED", { name = randomName() }, 1)
 					relay("RADIO_C1_RELAY_ANSWERED", nil, 7)
@@ -427,6 +440,7 @@ end
 
 function Chapter1.Begin()
 	reset()
+	table.clear(stepped)
 	active = true
 	applySystems()
 	DirectorService.Configure(beats(), HINTS, ctx.playersInGame)
@@ -456,6 +470,7 @@ function Chapter1.Init(context)
 			return
 		end
 		StoryService.SetFlag("C1_FaxRead", true)
+		step("Fax")
 		relay("RADIO_C1_003", nil, 3)
 		askAnswer()
 	end)
@@ -476,6 +491,7 @@ function Chapter1.Init(context)
 		end
 		DecisionService.Cancel()
 		state.stage = "power"
+		step("Power")
 		ctx.setCheckpoint("C1_CONTROL")
 		relay("RADIO_C1_POWER")
 		StoryService.SetObjective("OBJECTIVE_POWER", { count = systemsOn(), total = 2 })
@@ -531,6 +547,7 @@ function Chapter1.Init(context)
 		state.fuses += 1
 		rewardAll(Config.Rewards.Fuse)
 		NoiseService.Emit((player.Character :: Model):GetPivot().Position, Config.Noise.Interact, player)
+		step(if state.fuses == 1 then "FirstFuse" else "")
 		if state.fuses >= Config.Creature.ActivateAfterFuses then
 			wakeCreature()
 		end
@@ -539,6 +556,7 @@ function Chapter1.Init(context)
 		end
 		if state.fuses >= TOTAL_FUSES then
 			state.stage = "relay"
+			step("AllFuses")
 			StoryService.SetObjective("OBJECTIVE_RELAY_B")
 		else
 			StoryService.SetObjective("OBJECTIVE_FIND_FUSES", { count = state.fuses, total = TOTAL_FUSES })
@@ -550,6 +568,7 @@ function Chapter1.Init(context)
 			return
 		end
 		state.stage = "core"
+		step("Relay")
 		PowerService.Set("B", true)
 		sfxAt("relay_activate", (panel :: BasePart).Position)
 		NoiseService.Emit((panel :: BasePart).Position, 60, nil)
@@ -569,6 +588,7 @@ function Chapter1.Init(context)
 			return
 		end
 		state.stage = "antenna"
+		step("Core")
 		PowerService.Set("CORE", true)
 		sfxAt("relay_activate", (console :: BasePart).Position)
 		CreatureService.Alert((console :: BasePart).Position)
@@ -596,6 +616,7 @@ function Chapter1.Init(context)
 		end
 		if state.stage == "antenna" then
 			state.stage = "done"
+			step("Antenna")
 			ForecastService.Cancel()
 			unknown(if state.answered then "RADIO_C1_ANTENNA_ANSWERED" else "RADIO_C1_ANTENNA", nil, 1)
 			CreatureService.SetAIEnabled(false)
@@ -630,6 +651,7 @@ function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
 		return
 	end
 	if state.stage == "arrival" then
+		AnalyticsTracker.ChapterStep(player, "Chapter1", "Gate")
 		StoryService.Sequence(player, ARRIVAL)
 		if StoryService.GetObjective() == nil then
 			task.delay(14, function()

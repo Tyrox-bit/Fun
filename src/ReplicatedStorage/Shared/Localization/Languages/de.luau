@@ -396,4 +396,14 @@ return {
 	ITEM_BANDAGE = "Verband",
 	ITEM_SYRINGE = "Spritze",
 	INV_FULL = "Deine Hände sind voll.",
+
+	-- 0.4: admin tools, rejoin
+	MENU_REJOIN = "Zurück zu deinem Team",
+	ADMIN_SPAWN_AIM = "Kreatur dort erscheinen lassen, wo ich hinschaue",
+	ADMIN_SPAWN_AIM_ADD = "Weitere Kreatur dort hinzufügen, wo ich hinschaue",
+	ADMIN_TP_CHECKPOINT = "Teleport: {id}",
+	ADMIN_FORECAST_TEST = "Prognose testen (20 s)",
+	ADMIN_LIGHT_TEST = "Lichttest (alle Sektoren)",
+	ADMIN_SCARE_TEST = "Schrecktest: {kind}",
+	ADMIN_SOUND_TEST = "Soundtest: {name}",
 }

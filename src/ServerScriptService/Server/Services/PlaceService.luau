@@ -35,7 +35,8 @@ function PlaceService.Teleport(players: { Player }, mapId: string, data: { mode:
 	end
 	local options = Instance.new("TeleportOptions")
 	options.ReservedServerAccessCode = accessCode
-	options:SetTeleportData({ mode = data.mode, contentId = data.contentId })
+	-- The access code travels along so the destination can offer "rejoin" after disconnects.
+	options:SetTeleportData({ mode = data.mode, contentId = data.contentId, code = accessCode })
 	for attempt = 1, 3 do
 		local success, err = pcall(function()
 			TeleportService:TeleportAsync(placeId, players, options)
@@ -47,6 +48,33 @@ function PlaceService.Teleport(players: { Player }, mapId: string, data: { mode:
 		task.wait(attempt * 2)
 	end
 	return false
+end
+
+-- Teleport a single player back into a specific running server (rejoin after disconnect).
+function PlaceService.Rejoin(player: Player, placeId: number, jobId: string, code: string?): boolean
+	local options = Instance.new("TeleportOptions")
+	if code and code ~= "" then
+		options.ReservedServerAccessCode = code
+	else
+		options.ServerInstanceId = jobId
+	end
+	local ok, err = pcall(function()
+		TeleportService:TeleportAsync(placeId, { player }, options)
+	end)
+	if not ok then
+		warn("[FZ-Place] Rejoin failed: " .. tostring(err))
+	end
+	return ok
+end
+
+-- Access code of the reserved server this player arrived in (if any).
+function PlaceService.ArrivalCode(player: Player): string?
+	local ok, joinData = pcall(player.GetJoinData, player)
+	local data = ok and type(joinData) == "table" and joinData.TeleportData
+	if type(data) == "table" and type(data.code) == "string" then
+		return data.code
+	end
+	return nil
 end
 
 -- Selection a player arrived with (validated against the registry, never trusted blindly).

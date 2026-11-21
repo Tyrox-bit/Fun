@@ -8,6 +8,8 @@
 --   3. Every admin remote call re-checks authorization; the client-visible attribute
 --      FZ_Admin is only a UI hint and is never trusted.
 
+local CollectionService = game:GetService("CollectionService")
+local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -26,6 +28,7 @@ local authorizedCache: { [Player]: boolean } = {}
 local unlocked: { [Player]: boolean } = {}
 local auditLog: { { time: number, userId: number, name: string, action: string, detail: string } } = {}
 local MAX_LOG = 200
+local pendingLog: { any } = {} -- written to the DataStore "FZ_AdminLog_v1" once a minute
 
 function AdminService.Log(player: Player, action: string, detail: string?)
 	local entry = {
@@ -36,6 +39,7 @@ function AdminService.Log(player: Player, action: string, detail: string?)
 		detail = detail or "",
 	}
 	table.insert(auditLog, entry)
+	table.insert(pendingLog, entry)
 	if #auditLog > MAX_LOG then
 		table.remove(auditLog, 1)
 	end
@@ -181,6 +185,94 @@ ACTIONS.reset = function()
 	return { ok = true }
 end
 
+-- Spawn where the owner is looking (the client sends the aimed point, the server checks it).
+ACTIONS.spawn_creature_at = function(player: Player, payload: any)
+	if not isTestServer() then
+		return { ok = false, reason = "public" }
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local position = type(payload) == "table" and payload.position
+	if not root or typeof(position) ~= "Vector3" or (position - root.Position).Magnitude > 400 then
+		return { ok = false }
+	end
+	local creatures = lazy("CreatureService")
+	creatures.Spawn(CFrame.lookAt(position + Vector3.new(0, 6, 0), Vector3.new(root.Position.X, position.Y + 6, root.Position.Z)), type(payload) == "table" and payload.add == true)
+	return { ok = true }
+end
+
+ACTIONS.teleport_checkpoint = function(player: Player, payload: any)
+	local id = type(payload) == "table" and payload.id
+	for _, part in CollectionService:GetTagged("FZ_Checkpoint") do
+		if part:IsA("BasePart") and part:GetAttribute("CheckpointId") == id and player.Character then
+			player.Character:PivotTo(part.CFrame + Vector3.new(0, 4, 0))
+			return { ok = true }
+		end
+	end
+	return { ok = false }
+end
+
+local SCARES = { apparition = true, footsteps = true, flicker = true, cctv = true, namecall = true }
+ACTIONS.scare_test = function(player: Player, payload: any)
+	local kind = type(payload) == "table" and payload.kind
+	if not SCARES[kind] then
+		return { ok = false }
+	end
+	Net.Event("Scare"):FireClient(player, kind, { withFigure = true, offset = 20, name = player.DisplayName })
+	return { ok = true }
+end
+
+ACTIONS.sound_test = function(player: Player, payload: any)
+	local name = type(payload) == "table" and payload.name
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if type(name) ~= "string" or not root then
+		return { ok = false }
+	end
+	Net.Event("Sfx"):FireClient(player, name, root.Position + root.CFrame.LookVector * 8)
+	return { ok = true }
+end
+
+ACTIONS.light_test = function()
+	if not isTestServer() then
+		return { ok = false, reason = "public" }
+	end
+	local power = lazy("PowerService")
+	task.spawn(function()
+		for _, sector in { "A", "B", "C", "D", "E", "HALLS", "CORE" } do
+			local was = power.IsOn(sector)
+			power.Set(sector, not was)
+			task.wait(1.2)
+			power.Set(sector, was)
+		end
+	end)
+	return { ok = true }
+end
+
+ACTIONS.forecast_test = function()
+	if not isTestServer() then
+		return { ok = false, reason = "public" }
+	end
+	local forecasts = lazy("ForecastService")
+	local power = lazy("PowerService")
+	forecasts.Breakable("c1_breaker_a")
+	forecasts.Start({
+		id = "admin_test",
+		text = "RADIO_C1_FORECAST",
+		hud = "FORECAST_LIGHTS_A",
+		seconds = 20,
+		breakWith = "c1_breaker_a",
+		onKept = function()
+			power.Set("A", false)
+			task.delay(10, function()
+				power.Set("A", true)
+			end)
+		end,
+		onBroken = function() end,
+		keptLine = "RADIO_C1_FORECAST_KEPT",
+		brokenLine = "RADIO_C1_FORECAST_BROKEN",
+	})
+	return { ok = true }
+end
+
 ACTIONS.get_log = function()
 	local recent = {}
 	for i = math.max(1, #auditLog - 19), #auditLog do
@@ -208,7 +300,7 @@ function AdminService.Start()
 			return { ok = false, reason = "unknown" }
 		end
 		AdminService.Log(player, action)
-		return handler(player)
+		return handler(player, _payload)
 	end
 
 	-- Monster mode attack: same telegraphed damage as the AI, test servers only.
@@ -236,6 +328,43 @@ function AdminService.Start()
 			end
 		end)
 	end)
+
+	-- Persist the audit log (one key per UTC day, newest 500 entries).
+	local logStore = nil
+	pcall(function()
+		logStore = DataStoreService:GetDataStore("FZ_AdminLog_v1")
+	end)
+	local function flush()
+		if not logStore or #pendingLog == 0 then
+			return
+		end
+		local batch = pendingLog
+		pendingLog = {}
+		local ok = pcall(function()
+			logStore:UpdateAsync(os.date("!%Y-%m-%d"), function(old)
+				local list = if type(old) == "table" then old else {}
+				for _, entry in batch do
+					table.insert(list, entry)
+				end
+				while #list > 500 do
+					table.remove(list, 1)
+				end
+				return list
+			end)
+		end)
+		if not ok then
+			for _, entry in batch do
+				table.insert(pendingLog, entry)
+			end
+		end
+	end
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			flush()
+		end
+	end)
+	game:BindToClose(flush)
 
 	Players.PlayerRemoving:Connect(function(player)
 		authorizedCache[player] = nil

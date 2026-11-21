@@ -30,7 +30,7 @@ function Admin.new(router)
 	})
 	Components.Spacer(column, 10, 3)
 
-	local status = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 20, Parent = column })
+	local status = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = 98, Parent = column })
 
 	local debugButton = Components.Button({ Key = "ADMIN_DEBUG", LayoutOrder = 10, Parent = column, OnActivated = function()
 		app.Debug.Toggle()
@@ -42,10 +42,10 @@ function Admin.new(router)
 		local success = ok and type(response) == "table" and response.ok
 		Localization.Bind(status, if success then "ADMIN_DONE" else "ADMIN_DENIED")
 	end })
-	local function action(key: string, order: number, actionName: string)
-		Components.Button({ Key = key, LayoutOrder = order, Height = 40, Parent = column, OnActivated = function()
+	local function action(key: string, order: number, actionName: string, payload: (() -> any)?, params: { [string]: any }?)
+		Components.Button({ Key = key, Params = params, LayoutOrder = order, Height = 40, Parent = column, OnActivated = function()
 			local ok, response = pcall(function()
-				return Net.Function("AdminAction"):InvokeServer(actionName)
+				return Net.Function("AdminAction"):InvokeServer(actionName, if payload then payload() else nil)
 			end)
 			local success = ok and type(response) == "table" and response.ok
 			local reason = ok and type(response) == "table" and response.reason
@@ -62,8 +62,41 @@ function Admin.new(router)
 	action("ADMIN_TP_CORE", 16, "tp_core")
 	action("ADMIN_SPEED", 17, "toggle_speed")
 	action("ADMIN_RESET", 18, "reset")
+
+	-- Where the owner is looking (max 300 studs), for "spawn here"
+	local function aimed()
+		local camera = workspace.CurrentCamera
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { game:GetService("Players").LocalPlayer.Character :: Instance }
+		local hit = workspace:Raycast(camera.CFrame.Position, camera.CFrame.LookVector * 300, params)
+		return { position = if hit then hit.Position else camera.CFrame.Position + camera.CFrame.LookVector * 30 }
+	end
+	action("ADMIN_SPAWN_AIM", 40, "spawn_creature_at", aimed)
+	action("ADMIN_SPAWN_AIM_ADD", 41, "spawn_creature_at", function()
+		local p = aimed()
+		p.add = true
+		return p
+	end)
+	for index, checkpoint in { "C1_START", "C1_CONTROL", "C1_CORE" } do
+		action("ADMIN_TP_CHECKPOINT", 42 + index, "teleport_checkpoint", function()
+			return { id = checkpoint }
+		end, { id = checkpoint })
+	end
+	action("ADMIN_FORECAST_TEST", 50, "forecast_test")
+	action("ADMIN_LIGHT_TEST", 51, "light_test")
+	for index, kind in { "apparition", "footsteps", "flicker", "cctv", "namecall" } do
+		action("ADMIN_SCARE_TEST", 52 + index, "scare_test", function()
+			return { kind = kind }
+		end, { kind = kind })
+	end
+	for index, sound in { "creature_alert", "vent_rattle", "door_open", "radio_squelch_on", "stinger_low" } do
+		action("ADMIN_SOUND_TEST", 60 + index, "sound_test", function()
+			return { name = sound }
+		end, { name = sound })
+	end
 	Components.Spacer(column, 10, 19)
-	Components.Button({ Key = "MENU_BACK", LayoutOrder = 30, Parent = column, OnActivated = function()
+	Components.Button({ Key = "MENU_BACK", LayoutOrder = 99, Parent = column, OnActivated = function()
 		router:Pop()
 	end })
 

@@ -10,6 +10,7 @@ local Net = require(Shared.Net)
 
 local DataService = require(script.Parent.DataService)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
 
 local SettingsService = {}
 
@@ -26,6 +27,9 @@ function SettingsService.Start()
 		DataService.Mutate(player, function(data)
 			data.settings[key] = sanitized
 		end)
+		if key == "language" and player:GetAttribute("FZ_NewPlayer") then
+			AnalyticsTracker.Onboarding(player, 2, "LanguageChosen")
+		end
 	end)
 end
 

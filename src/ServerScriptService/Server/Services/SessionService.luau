@@ -28,6 +28,7 @@ local HealthService = require(script.Parent.HealthService)
 local PowerService = require(script.Parent.PowerService)
 local DoorService = require(script.Parent.DoorService)
 local InventoryService = require(script.Parent.InventoryService)
+local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
 local SessionService = {}
@@ -43,6 +44,8 @@ local MODULES = {
 
 type Session = { mode: string, contentId: string, mapId: string, module: any, idleSince: number? }
 local session: Session? = nil
+local REJOIN_WINDOW = 15 * 60
+local reservedCode: string? = nil -- known when this server was reached via a reserved teleport
 local inGame: { [Player]: boolean } = {}
 local entered: { [Player]: boolean } = {}
 
@@ -138,6 +141,9 @@ local function leave(player: Player, respawn: boolean)
 	end
 	inGame[player] = nil
 	InventoryService.Clear(player)
+	DataService.Mutate(player, function(data)
+		data.lastSession = {} -- left on purpose: no rejoin offer
+	end)
 	player:SetAttribute("FZ_InGame", false)
 	player:SetAttribute("FZ_Downed", false)
 	if respawn and player.Parent and not player:GetAttribute("FZ_MonsterMode") then
@@ -177,7 +183,15 @@ local function join(player: Player)
 	entered[player] = true
 	if firstTime then
 		InventoryService.Reset(player)
+		AnalyticsTracker.NewRun(player)
 	end
+	if player:GetAttribute("FZ_NewPlayer") then
+		AnalyticsTracker.Onboarding(player, 3, "EnteredGame")
+	end
+	player:SetAttribute("FZ_RejoinAvailable", nil)
+	DataService.Mutate(player, function(data)
+		data.lastSession = { placeId = game.PlaceId, jobId = game.JobId, code = reservedCode or "", time = os.time() }
+	end)
 	if current.module.OnPlayerEntered then
 		task.spawn(current.module.OnPlayerEntered, player, firstTime)
 	end
@@ -193,6 +207,17 @@ local function request(player: Player, action: string, mode: any, contentId: any
 	if action == "leave" then
 		leave(player, true)
 		return { status = "ok" }
+	elseif action == "rejoin" then
+		local profile = DataService.Get(player)
+		local last = profile and profile.Data.lastSession
+		if not last or type(last.jobId) ~= "string" or last.jobId == game.JobId or os.time() - (last.time or 0) > REJOIN_WINDOW then
+			return { status = "none" }
+		end
+		DataService.Mutate(player, function(data)
+			data.lastSession = {}
+		end)
+		task.spawn(PlaceService.Rejoin, player, last.placeId, last.jobId, last.code)
+		return { status = "teleport" }
 	elseif action == "join" then
 		return { status = if join(player) then "ok" else "none" }
 	elseif action ~= "start" then
@@ -262,6 +287,7 @@ function SessionService.Start()
 			end
 		end)
 		-- Arrived by teleport with a selection? Start or join it automatically.
+		reservedCode = reservedCode or PlaceService.ArrivalCode(player)
 		local mode, contentId = PlaceService.ArrivalSelection(player)
 		if mode and contentId then
 			if not session then
@@ -281,10 +307,30 @@ function SessionService.Start()
 		entered[player] = nil
 	end)
 
+	-- Disconnected recently from a running session in another server? Offer the way back.
+	DataService.ProfileLoaded:Connect(function(player, profile)
+		local last = profile.Data.lastSession
+		if type(last) == "table" and type(last.jobId) == "string" and last.jobId ~= game.JobId and os.time() - (last.time or 0) <= REJOIN_WINDOW then
+			player:SetAttribute("FZ_RejoinAvailable", true)
+		end
+	end)
+
 	-- End idle sessions so the next team can pick something else.
 	task.spawn(function()
+		local ticks = 0
 		while true do
 			task.wait(2)
+			ticks += 1
+			if ticks % 30 == 0 then
+				-- keep the rejoin window fresh for long sessions (once a minute)
+				for player in inGame do
+					DataService.Mutate(player, function(data)
+						if type(data.lastSession) == "table" and data.lastSession.jobId == game.JobId then
+							data.lastSession.time = os.time()
+						end
+					end)
+				end
+			end
 			local current = session
 			if current then
 				if next(inGame) == nil then
