@@ -442,4 +442,12 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Lanterna: âmbar",
 	ITEM_FLASH_RED_NAME = "Lanterna: filtro vermelho",
 	ITEM_FLASH_DESC = "Muda a cor da sua luz. Apenas cosmético.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Criar sessão privada",
+	LOBBY_PRIVATE_HINT = "Todos aqui recebem um convite. Quem aceitar vai com você para um servidor só de vocês.",
+	PARTY_INVITE = "{name} está começando uma sessão privada. Você vem?",
+	PARTY_ACCEPT = "Ir junto",
+	PARTY_DECLINE = "Ficar aqui",
+	PARTY_SENT = "Convites enviados. Vocês saem em 15 segundos.",
 }

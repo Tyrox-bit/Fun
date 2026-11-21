@@ -96,6 +96,7 @@ local function setup(instance: Instance)
 	p.HoldDuration = tonumber(instance:GetAttribute("HoldDuration")) or 0
 	p.MaxActivationDistance = tonumber(instance:GetAttribute("MaxDistance")) or 8
 	p.RequiresLineOfSight = true
+	p.Style = Enum.ProximityPromptStyle.Custom -- drawn by PromptController (all devices)
 	p:SetAttribute("FZ_Action", instance:GetAttribute("ActionKey"))
 	p:SetAttribute("FZ_Object", instance:GetAttribute("ObjectKey"))
 	CollectionService:AddTag(p, PROMPT_TAG)

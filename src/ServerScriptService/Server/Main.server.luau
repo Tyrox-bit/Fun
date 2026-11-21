@@ -29,6 +29,7 @@ local SERVICES = {
 	"DecisionService",
 	"DirectorService",
 	"PlaceService",
+	"PartyService",
 	"SessionService",
 }
 

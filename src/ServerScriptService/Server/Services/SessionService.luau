@@ -29,6 +29,7 @@ local PowerService = require(script.Parent.PowerService)
 local DoorService = require(script.Parent.DoorService)
 local InventoryService = require(script.Parent.InventoryService)
 local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
+local PartyService = require(script.Parent.PartyService)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
 local SessionService = {}
@@ -207,6 +208,11 @@ local function request(player: Player, action: string, mode: any, contentId: any
 	if action == "leave" then
 		leave(player, true)
 		return { status = "ok" }
+	elseif action == "private" then
+		if inGame[player] then
+			return { status = "error" }
+		end
+		return { status = PartyService.CreatePrivate(player) }
 	elseif action == "rejoin" then
 		local profile = DataService.Get(player)
 		local last = profile and profile.Data.lastSession

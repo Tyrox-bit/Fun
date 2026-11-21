@@ -442,4 +442,12 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Taschenlampe: Bernstein",
 	ITEM_FLASH_RED_NAME = "Taschenlampe: Rotfilter",
 	ITEM_FLASH_DESC = "Ändert die Farbe deines Lichts. Rein kosmetisch.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Private Sitzung erstellen",
+	LOBBY_PRIVATE_HINT = "Alle hier bekommen eine Einladung. Wer annimmt, reist mit dir in einen Server nur für euch.",
+	PARTY_INVITE = "{name} startet eine private Sitzung. Kommst du mit?",
+	PARTY_ACCEPT = "Mitkommen",
+	PARTY_DECLINE = "Hierbleiben",
+	PARTY_SENT = "Einladungen verschickt. In 15 Sekunden geht es los.",
 }

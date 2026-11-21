@@ -40,9 +40,14 @@ end
 
 local function render(decision)
 	local changed = not current or current.id ~= decision.id
+	if changed then
+		decision.total = math.max(1, decision.ends - workspace:GetServerTimeNow())
+	else
+		decision.total = (current :: any).total
+	end
 	current = decision
 	root.Visible = true
-	Localization.Bind(promptLabel, decision.prompt)
+	Localization.Bind(promptLabel, decision.prompt, decision.promptParams)
 	if changed then
 		myVote = nil
 		for _, b in buttons do
@@ -84,7 +89,7 @@ local function render(decision)
 				return
 			end
 			local remaining = math.max(0, d.ends - workspace:GetServerTimeNow())
-			timeBar.Size = UDim2.new(math.clamp(remaining / 20, 0, 1), 0, 0, 2)
+			timeBar.Size = UDim2.new(math.clamp(remaining / (d.total or 20), 0, 1), 0, 0, 2)
 		end)
 	end
 end

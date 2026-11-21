@@ -442,4 +442,12 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Lampe : ambre",
 	ITEM_FLASH_RED_NAME = "Lampe : filtre rouge",
 	ITEM_FLASH_DESC = "Change la couleur de ta lumière. Purement cosmétique.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Créer une session privée",
+	LOBBY_PRIVATE_HINT = "Tout le monde ici reçoit une invitation. Ceux qui acceptent partent avec toi sur un serveur rien que pour vous.",
+	PARTY_INVITE = "{name} lance une session privée. Tu viens ?",
+	PARTY_ACCEPT = "Venir",
+	PARTY_DECLINE = "Rester ici",
+	PARTY_SENT = "Invitations envoyées. Départ dans 15 secondes.",
 }

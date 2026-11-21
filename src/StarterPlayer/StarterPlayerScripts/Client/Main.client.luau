@@ -42,6 +42,7 @@ local HealthController = require(Controllers.HealthController)
 local EquipmentController = require(Controllers.EquipmentController)
 local DirectorController = require(Controllers.DirectorController)
 local InventoryController = require(Controllers.InventoryController)
+local PromptController = require(Controllers.PromptController)
 local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
@@ -222,6 +223,7 @@ EquipmentController.Init()
 DirectorController.Init(SettingsController, Hud.ShowSubtitle)
 DecisionPanel.Init(hudGui, InputController)
 InventoryController.Init(hudGui)
+PromptController.Init()
 
 -- Forecast countdown (the prediction you can break)
 local function updateForecast()
@@ -395,6 +397,11 @@ function app.Resume()
 		setMenuCamera(false)
 		setGameplay(true)
 	end
+end
+
+function app.CreatePrivate()
+	local result = callSession("private")
+	Hud.Notify(if result.status == "teleport" then "SESSION_TELEPORT" elseif result.status == "invited" then "PARTY_SENT" else "SESSION_ERROR")
 end
 
 function app.Rejoin()

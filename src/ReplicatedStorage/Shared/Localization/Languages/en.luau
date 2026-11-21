@@ -442,4 +442,12 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Flashlight: Amber",
 	ITEM_FLASH_RED_NAME = "Flashlight: Red filter",
 	ITEM_FLASH_DESC = "Changes the colour of your light. Purely cosmetic.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Create private session",
+	LOBBY_PRIVATE_HINT = "Everyone here gets an invite. Whoever accepts travels with you to a server only for you.",
+	PARTY_INVITE = "{name} is starting a private session. Coming along?",
+	PARTY_ACCEPT = "Come along",
+	PARTY_DECLINE = "Stay here",
+	PARTY_SENT = "Invites sent. You leave in 15 seconds.",
 }

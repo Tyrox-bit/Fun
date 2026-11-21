@@ -1298,6 +1298,14 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Taschenlampe: Bernstein",
 	ITEM_FLASH_RED_NAME = "Taschenlampe: Rotfilter",
 	ITEM_FLASH_DESC = "Ändert die Farbe deines Lichts. Rein kosmetisch.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Private Sitzung erstellen",
+	LOBBY_PRIVATE_HINT = "Alle hier bekommen eine Einladung. Wer annimmt, reist mit dir in einen Server nur für euch.",
+	PARTY_INVITE = "{name} startet eine private Sitzung. Kommst du mit?",
+	PARTY_ACCEPT = "Mitkommen",
+	PARTY_DECLINE = "Hierbleiben",
+	PARTY_SENT = "Einladungen verschickt. In 15 Sekunden geht es los.",
 }
 ]]></string>
             </Properties>
@@ -1749,6 +1757,14 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Flashlight: Amber",
 	ITEM_FLASH_RED_NAME = "Flashlight: Red filter",
 	ITEM_FLASH_DESC = "Changes the colour of your light. Purely cosmetic.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Create private session",
+	LOBBY_PRIVATE_HINT = "Everyone here gets an invite. Whoever accepts travels with you to a server only for you.",
+	PARTY_INVITE = "{name} is starting a private session. Coming along?",
+	PARTY_ACCEPT = "Come along",
+	PARTY_DECLINE = "Stay here",
+	PARTY_SENT = "Invites sent. You leave in 15 seconds.",
 }
 ]]></string>
             </Properties>
@@ -2200,6 +2216,14 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Linterna: ámbar",
 	ITEM_FLASH_RED_NAME = "Linterna: filtro rojo",
 	ITEM_FLASH_DESC = "Cambia el color de tu luz. Solo cosmético.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Crear sesión privada",
+	LOBBY_PRIVATE_HINT = "Todos aquí reciben una invitación. Quien acepte viaja contigo a un servidor solo para ustedes.",
+	PARTY_INVITE = "{name} inicia una sesión privada. ¿Vienes?",
+	PARTY_ACCEPT = "Ir",
+	PARTY_DECLINE = "Quedarme",
+	PARTY_SENT = "Invitaciones enviadas. Salen en 15 segundos.",
 }
 ]]></string>
             </Properties>
@@ -2651,6 +2675,14 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Lampe : ambre",
 	ITEM_FLASH_RED_NAME = "Lampe : filtre rouge",
 	ITEM_FLASH_DESC = "Change la couleur de ta lumière. Purement cosmétique.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Créer une session privée",
+	LOBBY_PRIVATE_HINT = "Tout le monde ici reçoit une invitation. Ceux qui acceptent partent avec toi sur un serveur rien que pour vous.",
+	PARTY_INVITE = "{name} lance une session privée. Tu viens ?",
+	PARTY_ACCEPT = "Venir",
+	PARTY_DECLINE = "Rester ici",
+	PARTY_SENT = "Invitations envoyées. Départ dans 15 secondes.",
 }
 ]]></string>
             </Properties>
@@ -3102,6 +3134,14 @@ return {
 	ITEM_FLASH_AMBER_NAME = "Lanterna: âmbar",
 	ITEM_FLASH_RED_NAME = "Lanterna: filtro vermelho",
 	ITEM_FLASH_DESC = "Muda a cor da sua luz. Apenas cosmético.",
+
+	-- 0.4: private sessions
+	LOBBY_PRIVATE = "Criar sessão privada",
+	LOBBY_PRIVATE_HINT = "Todos aqui recebem um convite. Quem aceitar vai com você para um servidor só de vocês.",
+	PARTY_INVITE = "{name} está começando uma sessão privada. Você vem?",
+	PARTY_ACCEPT = "Ir junto",
+	PARTY_DECLINE = "Ficar aqui",
+	PARTY_SENT = "Convites enviados. Vocês saem em 15 segundos.",
 }
 ]]></string>
             </Properties>
@@ -4318,6 +4358,7 @@ local SERVICES = {
 	"DecisionService",
 	"DirectorService",
 	"PlaceService",
+	"PartyService",
 	"SessionService",
 }
 
@@ -7674,6 +7715,12 @@ type Running = {
 
 local running: Running? = nil
 local token = 0
+local external: { [string]: (player: Player, id: string, index: number) -> () } = {}
+
+-- Other systems can reuse the vote panel for their own questions (id prefix "party:" ...).
+function DecisionService.RegisterExternal(prefix: string, handler: (player: Player, id: string, index: number) -> ())
+	external[prefix] = handler
+end
 
 local function payload(r: Running)
 	local counts = {}
@@ -7752,6 +7799,15 @@ end
 function DecisionService.Start()
 	local limiter = RateLimiter.new(4, 1)
 	Net.Event("DecisionVote").OnServerEvent:Connect(function(player: Player, id: any, index: any)
+		if type(id) == "string" and type(index) == "number" then
+			local prefix = string.match(id, "^(%w+):")
+			if prefix and external[prefix] then
+				if limiter:Allow(player) then
+					external[prefix](player, id, index)
+				end
+				return
+			end
+		end
 		local r = running
 		if not r or not limiter:Allow(player) or id ~= r.decision.id or type(index) ~= "number" then
 			return
@@ -8553,6 +8609,7 @@ local function setup(instance: Instance)
 	p.HoldDuration = tonumber(instance:GetAttribute("HoldDuration")) or 0
 	p.MaxActivationDistance = tonumber(instance:GetAttribute("MaxDistance")) or 8
 	p.RequiresLineOfSight = true
+	p.Style = Enum.ProximityPromptStyle.Custom -- drawn by PromptController (all devices)
 	p:SetAttribute("FZ_Action", instance:GetAttribute("ActionKey"))
 	p:SetAttribute("FZ_Object", instance:GetAttribute("ObjectKey"))
 	CollectionService:AddTag(p, PROMPT_TAG)
@@ -9126,6 +9183,125 @@ return NoiseService
         </Item>
         <Item class="ModuleScript" referent="55">
           <Properties>
+            <string name="Name">PartyService</string>
+            <string name="Source"><![CDATA[-- PartyService: "private session". The host invites everyone in this server who is in the
+-- menu; whoever accepts within 15 s travels together into a fresh reserved server of this
+-- place (not joinable by strangers). Works without any extra places.
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+
+local DecisionService = require(script.Parent.DecisionService)
+
+local PartyService = {}
+
+local INVITE_SECONDS = 15
+type Invite = { id: string, host: Player, invited: { Player }, accepted: { [Player]: boolean }, answered: { [Player]: boolean }, done: boolean }
+local invites: { [string]: Invite } = {}
+
+local function teleport(invite: Invite)
+	if invite.done then
+		return
+	end
+	invite.done = true
+	invites[invite.id] = nil
+	local travellers = { invite.host }
+	for player in invite.accepted do
+		if player.Parent then
+			table.insert(travellers, player)
+		end
+	end
+	for _, player in invite.invited do
+		if player.Parent then
+			Net.Event("Decision"):FireClient(player, nil)
+		end
+	end
+	local ok, code = pcall(function()
+		return (TeleportService:ReserveServer(game.PlaceId))
+	end)
+	if not ok then
+		Net.Event("Notify"):FireClient(invite.host, "SESSION_ERROR")
+		return
+	end
+	local options = Instance.new("TeleportOptions")
+	options.ReservedServerAccessCode = code
+	options:SetTeleportData({ private = true, code = code })
+	for _, player in travellers do
+		Net.Event("Notify"):FireClient(player, "SESSION_TELEPORT")
+	end
+	local success, err = pcall(function()
+		TeleportService:TeleportAsync(game.PlaceId, travellers, options)
+	end)
+	if not success then
+		warn("[FZ-Party] Teleport failed: " .. tostring(err))
+		for _, player in travellers do
+			Net.Event("Notify"):FireClient(player, "SESSION_ERROR")
+		end
+	end
+end
+
+-- Returns "teleport" (alone, leaving now) or "invited".
+function PartyService.CreatePrivate(host: Player): string
+	local invite: Invite = { id = "party:" .. HttpService:GenerateGUID(false), host = host, invited = {}, accepted = {}, answered = {}, done = false }
+	for _, player in Players:GetPlayers() do
+		if player ~= host and not player:GetAttribute("FZ_InGame") then
+			table.insert(invite.invited, player)
+		end
+	end
+	if #invite.invited == 0 then
+		task.spawn(teleport, invite)
+		return "teleport"
+	end
+	invites[invite.id] = invite
+	for _, player in invite.invited do
+		Net.Event("Decision"):FireClient(player, {
+			id = invite.id,
+			prompt = "PARTY_INVITE",
+			promptParams = { name = host.DisplayName },
+			options = { "PARTY_ACCEPT", "PARTY_DECLINE" },
+			ends = workspace:GetServerTimeNow() + INVITE_SECONDS,
+			counts = { 0, 0 },
+			voters = #invite.invited,
+		})
+	end
+	task.delay(INVITE_SECONDS, function()
+		teleport(invite)
+	end)
+	return "invited"
+end
+
+function PartyService.Start()
+	DecisionService.RegisterExternal("party", function(player, id, index)
+		local invite = invites[id]
+		if not invite or invite.done or not table.find(invite.invited, player) then
+			return
+		end
+		invite.answered[player] = true
+		invite.accepted[player] = if index == 1 then true else nil
+		Net.Event("Decision"):FireClient(player, nil)
+		local all = true
+		for _, invited in invite.invited do
+			if invited.Parent and not invite.answered[invited] then
+				all = false
+			end
+		end
+		if all then
+			teleport(invite)
+		end
+	end)
+end
+
+return PartyService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="56">
+          <Properties>
             <string name="Name">PlaceService</string>
             <string name="Source"><![CDATA[-- PlaceService: server-side teleports between places of this experience.
 -- Only used when Content.Places has real place ids. Teams travel together into a
@@ -9230,7 +9406,7 @@ return PlaceService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="57">
           <Properties>
             <string name="Name">PowerService</string>
             <string name="Source"><![CDATA[-- PowerService: sector power. Switches tagged lights (FZ_SectorLight) and unlocks/locks
@@ -9305,7 +9481,7 @@ return PowerService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">SessionService</string>
             <string name="Source"><![CDATA[-- SessionService: what the team in this server is currently playing.
@@ -9339,6 +9515,7 @@ local PowerService = require(script.Parent.PowerService)
 local DoorService = require(script.Parent.DoorService)
 local InventoryService = require(script.Parent.InventoryService)
 local AnalyticsTracker = require(script.Parent.AnalyticsTracker)
+local PartyService = require(script.Parent.PartyService)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
 local SessionService = {}
@@ -9517,6 +9694,11 @@ local function request(player: Player, action: string, mode: any, contentId: any
 	if action == "leave" then
 		leave(player, true)
 		return { status = "ok" }
+	elseif action == "private" then
+		if inGame[player] then
+			return { status = "error" }
+		end
+		return { status = PartyService.CreatePrivate(player) }
 	elseif action == "rejoin" then
 		local profile = DataService.Get(player)
 		local last = profile and profile.Data.lastSession
@@ -9660,7 +9842,7 @@ return SessionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">SettingsService</string>
             <string name="Source"><![CDATA[-- SettingsService: persists player settings (language, subtitles, accessibility, graphics).
@@ -9702,7 +9884,7 @@ return SettingsService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">ShopService</string>
             <string name="Source"><![CDATA[-- ShopService: unlock and equip items with earned Signal Marks (server-authoritative).
@@ -9899,7 +10081,7 @@ return ShopService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">StoryService</string>
             <string name="Source"><![CDATA[-- StoryService: sends story content (subtitles, documents, objectives) to clients.
@@ -9988,7 +10170,7 @@ return StoryService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="61">
+        <Item class="ModuleScript" referent="62">
           <Properties>
             <string name="Name">VoiceService</string>
             <string name="Source"><![CDATA[-- VoiceService: proximity voice + walkie-talkie radio on top of the Roblox Audio API.
@@ -10138,11 +10320,11 @@ return VoiceService
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="62">
+      <Item class="Folder" referent="63">
         <Properties>
           <string name="Name">Util</string>
         </Properties>
-        <Item class="ModuleScript" referent="63">
+        <Item class="ModuleScript" referent="64">
           <Properties>
             <string name="Name">RateLimiter</string>
             <string name="Source"><![CDATA[-- Token-bucket rate limiter per player. Every client->server remote uses one.
@@ -10195,15 +10377,15 @@ return RateLimiter
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="64">
+  <Item class="ServerStorage" referent="65">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="Folder" referent="65">
+    <Item class="Folder" referent="66">
       <Properties>
         <string name="Name">Secrets</string>
       </Properties>
-      <Item class="ModuleScript" referent="66">
+      <Item class="ModuleScript" referent="67">
         <Properties>
           <string name="Name">Codes</string>
           <string name="Source"><![CDATA[-- Redeemable codes. Lives in ServerStorage: never replicated to clients.
@@ -10222,18 +10404,18 @@ return {
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="67">
+  <Item class="StarterPlayer" referent="68">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <token name="CameraMode">1</token>
       <float name="CharacterWalkSpeed">10</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterCharacterScripts" referent="68">
+    <Item class="StarterCharacterScripts" referent="69">
       <Properties>
         <string name="Name">StarterCharacterScripts</string>
       </Properties>
-      <Item class="Script" referent="69">
+      <Item class="Script" referent="70">
         <Properties>
           <string name="Name">Health</string>
           <token name="RunContext">0</token>
@@ -10243,19 +10425,19 @@ return {
         </Properties>
       </Item>
     </Item>
-    <Item class="StarterPlayerScripts" referent="70">
+    <Item class="StarterPlayerScripts" referent="71">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="71">
+      <Item class="Folder" referent="72">
         <Properties>
           <string name="Name">Client</string>
         </Properties>
-        <Item class="Folder" referent="72">
+        <Item class="Folder" referent="73">
           <Properties>
             <string name="Name">Controllers</string>
           </Properties>
-          <Item class="ModuleScript" referent="73">
+          <Item class="ModuleScript" referent="74">
             <Properties>
               <string name="Name">AudioController</string>
               <string name="Source"><![CDATA[-- AudioController: every non-voice sound on the client.
@@ -10573,7 +10755,7 @@ return AudioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="74">
+          <Item class="ModuleScript" referent="75">
             <Properties>
               <string name="Name">CreatureVisualsController</string>
               <string name="Source"><![CDATA[-- CreatureVisualsController: everything the player SEES and HEARS of the creature.
@@ -10759,7 +10941,7 @@ return CreatureVisualsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="75">
+          <Item class="ModuleScript" referent="76">
             <Properties>
               <string name="Name">DirectorController</string>
               <string name="Source"><![CDATA[-- DirectorController: performs the HorrorDirector's moments on THIS client only.
@@ -11108,7 +11290,7 @@ return DirectorController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="76">
+          <Item class="ModuleScript" referent="77">
             <Properties>
               <string name="Name">EquipmentController</string>
               <string name="Source"><![CDATA[-- EquipmentController: client side of shop equipment.
@@ -11226,7 +11408,7 @@ return EquipmentController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="77">
+          <Item class="ModuleScript" referent="78">
             <Properties>
               <string name="Name">FlashlightController</string>
               <string name="Source"><![CDATA[-- FlashlightController: precise camera-aligned light for the local player, plus the
@@ -11377,7 +11559,7 @@ return FlashlightController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="78">
+          <Item class="ModuleScript" referent="79">
             <Properties>
               <string name="Name">GraphicsController</string>
               <string name="Source"><![CDATA[-- GraphicsController: quality profiles for the parts an experience may control itself.
@@ -11554,7 +11736,7 @@ return GraphicsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="79">
+          <Item class="ModuleScript" referent="80">
             <Properties>
               <string name="Name">HealthController</string>
               <string name="Source"><![CDATA[-- HealthController: health HUD (only visible when hurt), damage vignette, downed overlay.
@@ -11661,7 +11843,7 @@ return HealthController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="80">
+          <Item class="ModuleScript" referent="81">
             <Properties>
               <string name="Name">InputController</string>
               <string name="Source"><![CDATA[-- InputController: one logical action layer for keyboard/mouse, gamepad and touch.
@@ -12003,7 +12185,7 @@ return InputController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="81">
+          <Item class="ModuleScript" referent="82">
             <Properties>
               <string name="Name">InventoryController</string>
               <string name="Source"><![CDATA[-- InventoryController: the hotbar. Only visible when you carry something.
@@ -12113,7 +12295,7 @@ return InventoryController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="82">
+          <Item class="ModuleScript" referent="83">
             <Properties>
               <string name="Name">MovementController</string>
               <string name="Source"><![CDATA[-- MovementController: slow walk, short limited sprint with stamina.
@@ -12243,7 +12425,198 @@ return MovementController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="83">
+          <Item class="ModuleScript" referent="84">
+            <Properties>
+              <string name="Name">PromptController</string>
+              <string name="Source"><![CDATA[-- PromptController: our own interaction prompt (all prompts use Style = Custom).
+-- Same look on every device; key glyph adapts to the input device:
+--   keyboard "E" · gamepad "X" · touch: the whole prompt is a big tap / hold target
+-- Hold prompts fill the key box; a short flash confirms the trigger.
+
+local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local Theme = require(script.Parent.Parent.UI.Theme)
+
+local PromptController = {}
+
+local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local function keyText(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType): string
+	if inputType == Enum.ProximityPromptInputType.Gamepad then
+		local name = prompt.GamepadKeyCode.Name
+		return (string.gsub(name, "^Button", ""))
+	elseif inputType == Enum.ProximityPromptInputType.Touch then
+		return "●"
+	end
+	local ok, text = pcall(UserInputService.GetStringForKeyCode, UserInputService, prompt.KeyboardKeyCode)
+	return if ok and text ~= "" then string.upper(text) else prompt.KeyboardKeyCode.Name
+end
+
+local function adornee(prompt: ProximityPrompt): Instance?
+	local parent = prompt.Parent
+	if parent and parent:IsA("Model") then
+		return parent.PrimaryPart
+	end
+	return parent
+end
+
+local function build(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType)
+	local touch = inputType == Enum.ProximityPromptInputType.Touch
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "FZ_Prompt"
+	gui.AlwaysOnTop = true
+	gui.LightInfluence = 0
+	gui.Size = UDim2.fromOffset(if touch then 280 else 250, if touch then 72 else 58)
+	gui.StudsOffset = Vector3.new(0, 1.6, 0)
+	gui.ResetOnSpawn = false
+	gui.AutoLocalize = false
+	gui.Active = touch
+	gui.ClipsDescendants = false
+	gui.Adornee = adornee(prompt)
+
+	local frame = Instance.new("TextButton")
+	frame.Name = "Frame"
+	frame.AutoButtonColor = false
+	frame.Text = ""
+	frame.Size = UDim2.fromScale(1, 1)
+	frame.BackgroundColor3 = Theme.Colors.Panel
+	frame.BackgroundTransparency = 1
+	frame.Active = touch
+	frame.Selectable = false
+	frame.Parent = gui
+
+	local key = Instance.new("Frame")
+	key.Name = "Key"
+	key.AnchorPoint = Vector2.new(0, 0.5)
+	key.Position = UDim2.new(0, 4, 0.5, 0)
+	key.Size = UDim2.fromOffset(if touch then 56 else 42, if touch then 56 else 42)
+	key.BackgroundColor3 = Theme.Colors.Panel
+	key.BackgroundTransparency = 0.15
+	key.ClipsDescendants = true
+	key.Parent = frame
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = key
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Theme.Colors.TextBright
+	stroke.Transparency = 0.35
+	stroke.Thickness = 1.5
+	stroke.Parent = key
+
+	local fill = Instance.new("Frame")
+	fill.Name = "Hold"
+	fill.AnchorPoint = Vector2.new(0, 1)
+	fill.Position = UDim2.fromScale(0, 1)
+	fill.Size = UDim2.fromScale(1, 0)
+	fill.BackgroundColor3 = Theme.Colors.Relay
+	fill.BackgroundTransparency = 0.35
+	fill.BorderSizePixel = 0
+	fill.Parent = key
+
+	local keyLabel = Instance.new("TextLabel")
+	keyLabel.BackgroundTransparency = 1
+	keyLabel.Size = UDim2.fromScale(1, 1)
+	keyLabel.Font = Theme.Fonts.Bold
+	keyLabel.TextSize = if touch then 24 else 20
+	keyLabel.TextColor3 = Theme.Colors.TextBright
+	keyLabel.Text = keyText(prompt, inputType)
+	keyLabel.AutoLocalize = false
+	keyLabel.ZIndex = 2
+	keyLabel.Parent = key
+
+	local action = Instance.new("TextLabel")
+	action.BackgroundTransparency = 1
+	action.Position = UDim2.new(0, key.Size.X.Offset + 14, 0, if touch then 10 else 6)
+	action.Size = UDim2.new(1, -(key.Size.X.Offset + 16), 0, 24)
+	action.Font = Theme.Fonts.Bold
+	action.TextSize = if touch then 20 else 18
+	action.TextXAlignment = Enum.TextXAlignment.Left
+	action.TextColor3 = Theme.Colors.TextBright
+	action.TextStrokeTransparency = 0.5
+	action.TextTruncate = Enum.TextTruncate.AtEnd
+	action.AutoLocalize = false
+	action.Parent = frame
+
+	local object = action:Clone()
+	object.Position = UDim2.new(0, key.Size.X.Offset + 14, 0, if touch then 34 else 30)
+	object.Size = UDim2.new(1, -(key.Size.X.Offset + 16), 0, 20)
+	object.Font = Theme.Fonts.Mono
+	object.TextSize = 14
+	object.TextColor3 = Theme.Colors.TextDim
+	object.Parent = frame
+
+	local function refreshText()
+		action.Text = prompt.ActionText
+		object.Text = prompt.ObjectText
+	end
+	refreshText()
+
+	local connections = {
+		prompt:GetPropertyChangedSignal("ActionText"):Connect(refreshText),
+		prompt:GetPropertyChangedSignal("ObjectText"):Connect(refreshText),
+	}
+	local holdTween: Tween? = nil
+	table.insert(connections, prompt.PromptButtonHoldBegan:Connect(function()
+		if prompt.HoldDuration > 0 then
+			fill.Size = UDim2.fromScale(1, 0)
+			holdTween = TweenService:Create(fill, TweenInfo.new(prompt.HoldDuration, Enum.EasingStyle.Linear), { Size = UDim2.fromScale(1, 1) })
+			;(holdTween :: Tween):Play()
+		end
+	end))
+	table.insert(connections, prompt.PromptButtonHoldEnded:Connect(function()
+		if holdTween then
+			holdTween:Cancel()
+		end
+		TweenService:Create(fill, Theme.Fast, { Size = UDim2.fromScale(1, 0) }):Play()
+	end))
+	table.insert(connections, prompt.Triggered:Connect(function()
+		stroke.Color = Theme.Colors.Relay
+		stroke.Transparency = 0
+		TweenService:Create(stroke, TweenInfo.new(0.4), { Transparency = 0.35, Color = Theme.Colors.TextBright }):Play()
+	end))
+
+	if touch then
+		-- Large target: tap = trigger, hold = hold prompt
+		table.insert(connections, frame.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+				prompt:InputHoldBegin()
+			end
+		end))
+		table.insert(connections, frame.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+				prompt:InputHoldEnd()
+			end
+		end))
+	end
+
+	gui.Parent = playerGui
+	return function()
+		for _, connection in connections do
+			connection:Disconnect()
+		end
+		gui:Destroy()
+	end
+end
+
+function PromptController.Init()
+	ProximityPromptService.PromptShown:Connect(function(prompt, inputType)
+		if prompt.Style ~= Enum.ProximityPromptStyle.Custom then
+			return
+		end
+		local cleanup = build(prompt, inputType)
+		prompt.PromptHidden:Wait()
+		cleanup()
+	end)
+end
+
+return PromptController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="85">
             <Properties>
               <string name="Name">RadioController</string>
               <string name="Source"><![CDATA[-- RadioController: the walkie-talkie in your hand.
@@ -12490,7 +12863,7 @@ return RadioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="84">
+          <Item class="ModuleScript" referent="86">
             <Properties>
               <string name="Name">SettingsController</string>
               <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
@@ -12581,7 +12954,7 @@ return SettingsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="85">
+          <Item class="ModuleScript" referent="87">
             <Properties>
               <string name="Name">VoiceController</string>
               <string name="Source"><![CDATA[-- VoiceController: hearing voices on this client.
@@ -12824,7 +13197,7 @@ return VoiceController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="86">
+          <Item class="ModuleScript" referent="88">
             <Properties>
               <string name="Name">WorldTextController</string>
               <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
@@ -12909,7 +13282,7 @@ return WorldTextController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="87">
+        <Item class="LocalScript" referent="89">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- FREQUENCY ZERO - client bootstrap.
@@ -12956,6 +13329,7 @@ local HealthController = require(Controllers.HealthController)
 local EquipmentController = require(Controllers.EquipmentController)
 local DirectorController = require(Controllers.DirectorController)
 local InventoryController = require(Controllers.InventoryController)
+local PromptController = require(Controllers.PromptController)
 local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
@@ -13136,6 +13510,7 @@ EquipmentController.Init()
 DirectorController.Init(SettingsController, Hud.ShowSubtitle)
 DecisionPanel.Init(hudGui, InputController)
 InventoryController.Init(hudGui)
+PromptController.Init()
 
 -- Forecast countdown (the prediction you can break)
 local function updateForecast()
@@ -13311,6 +13686,11 @@ function app.Resume()
 	end
 end
 
+function app.CreatePrivate()
+	local result = callSession("private")
+	Hud.Notify(if result.status == "teleport" then "SESSION_TELEPORT" elseif result.status == "invited" then "PARTY_SENT" else "SESSION_ERROR")
+end
+
 function app.Rejoin()
 	local result = callSession("rejoin")
 	Hud.Notify(if result.status == "teleport" then "SESSION_TELEPORT" else "SESSION_ERROR")
@@ -13447,11 +13827,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="88">
+        <Item class="Folder" referent="90">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="89">
+          <Item class="ModuleScript" referent="91">
             <Properties>
               <string name="Name">Components</string>
               <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
@@ -13800,7 +14180,7 @@ return Components
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="90">
+          <Item class="ModuleScript" referent="92">
             <Properties>
               <string name="Name">DebugOverlay</string>
               <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
@@ -13880,7 +14260,7 @@ return DebugOverlay
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="91">
+          <Item class="ModuleScript" referent="93">
             <Properties>
               <string name="Name">DecisionPanel</string>
               <string name="Source"><![CDATA[-- DecisionPanel: the team vote UI. Big buttons, live vote counts, a time bar.
@@ -13925,9 +14305,14 @@ end
 
 local function render(decision)
 	local changed = not current or current.id ~= decision.id
+	if changed then
+		decision.total = math.max(1, decision.ends - workspace:GetServerTimeNow())
+	else
+		decision.total = (current :: any).total
+	end
 	current = decision
 	root.Visible = true
-	Localization.Bind(promptLabel, decision.prompt)
+	Localization.Bind(promptLabel, decision.prompt, decision.promptParams)
 	if changed then
 		myVote = nil
 		for _, b in buttons do
@@ -13969,7 +14354,7 @@ local function render(decision)
 				return
 			end
 			local remaining = math.max(0, d.ends - workspace:GetServerTimeNow())
-			timeBar.Size = UDim2.new(math.clamp(remaining / 20, 0, 1), 0, 0, 2)
+			timeBar.Size = UDim2.new(math.clamp(remaining / (d.total or 20), 0, 1), 0, 0, 2)
 		end)
 	end
 end
@@ -14028,7 +14413,7 @@ return DecisionPanel
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="92">
+          <Item class="ModuleScript" referent="94">
             <Properties>
               <string name="Name">Hud</string>
               <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
@@ -14406,7 +14791,7 @@ return Hud
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="93">
+          <Item class="ModuleScript" referent="95">
             <Properties>
               <string name="Name">Router</string>
               <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
@@ -14573,11 +14958,11 @@ return Router
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="94">
+          <Item class="Folder" referent="96">
             <Properties>
               <string name="Name">Screens</string>
             </Properties>
-            <Item class="ModuleScript" referent="95">
+            <Item class="ModuleScript" referent="97">
               <Properties>
                 <string name="Name">Admin</string>
                 <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
@@ -14689,7 +15074,7 @@ return Admin
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="96">
+            <Item class="ModuleScript" referent="98">
               <Properties>
                 <string name="Name">Archive</string>
                 <string name="Source"><![CDATA[-- Archive: everything you have found and decided, plus your titles.
@@ -14810,7 +15195,7 @@ return Archive
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="97">
+            <Item class="ModuleScript" referent="99">
               <Properties>
                 <string name="Name">Extras</string>
                 <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
@@ -14959,7 +15344,7 @@ return Extras
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="98">
+            <Item class="ModuleScript" referent="100">
               <Properties>
                 <string name="Name">LanguageSelect</string>
                 <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
@@ -15061,7 +15446,7 @@ return LanguageSelect
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="99">
+            <Item class="ModuleScript" referent="101">
               <Properties>
                 <string name="Name">Leaderboard</string>
                 <string name="Source"><![CDATA[-- Global best shifts for one survival map (top 10) + your own best.
@@ -15130,7 +15515,7 @@ return Leaderboard
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="100">
+            <Item class="ModuleScript" referent="102">
               <Properties>
                 <string name="Name">Lobby</string>
                 <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
@@ -15229,6 +15614,10 @@ function Lobby.new(router)
 			end
 		end)
 	end })
+	Components.Button({ Key = "LOBBY_PRIVATE", LayoutOrder = 5, Parent = column, OnActivated = function()
+		app.CreatePrivate()
+	end })
+	Components.Text({ Key = "LOBBY_PRIVATE_HINT", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 5, Parent = column })
 	Components.Text({ Key = "LOBBY_SOLO_HINT", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 6, Parent = column })
 	Components.Spacer(column, 10, 7)
 	Components.Button({ Key = "MENU_BACK", LayoutOrder = 8, Parent = column, OnActivated = function()
@@ -15250,7 +15639,7 @@ return Lobby
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="101">
+            <Item class="ModuleScript" referent="103">
               <Properties>
                 <string name="Name">MainMenu</string>
                 <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
@@ -15374,7 +15763,7 @@ return MainMenu
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="102">
+            <Item class="ModuleScript" referent="104">
               <Properties>
                 <string name="Name">Play</string>
                 <string name="Source"><![CDATA[-- Play: choose a story chapter or a survival map. Everything comes from Shared/Content,
@@ -15504,7 +15893,7 @@ return Play
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="103">
+            <Item class="ModuleScript" referent="105">
               <Properties>
                 <string name="Name">Settings</string>
                 <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
@@ -15771,7 +16160,7 @@ return Settings
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="104">
+            <Item class="ModuleScript" referent="106">
               <Properties>
                 <string name="Name">Shop</string>
                 <string name="Source"><![CDATA[-- Shop: tabs (Equipment / Upgrades / Cosmetics) with large cards, Signal Mark balance,
@@ -16020,7 +16409,7 @@ return Shop
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="105">
+            <Item class="ModuleScript" referent="107">
               <Properties>
                 <string name="Name">Updates</string>
                 <string name="Source"><![CDATA[-- "What's new": optional, opened by the player from the main menu. Never a pop-up.
@@ -16074,7 +16463,7 @@ return UpdatesScreen
               </Properties>
             </Item>
           </Item>
-          <Item class="ModuleScript" referent="106">
+          <Item class="ModuleScript" referent="108">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
@@ -16132,7 +16521,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="VoiceChatService" referent="107">
+  <Item class="VoiceChatService" referent="109">
     <Properties>
       <string name="Name">VoiceChatService</string>
       <bool name="EnableDefaultVoice">false</bool>

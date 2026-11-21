@@ -36,6 +36,12 @@ type Running = {
 
 local running: Running? = nil
 local token = 0
+local external: { [string]: (player: Player, id: string, index: number) -> () } = {}
+
+-- Other systems can reuse the vote panel for their own questions (id prefix "party:" ...).
+function DecisionService.RegisterExternal(prefix: string, handler: (player: Player, id: string, index: number) -> ())
+	external[prefix] = handler
+end
 
 local function payload(r: Running)
 	local counts = {}
@@ -114,6 +120,15 @@ end
 function DecisionService.Start()
 	local limiter = RateLimiter.new(4, 1)
 	Net.Event("DecisionVote").OnServerEvent:Connect(function(player: Player, id: any, index: any)
+		if type(id) == "string" and type(index) == "number" then
+			local prefix = string.match(id, "^(%w+):")
+			if prefix and external[prefix] then
+				if limiter:Allow(player) then
+					external[prefix](player, id, index)
+				end
+				return
+			end
+		end
 		local r = running
 		if not r or not limiter:Allow(player) or id ~= r.decision.id or type(index) ~= "number" then
 			return

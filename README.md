@@ -68,6 +68,7 @@ StarterPlayer               CameraMode = LockFirstPerson, WalkSpeed 10
 | **Spielstand-Versionen + Migration** (v1 → v2 automatisch, Schutz vor alten Servern) | ✅ – siehe `docs/UPDATES.md` |
 | Mehrere Places + Teleports | ✅ vorbereitet – aktiv, sobald Place-IDs in `Content.Places` stehen |
 | Kapitel 2–4, Überlebenskarte „Staumauer 3“ | ⏳ im Menü als „In Entwicklung“ sichtbar |
+| **v0.4:** Team-Entscheidungen, Prognosen, Notstrom 2 von 3, HorrorDirector, Hinweise, Geisterprotokolle + Archiv, Titel, Badges, Inventar, Einstellungs-Kategorien + Lautstärke, Spannungsmusik, eigener Prompt, private Sitzungen, Rejoin, Owner-Tests | ✅ – vollständige Abhakliste: `docs/OFFEN.md` |
 | **Kreatur-KI** (hört, sieht, sucht, jagt, Lüftungsschächte, Licht blendet) mit Platzhalter-Monster und prozeduraler Animation | ✅ – dein Monster: siehe `docs/CREATURE.md` |
 | **Proximity-Voice + Funkgerät** (Push-to-talk, Mikro stumm/frei, Teammitglieder stummschalten, leiser + mehr Rauschen mit Entfernung) | ✅ – braucht Voice-Chat-berechtigte Konten |
 | Gesundheit, am Boden liegen, Aufhelfen, Checkpoints | ✅ |
