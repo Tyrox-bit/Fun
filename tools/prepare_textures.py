@@ -26,34 +26,61 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets" / "textures"
 RAW = Path(os.environ.get("FZ_TEXTURE_RAW", ROOT / "build" / "texture_raw"))
 
-# Roblox base material -> Poly Haven asset id
-PICK = {
-    "Concrete": "concrete_wall_003",
-    "Plaster": "grey_plaster_02",
-    "CeramicTiles": "dirty_tiles",
-    "Metal": "blue_metal_plate",
-    "DiamondPlate": "metal_plate",
-    "CorrodedMetal": "rusty_metal_02",
-    "Wood": "wood_table_worn",
-    "WoodPlanks": "weathered_brown_planks",
-    "Asphalt": "worn_asphalt",
-    "Cobblestone": "rustic_stone_wall_02",
-    "Slate": "slate_floor",
-    "Rock": "rock_face_03",
-    "Brick": "red_brick_03",
-    "Fabric": "rough_linen",
-    "Carpet": "dirty_carpet",
-    "RoofShingles": "roof_slates_02",
-    "Pebble": "gravel_floor",
-    "Pavement": "concrete_pavement",
-    "Ground": "forest_ground_04",
+# Variants: name -> (Roblox base material, Poly Haven id, is the base material override)
+# Overrides texture every part (and terrain) of that material. The others are assigned to
+# specific parts by MapDress.Surfaces (part.MaterialVariant), e.g. the dam's weathered
+# concrete or the chapel's stone floor.
+VARIANTS = {
+    # base material overrides
+    "Concrete": ("Concrete", "concrete_wall_003", True),
+    "Plaster": ("Plaster", "grey_plaster_02", True),
+    "CeramicTiles": ("CeramicTiles", "dirty_tiles", True),
+    "Metal": ("Metal", "blue_metal_plate", True),
+    "DiamondPlate": ("DiamondPlate", "metal_plate", True),
+    "CorrodedMetal": ("CorrodedMetal", "rusty_metal_02", True),
+    "Wood": ("Wood", "wood_table_worn", True),
+    "WoodPlanks": ("WoodPlanks", "weathered_brown_planks", True),
+    "Asphalt": ("Asphalt", "worn_asphalt", True),
+    "Cobblestone": ("Cobblestone", "rustic_stone_wall_02", True),
+    "Slate": ("Slate", "slate_floor", True),
+    "Rock": ("Rock", "rock_face_03", True),
+    "Brick": ("Brick", "red_brick_03", True),
+    "Fabric": ("Fabric", "rough_linen", True),
+    "Carpet": ("Carpet", "dirty_carpet", True),
+    "RoofShingles": ("RoofShingles", "roof_slates_02", True),
+    "Pebble": ("Pebble", "gravel_floor", True),
+    "Pavement": ("Pavement", "concrete_pavement", True),
+    "Ground": ("Ground", "forest_ground_04", True),
+    "Granite": ("Granite", "lichen_rock", True),
+    "Marble": ("Marble", "marble_01", True),
+    "Mud": ("Mud", "brown_mud_02", True),
+    # surface-specific variants
+    "ConcreteFloor": ("Concrete", "concrete_floor_worn_001", False),
+    "DamConcrete": ("Concrete", "concrete_wall_008", False),
+    "CrackedWall": ("Concrete", "cracked_concrete_wall", False),
+    "Ceiling": ("Concrete", "ceiling_interior", False),
+    "RoofConcrete": ("Concrete", "concrete_layers_02", False),
+    "DoorMetal": ("Metal", "rusty_painted_metal", False),
+    "Machine": ("Metal", "green_metal_rust", False),
+    "Container": ("CorrodedMetal", "container_side", False),
+    "Corrugated": ("CorrodedMetal", "rusty_corrugated_iron", False),
+    "Bark": ("Wood", "pine_bark", False),
+    "Timber": ("Wood", "rough_wood", False),
+    "DarkWood": ("Wood", "dark_wood", False),
+    "OldFloor": ("WoodPlanks", "old_wood_floor", False),
+    "ChapelFloor": ("Slate", "monastery_stone_floor", False),
+    "Rubble": ("Slate", "rubble", False),
+    "MineFloor": ("Ground", "rocky_trail", False),
 }
+PICK = {name: v[1] for name, v in VARIANTS.items()}
 # share of the original colour kept in the colour map (0 = pure detail map)
-CHROMA = {"CeramicTiles": 0.0, "Metal": 0.0, "Fabric": 0.0, "Carpet": 0.15}
+CHROMA = {"CeramicTiles": 0.0, "Metal": 0.0, "Fabric": 0.0, "Carpet": 0.15, "Container": 0.0, "Machine": 0.1, "DoorMetal": 0.1, "Marble": 0.0}
 DEFAULT_CHROMA = 0.25
 # contrast of the colour map around its mean (1 = as scanned): big repeating stains read as
 # a pattern on large walls, so concrete is calmed down
-CONTRAST = {"Concrete": 0.55, "Plaster": 0.8}
+CONTRAST = {"Concrete": 0.55, "Plaster": 0.8, "DamConcrete": 0.75}
+# tile size overrides in studs (thin tree trunks, small cracks that would repeat too often)
+STUDS = {"Bark": 3.0, "CrackedWall": 8.0, "Machine": 5.0, "Timber": 4.0}
 MAPS = {"Diffuse": "diff", "nor_gl": "nor", "Rough": "rough", "AO": "ao", "Metal": "metal"}
 
 
@@ -64,6 +91,8 @@ def curl(url: str, target: Path) -> None:
 def download() -> None:
     for material, pid in PICK.items():
         folder = RAW / pid
+        if (folder / "diff.jpg").exists():
+            continue
         folder.mkdir(parents=True, exist_ok=True)
         curl(f"https://api.polyhaven.com/files/{pid}", folder / "files.json")
         curl(f"https://api.polyhaven.com/info/{pid}", folder / "info_full.json")
@@ -113,8 +142,10 @@ def process() -> None:
             load("metal.jpg", "L").save(out / "metalness.jpg", quality=90, optimize=True)
             maps.append("metalness")
         dims = info.get("dimensions") or [2000, 2000]
-        studs = round(min(max(float(dims[0]) / 1000 / 0.28, 3), 16), 1)
+        studs = STUDS.get(material) or round(min(max(float(dims[0]) / 1000 / 0.28, 3), 16), 1)
         manifest[material] = {
+            "base": VARIANTS[material][0],
+            "override": VARIANTS[material][2],
             "source": pid,
             "name": info.get("name"),
             "authors": sorted((info.get("authors") or {}).keys()),
@@ -129,7 +160,7 @@ def process() -> None:
         "All textures are from [Poly Haven](https://polyhaven.com) and released under **CC0** (public domain):",
         "free for any use, including commercial, no attribution required. Credited anyway, with thanks.",
         "",
-        "| Roblox material | Poly Haven texture | Author(s) |",
+        "| Variant | Poly Haven texture | Author(s) |",
         "|---|---|---|",
     ]
     for material, entry in manifest.items():

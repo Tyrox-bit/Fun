@@ -224,6 +224,152 @@ function MapDress.Flicker(model: Instance, share: number, seed: number)
 end
 
 ---------------------------------------------------------------------------
+-- Surfaces: photo-scanned texture variants for specific parts (part.MaterialVariant).
+-- A variant only applies when its base material matches the part (else it is skipped), and
+-- falls back to the base material while its images are not uploaded yet.
+---------------------------------------------------------------------------
+local BY_NAME = {
+	Trunk = "Bark", Branch = "Bark",
+	Timber = "Timber", TimberCap = "Timber", PortalBeam = "Timber", PortalPost = "Timber", Sleeper = "Timber", ShedPost = "Timber", Rafter = "Timber",
+	Container = "Container", ContainerRib = "Container",
+	ShedRoof = "Corrugated",
+	Generator = "Machine", Drum = "Machine", TurbineHousing = "Machine", Pump = "Machine", Transformer = "Machine", WindingDrum = "Machine", Fin = "Machine",
+	NaveFloor = "ChapelFloor", ApseFloor = "ChapelFloor", TowerFloor = "ChapelFloor", AltarStep = "ChapelFloor",
+	Bench = "DarkWood", BenchLeg = "DarkWood", PewBack = "DarkWood", Cross = "DarkWood", CrossBar = "DarkWood", BellYoke = "DarkWood",
+	Rubble = "Rubble", CollapseRubble = "Rubble", SpoilHeap = "Rubble",
+	DamFront = "DamConcrete", DamBack = "DamConcrete", DamCapW = "DamConcrete", DamCapE = "DamConcrete", DamFrontPortalTop = "DamConcrete",
+	Buttress = "DamConcrete", RampSupport = "DamConcrete", YardPillar = "DamConcrete", LandingPost = "DamConcrete",
+	Ceiling = "Ceiling", InclineWall = "CrackedWall", GalleryCeiling = "RoofConcrete", PortalCeiling = "RoofConcrete", InclineCeiling = "RoofConcrete",
+	DoorFrame = "DoorMetal", DoorHeader = "DoorMetal",
+}
+-- per base material: which variant a floor / roof / door of that material gets
+local FLOOR = { Concrete = "ConcreteFloor", WoodPlanks = "OldFloor", Ground = "MineFloor" }
+local ROOF = { Concrete = "RoofConcrete" }
+local DOOR = { Metal = "DoorMetal", Wood = "DarkWood" }
+
+local function wallVariant(wall: BasePart, mapId: string): string?
+	if wall.Material ~= Enum.Material.Concrete then
+		return nil
+	end
+	local p = wall.CFrame.Position
+	if mapId == "church" then
+		return "CrackedWall" -- the bunker under the hill
+	elseif mapId == "dam03" and p.Z < 0 then
+		return "CrackedWall" -- the gallery inside the dam
+	elseif mapId == "relay07" and math.abs(p.X) < 50 then
+		return "CrackedWall" -- halls and corridors around the core
+	end
+	return nil
+end
+
+function MapDress.Surfaces(model: Instance, mapId: string, textures: any)
+	local variants = textures.Variants
+	local function base(name: string?): string?
+		local spec = name and variants[name]
+		return spec and spec.base
+	end
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			local name = part.Name
+			local material = part.Material.Name
+			-- the mine: tunnel ceilings are raw rock, not concrete
+			if mapId == "mine" and name == "Roof" and part.CFrame.Position.Z < 0 and part.Material == Enum.Material.Concrete then
+				part.Material = Enum.Material.Rock
+				material = "Rock"
+			end
+			local variant: string? = BY_NAME[name]
+			if not variant then
+				if name == "Wall" then
+					variant = wallVariant(part, mapId)
+				elseif name == "Floor" or string.sub(name, 1, 6) == "Floor_" or string.sub(name, -5) == "Floor" or name == "Ceiling" then
+					variant = FLOOR[material]
+				elseif name == "Roof" or string.sub(name, 1, 5) == "Roof_" or string.sub(name, -4) == "Roof" then
+					variant = ROOF[material]
+				elseif string.match(name, "^Door%d+$") then
+					variant = DOOR[material]
+				end
+			elseif name == "Ceiling" and material ~= "Concrete" then
+				variant = FLOOR[material]
+			end
+			if variant and base(variant) == material then
+				part.MaterialVariant = "SR_" .. variant
+			end
+		end
+	end
+end
+
+---------------------------------------------------------------------------
+-- Grime: water stains, rust streaks, mould, soot, cracks, tally marks on walls.
+-- Decals (tag FZ_Grime, attribute Kind) get their image from TextureService / the bake.
+---------------------------------------------------------------------------
+local GRIME = {
+	-- kind, weight, width, height, vertical anchor (0 = bottom, 1 = top of the wall)
+	{ "water_stain", 5, 8, 7, 1 },
+	{ "rust_streak", 3, 3, 6, 0.85 },
+	{ "mould", 3, 6, 5, 0 },
+	{ "soot", 2, 5, 6, 0.7 },
+	{ "cracks", 3, 6, 6, 0.5 },
+	{ "tally", 1, 3.2, 2.6, 0.38 },
+}
+
+function MapDress.Grime(model: Instance, seed: number, chance: number?, folderName: string?)
+	local walls = model:FindFirstChild(folderName or "Walls")
+	if not walls then
+		return
+	end
+	local rng = Random.new(seed)
+	local out = folderIn(model, "Grime")
+	local total = 0
+	for _, entry in GRIME do
+		total += entry[2]
+	end
+	local tallies = 0
+	for _, wall in walls:GetChildren() do
+		if wall:IsA("BasePart") and wall.Name == "Wall" and wall.Size.Y >= 6 and rng:NextNumber() < (chance or 0.4) then
+			local size = wall.Size
+			local alongX = size.X >= size.Z
+			local length = if alongX then size.X else size.Z
+			local thickness = if alongX then size.Z else size.X
+			if length >= 7 then
+				local pickAt = rng:NextNumber() * total
+				local kind = GRIME[1]
+				for _, entry in GRIME do
+					pickAt -= entry[2]
+					if pickAt <= 0 then
+						kind = entry
+						break
+					end
+				end
+				if kind[1] == "tally" then
+					tallies += 1
+				end
+				if kind[1] ~= "tally" or tallies <= 3 then
+					local w = math.min(kind[3], length - 1)
+					local h = math.min(kind[4], size.Y - 0.5)
+					local center = wall.CFrame.Position
+					local bottom = center.Y - size.Y / 2
+					local y = bottom + h / 2 + (size.Y - h) * kind[5]
+					local along = rng:NextNumber(-(length - w) / 2, (length - w) / 2)
+					local side = if rng:NextNumber() < 0.5 then -1 else 1
+					local normal = if alongX then Vector3.new(0, 0, side) else Vector3.new(side, 0, 0)
+					local tangent = if alongX then Vector3.new(along, 0, 0) else Vector3.new(0, 0, along)
+					local pos = Vector3.new(center.X, y, center.Z) + tangent + normal * (thickness / 2 + 0.14)
+					local holder = part(out, "Grime_" .. kind[1], Vector3.new(w, h, 0.05), CFrame.lookAt(pos, pos + normal), Color3.new(1, 1, 1), Enum.Material.SmoothPlastic)
+					holder.Transparency = 1
+					local decal = Instance.new("Decal")
+					decal.Face = Enum.NormalId.Front
+					decal.Texture = ""
+					decal.Transparency = 0.1
+					decal:SetAttribute("Kind", kind[1])
+					decal.Parent = holder
+					CollectionService:AddTag(decal, "FZ_Grime")
+				end
+			end
+		end
+	end
+end
+
+---------------------------------------------------------------------------
 -- Terrain + lighting quality (runtime only: terrain cannot be baked)
 ---------------------------------------------------------------------------
 function MapDress.TerrainLook(colors: { [string]: Color3 }?)

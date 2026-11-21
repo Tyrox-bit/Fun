@@ -17,6 +17,7 @@ local CollectionService = game:GetService("CollectionService")
 
 local MapKit = require(script.Parent.MapKit)
 local MapDress = require(script.Parent.MapDress)
+local Textures = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Textures"))
 local C = MapKit.C
 
 local Map = {}
@@ -410,6 +411,8 @@ local function build()
 			d.Material = Enum.Material.RoofShingles -- winding house
 		end
 	end
+	MapDress.Surfaces(model, "mine", Textures)
+	MapDress.Grime(model, 505, 0.45)
 	return kit.finish()
 end
 

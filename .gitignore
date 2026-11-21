@@ -7,3 +7,4 @@ sourcemap.json
 # raw texture downloads (tools/prepare_textures.py download)
 build/texture_raw/
 build/*.zip
+__pycache__/

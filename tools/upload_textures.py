@@ -38,13 +38,14 @@ def curl_json(args: list) -> dict:
 
 
 def upload(path: Path, display: str, user_id: str) -> str:
+    mime = "image/png" if path.suffix == ".png" else "image/jpeg"
     request = {
         "assetType": "Decal",
         "displayName": display,
         "description": "SILENT RELAY texture - CC0 source: Poly Haven (see CREDITS.md)",
         "creationContext": {"creator": {"userId": str(user_id)}},
     }
-    answer = curl_json(["-X", "POST", f"{API}/assets/v1/assets", "--form-string", "request=" + json.dumps(request), "-F", f"fileContent=@{path};type=image/jpeg"])
+    answer = curl_json(["-X", "POST", f"{API}/assets/v1/assets", "--form-string", "request=" + json.dumps(request), "-F", f"fileContent=@{path};type={mime}"])
     operation = answer.get("path") or answer.get("operationId")
     if not operation:
         raise RuntimeError("no operation: " + json.dumps(answer)[:300])
@@ -91,6 +92,24 @@ def write_id(material: str, map_name: str, value: str) -> None:
     ASSETS.write_text(text, encoding="utf-8")
 
 
+def read_grime() -> dict:
+    text = ASSETS.read_text(encoding="utf-8")
+    block = text[text.index("\tGrime = {"):]
+    block = block[: block.index("\t},")]
+    return dict(re.findall(r'(\w+) = "([^"]*)"', block))
+
+
+def write_grime(kind: str, value: str) -> None:
+    text = ASSETS.read_text(encoding="utf-8")
+    start = text.index("\tGrime = {")
+    pattern = re.compile(r'(\t\t' + re.escape(kind) + r' = ")([^"]*)(")')
+    head, tail = text[:start], text[start:]
+    tail, count = pattern.subn(lambda m: m.group(1) + value + m.group(3), tail, count=1)
+    if count != 1:
+        raise RuntimeError(f"could not find Grime.{kind} in Assets.luau")
+    ASSETS.write_text(head + tail, encoding="utf-8")
+
+
 def main() -> int:
     user_id = os.environ.get("ROBLOX_CREATOR_USER_ID")
     if not user_id or not user_id.isdigit():
@@ -113,6 +132,15 @@ def main() -> int:
             write_id(material, map_name, f"rbxassetid://{image}")
             done += 1
             print(f"{material}.{map_name}: decal {decal} -> image {image}")
+    for kind, current in read_grime().items():
+        if current or (only and "Grime" not in only):
+            continue
+        path = TEXTURES / "Grime" / f"{kind}.png"
+        decal = upload(path, f"SR_Grime_{kind}", user_id)
+        image = image_id_of_decal(decal)
+        write_grime(kind, f"rbxassetid://{image}")
+        done += 1
+        print(f"Grime.{kind}: decal {decal} -> image {image}")
     print(f"uploaded {done} images")
     return 0
 

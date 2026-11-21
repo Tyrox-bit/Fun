@@ -932,21 +932,42 @@ scenario("textures", function()
 	setup("Mine", 1)
 	local assets = requireModule(pathProxy(ROOT .. "/ReplicatedStorage/Shared/Assets.luau"))
 	local textures = requireModule(pathProxy(ROOT .. "/ReplicatedStorage/Shared/Textures.luau"))
-	local expected = 0
-	for material, spec in textures do
+	local expected, overrides = 0, 0
+	for name, spec in textures.Variants do
 		expected += 1
-		for _, map in spec.maps do
-			assets.Textures[material][map] = "rbxassetid://" .. (100 + expected)
+		if spec.override then
+			overrides += 1
 		end
+		for _, map in spec.maps do
+			assets.Textures[name][map] = "rbxassetid://" .. (100 + expected)
+		end
+	end
+	for kind in assets.Grime do
+		assets.Grime[kind] = "rbxassetid://9"
 	end
 	requireModule(SERVER.Services.TextureService).Start()
 	local ms = dataModel:GetService("MaterialService")
 	assert(#ms:GetChildren() == expected, "variants: " .. #ms:GetChildren())
-	assert(ms.ConcreteName == "SR_Concrete" and ms.RockName == "SR_Rock" and ms.DiamondPlateName == "SR_DiamondPlate", "overrides missing")
-	for material in textures do
-		for map in pairs(assets.Textures[material]) do
-			assets.Textures[material][map] = ""
+	assert(ms.ConcreteName == "SR_Concrete" and ms.RockName == "SR_Rock" and ms.MarbleName == "SR_Marble", "overrides missing")
+	assert(ms.ConcreteName ~= "SR_DamConcrete", "a surface variant must not override its base")
+	-- the mine got its surface variants and grime decals, and they received their image
+	local timber, grime = 0, 0
+	for _, d in realWorkspace:GetDescendants() do
+		if d:IsA("BasePart") and d.MaterialVariant == "SR_Timber" then
+			timber += 1
+		elseif d:IsA("Decal") and d:HasTag("FZ_Grime") then
+			assert(d.Texture == "rbxassetid://9", "grime decal without image")
+			grime += 1
 		end
+	end
+	assert(timber > 20 and grime > 5, string.format("timber %d, grime %d", timber, grime))
+	for name in textures.Variants do
+		for map in pairs(assets.Textures[name]) do
+			assets.Textures[name][map] = ""
+		end
+	end
+	for kind in assets.Grime do
+		assets.Grime[kind] = ""
 	end
 end)
 

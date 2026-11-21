@@ -16,6 +16,7 @@ local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 
 local MapDress = require(script.Parent.MapDress)
+local Textures = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Textures"))
 
 local Map = {}
 
@@ -1391,6 +1392,8 @@ function Map.Build(): Model
 	MapDress.Steam(root, Vector3.new(0, 15, 0), Vector3.yAxis, Color3.fromRGB(190, 200, 215))
 	MapDress.Puddles(root, { { 60, 100, 6, 4 }, { 30, 92, 9, 5 }, { 78, 160, 5, 3 }, { 72, 210, 7, 4 }, { 90, 120, 4, 3 } })
 	MapDress.Flicker(root, 0.12, 7)
+	MapDress.Surfaces(root, "relay07", Textures)
+	MapDress.Grime(root, 707, 0.45)
 	root:SetAttribute("FZ_Builder", "RelayStation07")
 	root.Parent = workspace
 	if not Map.SkipTerrain then

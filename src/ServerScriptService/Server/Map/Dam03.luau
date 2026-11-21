@@ -14,6 +14,7 @@ local CollectionService = game:GetService("CollectionService")
 
 local MapKit = require(script.Parent.MapKit)
 local MapDress = require(script.Parent.MapDress)
+local Textures = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Textures"))
 local C = MapKit.C
 
 local Map = {}
@@ -489,6 +490,8 @@ local function build()
 		end
 	end
 
+	MapDress.Surfaces(model, "dam03", Textures)
+	MapDress.Grime(model, 303, 0.45)
 	return kit.finish()
 end
 

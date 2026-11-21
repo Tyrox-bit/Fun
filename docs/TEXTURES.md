@@ -1,31 +1,39 @@
 # Realistische Texturen (Foto-Scans)
 
-Das Spiel bringt **19 fotorealistische PBR-Texturen** mit (`assets/textures/`): echte Foto-Scans
-von Poly Haven, Lizenz **CC0** – frei für dein Spiel, auch kommerziell (Credits: `assets/textures/CREDITS.md`).
+Das Spiel bringt **38 fotorealistische PBR-Texturen** und **6 Schmutz-Decals** mit (`assets/textures/`):
+echte Foto-Scans von Poly Haven, Lizenz **CC0** – frei für dein Spiel, auch kommerziell (Credits: `assets/textures/CREDITS.md`).
+Die Decals erzeugt `tools/generate_grime.py` selbst (100 % eigen).
 
-| Roblox-Material | Textur | wo im Spiel |
+**22 Grundmaterialien** (gelten überall, auch fürs Terrain): Beton, Putz, Fliesen, lackierter Stahl, Riffelblech, Rost,
+Holz, Dielen, Asphalt, Bruchstein, Schiefer, Fels, Ziegel, Leinen, Teppich, Schieferdach, Kies, Betonplatten,
+Waldboden, flechtiger Stein (Grabsteine), Marmor (Altar), Schlamm.
+
+**16 Spezialtexturen für einzelne Bauteile** (`MapDress.Surfaces`):
+
+| Variante | Scan | wo |
 |---|---|---|
-| Concrete | Betonwand mit Flecken und Rissen | fast alle Wände, Staumauer, Böden |
-| Plaster | grauer Putz | gestrichene Wandsockel |
-| CeramicTiles | verschmutzte Fliesen | Kantine, Kontrollraum, Operatorraum |
-| Metal | zerkratzter, lackierter Stahl | Türen, Konsolen, Generatoren |
-| DiamondPlate | Riffelblech | Gitter, Lüftungen, Laufstege |
-| CorrodedMetal | Rost | Container, Fässer, Loren |
-| Wood / WoodPlanks | abgenutztes Holz / verwitterte Bretter | Tische, Kisten, Bänke |
-| Asphalt / Pavement / Pebble | Asphalt, Betonplatten, Kies | Straßen, Staumauer-Krone, Wege |
-| Cobblestone / Slate | Bruchsteinmauer, Schieferboden | Kapelle |
-| Rock / Ground | Felswand, Waldboden | Mine, Terrain |
-| Brick / RoofShingles | Ziegel, Schieferdach | Maschinenhaus, Dächer |
-| Fabric / Carpet | Leinen, alter Teppich | Sitze, Archiv |
+| ConcreteFloor | abgenutzter Betonboden | Böden |
+| DamConcrete | verwitterter Beton | Staumauer, Stützpfeiler |
+| CrackedWall | rissiger Beton | Flure in Relais 07, Galerie in der Mauer, Bunker unter der Kapelle |
+| Ceiling | Rasterdecke | Innendecken |
+| RoofConcrete | geschichteter Beton | Flachdächer, Galeriedecke |
+| DoorMetal | rostig lackierter Stahl | Stahltüren und Zargen |
+| Machine | grün lackiert, rostig | Generatoren, Turbinen, Pumpe, Trafos |
+| Container / Corrugated | Container-Blech, Wellblech | Container, Schuppendach |
+| Bark / Timber / DarkWood | Kiefernrinde, grobes Holz, dunkles Holz | Bäume, Grubenausbau, Kirchenbänke |
+| OldFloor / ChapelFloor | alte Dielen, Klostersteinboden | Sakristei, Kirchenschiff |
+| Rubble / MineFloor | Schutt, steiniger Pfad | Geröll, Stollenboden |
 
-Jede Textur hat Farbe, Relief (Normal Map), Rauheit (und bei Riffelblech Metall). Roblox legt sie als
-**MaterialVariant** über das jeweilige Grundmaterial – damit sind sofort **alle Teile und das Terrain**
-auf allen vier Karten texturiert, ohne ein Teil anzufassen.
+**Schmutz-Decals** (`MapDress.Grime`, ~20 pro Karte): Wasserläufe unter der Decke, Rostfahnen, Schimmel in Ecken,
+Ruß, Risse, eingeritzte Strichlisten.
+
+Jede Textur hat Farbe, Relief (Normal Map), Rauheit (Riffelblech auch Metall). Roblox legt sie als **MaterialVariant**
+über die Teile – auf allen vier Karten auf einen Schlag.
 
 ## Warum du einmal hochladen musst
 
 Roblox zeigt nur Bilder, die in einem Roblox-Account liegen – Skripte dürfen keine Bilder aus dem Internet
-laden. Deshalb müssen die 56 Bilder einmal in **deinen** Account. Zwei Wege:
+laden. Deshalb müssen die 121 Bilder einmal in **deinen** Account. Zwei Wege:
 
 ### Weg A – ich mache alles (empfohlen)
 
@@ -40,7 +48,7 @@ laden. Deshalb müssen die 56 Bilder einmal in **deinen** Account. Zwei Wege:
 ### Weg B – selbst in Studio
 
 1. Lade `SilentRelay_Texturen.zip` herunter und entpacke es.
-2. Studio → **View → Asset Manager** → **Bulk Import** → alle Bilder auswählen.
+2. Studio → **View → Asset Manager** → **Bulk Import** → alle Bilder auswählen (auch den Ordner `Grime`).
 3. Für jedes Bild: Rechtsklick → **Copy ID** → in `ReplicatedStorage → Shared → Assets → Textures → <Material>`
    bei `color` / `normal` / `roughness` (/ `metalness`) als `"rbxassetid://<ID>"` eintragen.
 4. **Play** drücken: `TextureService` legt die Materialien an. Oder schick mir die Liste – dann backe ich sie fest in die Datei, dann sieht man sie auch im Editor.

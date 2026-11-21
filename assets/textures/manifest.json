@@ -1,5 +1,7 @@
 {
  "Concrete": {
+  "base": "Concrete",
+  "override": true,
   "source": "concrete_wall_003",
   "name": "Concrete Wall 003",
   "authors": [
@@ -14,6 +16,8 @@
   ]
  },
  "Plaster": {
+  "base": "Plaster",
+  "override": true,
   "source": "grey_plaster_02",
   "name": "Grey Plaster 02",
   "authors": [
@@ -27,6 +31,8 @@
   ]
  },
  "CeramicTiles": {
+  "base": "CeramicTiles",
+  "override": true,
   "source": "dirty_tiles",
   "name": "Dirty Tiles",
   "authors": [
@@ -41,6 +47,8 @@
   ]
  },
  "Metal": {
+  "base": "Metal",
+  "override": true,
   "source": "blue_metal_plate",
   "name": "Blue Metal Plate",
   "authors": [
@@ -54,6 +62,8 @@
   ]
  },
  "DiamondPlate": {
+  "base": "DiamondPlate",
+  "override": true,
   "source": "metal_plate",
   "name": "Metal Plate",
   "authors": [
@@ -68,6 +78,8 @@
   ]
  },
  "CorrodedMetal": {
+  "base": "CorrodedMetal",
+  "override": true,
   "source": "rusty_metal_02",
   "name": "Rusty Metal 02",
   "authors": [
@@ -81,6 +93,8 @@
   ]
  },
  "Wood": {
+  "base": "Wood",
+  "override": true,
   "source": "wood_table_worn",
   "name": "Wood Table Worn",
   "authors": [
@@ -95,6 +109,8 @@
   ]
  },
  "WoodPlanks": {
+  "base": "WoodPlanks",
+  "override": true,
   "source": "weathered_brown_planks",
   "name": "Weathered Brown Planks",
   "authors": [
@@ -109,6 +125,8 @@
   ]
  },
  "Asphalt": {
+  "base": "Asphalt",
+  "override": true,
   "source": "worn_asphalt",
   "name": "Worn Asphalt",
   "authors": [
@@ -122,6 +140,8 @@
   ]
  },
  "Cobblestone": {
+  "base": "Cobblestone",
+  "override": true,
   "source": "rustic_stone_wall_02",
   "name": "Rustic Stone Wall 02",
   "authors": [
@@ -135,6 +155,8 @@
   ]
  },
  "Slate": {
+  "base": "Slate",
+  "override": true,
   "source": "slate_floor",
   "name": "Slate Floor",
   "authors": [
@@ -148,6 +170,8 @@
   ]
  },
  "Rock": {
+  "base": "Rock",
+  "override": true,
   "source": "rock_face_03",
   "name": "Rock Face 03",
   "authors": [
@@ -162,6 +186,8 @@
   ]
  },
  "Brick": {
+  "base": "Brick",
+  "override": true,
   "source": "red_brick_03",
   "name": "Red Brick 03",
   "authors": [
@@ -175,6 +201,8 @@
   ]
  },
  "Fabric": {
+  "base": "Fabric",
+  "override": true,
   "source": "rough_linen",
   "name": "Rough Linen",
   "authors": [
@@ -189,6 +217,8 @@
   ]
  },
  "Carpet": {
+  "base": "Carpet",
+  "override": true,
   "source": "dirty_carpet",
   "name": "Dirty Carpet",
   "authors": [
@@ -202,6 +232,8 @@
   ]
  },
  "RoofShingles": {
+  "base": "RoofShingles",
+  "override": true,
   "source": "roof_slates_02",
   "name": "Roof Slates 02",
   "authors": [
@@ -215,6 +247,8 @@
   ]
  },
  "Pebble": {
+  "base": "Pebble",
+  "override": true,
   "source": "gravel_floor",
   "name": "Gravel Floor",
   "authors": [
@@ -229,6 +263,8 @@
   ]
  },
  "Pavement": {
+  "base": "Pavement",
+  "override": true,
   "source": "concrete_pavement",
   "name": "Concrete Pavement",
   "authors": [
@@ -242,6 +278,8 @@
   ]
  },
  "Ground": {
+  "base": "Ground",
+  "override": true,
   "source": "forest_ground_04",
   "name": "Forest Ground 04",
   "authors": [
@@ -249,6 +287,296 @@
    "Rob Tuytel"
   ],
   "studsPerTile": 11.3,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Granite": {
+  "base": "Granite",
+  "override": true,
+  "source": "lichen_rock",
+  "name": "Lichen Rock",
+  "authors": [
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Marble": {
+  "base": "Marble",
+  "override": true,
+  "source": "marble_01",
+  "name": "Marble 01",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 5.4,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Mud": {
+  "base": "Mud",
+  "override": true,
+  "source": "brown_mud_02",
+  "name": "Brown Mud 02",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 4.6,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "ConcreteFloor": {
+  "base": "Concrete",
+  "override": false,
+  "source": "concrete_floor_worn_001",
+  "name": "Concrete Floor Worn 001",
+  "authors": [
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 10.7,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "DamConcrete": {
+  "base": "Concrete",
+  "override": false,
+  "source": "concrete_wall_008",
+  "name": "Concrete Wall 008",
+  "authors": [
+   "Charlotte Baglioni",
+   "Dario Barresi"
+  ],
+  "studsPerTile": 9.7,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "CrackedWall": {
+  "base": "Concrete",
+  "override": false,
+  "source": "cracked_concrete_wall",
+  "name": "Cracked Concrete Wall",
+  "authors": [
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 8.0,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Ceiling": {
+  "base": "Concrete",
+  "override": false,
+  "source": "ceiling_interior",
+  "name": "Ceiling Interior",
+  "authors": [
+   "Dimitrios Savva"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "RoofConcrete": {
+  "base": "Concrete",
+  "override": false,
+  "source": "concrete_layers_02",
+  "name": "Concrete Layers 02",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "DoorMetal": {
+  "base": "Metal",
+  "override": false,
+  "source": "rusty_painted_metal",
+  "name": "Rusty Painted Metal",
+  "authors": [
+   "Amal Kumar"
+  ],
+  "studsPerTile": 7.9,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Machine": {
+  "base": "Metal",
+  "override": false,
+  "source": "green_metal_rust",
+  "name": "Green Metal Rust",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 5.0,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Container": {
+  "base": "CorrodedMetal",
+  "override": false,
+  "source": "container_side",
+  "name": "Container Side",
+  "authors": [
+   "Dimitrios Savva"
+  ],
+  "studsPerTile": 6.9,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Corrugated": {
+  "base": "CorrodedMetal",
+  "override": false,
+  "source": "rusty_corrugated_iron",
+  "name": "Rusty Corrugated Iron",
+  "authors": [
+   "Charlotte Baglioni"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Bark": {
+  "base": "Wood",
+  "override": false,
+  "source": "pine_bark",
+  "name": "Pine Bark",
+  "authors": [
+   "Dimitrios Savva"
+  ],
+  "studsPerTile": 3.0,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Timber": {
+  "base": "Wood",
+  "override": false,
+  "source": "rough_wood",
+  "name": "Rough Wood",
+  "authors": [
+   "Rob Tuytel"
+  ],
+  "studsPerTile": 4.0,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "DarkWood": {
+  "base": "Wood",
+  "override": false,
+  "source": "dark_wood",
+  "name": "Dark Wood",
+  "authors": [
+   "Dario Barresi",
+   "Dimitrios Savva",
+   "Rico Cilliers"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "OldFloor": {
+  "base": "WoodPlanks",
+  "override": false,
+  "source": "old_wood_floor",
+  "name": "Old Wood Floor",
+  "authors": [
+   "Guillaume Monsergent"
+  ],
+  "studsPerTile": 10.7,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "ChapelFloor": {
+  "base": "Slate",
+  "override": false,
+  "source": "monastery_stone_floor",
+  "name": "Monastery Stone Floor",
+  "authors": [
+   "Amal Kumar"
+  ],
+  "studsPerTile": 6.4,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "Rubble": {
+  "base": "Slate",
+  "override": false,
+  "source": "rubble",
+  "name": "Rubble",
+  "authors": [
+   "Amal Kumar"
+  ],
+  "studsPerTile": 7.1,
+  "maps": [
+   "color",
+   "normal",
+   "roughness"
+  ]
+ },
+ "MineFloor": {
+  "base": "Ground",
+  "override": false,
+  "source": "rocky_trail",
+  "name": "Rocky Trail",
+  "authors": [
+   "Amal Kumar"
+  ],
+  "studsPerTile": 7.1,
   "maps": [
    "color",
    "normal",

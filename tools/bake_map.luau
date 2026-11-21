@@ -22,10 +22,26 @@ local collection = {
 		instance:AddTag(tagName)
 	end,
 }
+-- ReplicatedStorage with a WaitForChild that does not wait (everything is in the file)
+local replicated = game:GetService("ReplicatedStorage")
+local function finder(instance)
+	return setmetatable({ __instance = instance }, {
+		__index = function(_, key)
+			if key == "WaitForChild" or key == "FindFirstChild" then
+				return function(_, name)
+					return finder(instance:FindFirstChild(name))
+				end
+			end
+			return instance[key]
+		end,
+	})
+end
 local fakeGame = {
 	GetService = function(_, name)
 		if name == "CollectionService" then
 			return collection
+		elseif name == "ReplicatedStorage" then
+			return finder(replicated)
 		end
 		return game:GetService(name)
 	end,
@@ -62,7 +78,16 @@ local siblings = setmetatable({}, {
 		return { __module = name }
 	end,
 })
+local sharedCache = {}
 local function requireMap(target)
+	-- shared modules from ReplicatedStorage (e.g. Shared.Textures): run their source
+	local instance = type(target) == "table" and rawget(target, "__instance")
+	if instance then
+		if sharedCache[instance] == nil then
+			sharedCache[instance] = luau.load(instance.Source, { debugName = instance.Name, environment = env })()
+		end
+		return sharedCache[instance]
+	end
 	local name = type(target) == "table" and target.__module
 	assert(name and sources[name], "unknown map module " .. tostring(name))
 	if loaded[name] == nil then
@@ -163,29 +188,29 @@ for _, entry in { { "Dam03", "Dam03" }, { "Chapel", "Church" }, { "Mine", "Mine"
 end
 relay.ApplyLighting()
 
--- 3. Photo-scanned textures: MaterialVariants + base material overrides (MaterialService
---    "<Material>Name"), so the maps look real in edit mode too. Only materials whose image
---    ids are filled in Shared/Assets.luau. FZ_TEXTURE_TEST=1 uses placeholder ids (format test).
+-- 3. Photo-scanned textures: MaterialVariants (+ base material overrides via MaterialService
+--    "<Material>Name") and grime decal images, so the maps look real in edit mode too. Only
+--    what has image ids in Shared/Assets.luau. FZ_TEXTURE_TEST=1 uses placeholder ids.
 local function loadModule(path)
 	return luau.load(fs.readFile(path), { debugName = path, environment = env })()
 end
 local assets = loadModule("src/ReplicatedStorage/Shared/Assets.luau")
 local textures = loadModule("src/ReplicatedStorage/Shared/Textures.luau")
+local test = process.env.FZ_TEXTURE_TEST == "1"
 local materialService = game:GetService("MaterialService")
 local PROPERTY = { color = "ColorMap", normal = "NormalMap", roughness = "RoughnessMap", metalness = "MetalnessMap" }
-local baked = 0
-for material, spec in textures do
-	local set = (assets.Textures or {})[material] or {}
-	local test = process.env.FZ_TEXTURE_TEST == "1"
+local baked, overrides = 0, 0
+for name, spec in textures.Variants do
+	local set = (assets.Textures or {})[name] or {}
 	if test or (type(set.color) == "string" and set.color ~= "") then
-		local name = "SR_" .. material
-		local old = materialService:FindFirstChild(name)
+		local variantName = "SR_" .. name
+		local old = materialService:FindFirstChild(variantName)
 		if old then
 			old:Destroy()
 		end
 		local variant = roblox.Instance.new("MaterialVariant")
-		variant.Name = name
-		variant.BaseMaterial = roblox.Enum.Material[material]
+		variant.Name = variantName
+		variant.BaseMaterial = roblox.Enum.Material[spec.base]
 		variant.StudsPerTile = spec.studsPerTile
 		variant.MaterialPattern = roblox.Enum.MaterialPattern[spec.pattern]
 		for _, map in spec.maps do
@@ -195,11 +220,29 @@ for material, spec in textures do
 			end
 		end
 		variant.Parent = materialService
-		materialService[material .. "Name"] = name
 		baked += 1
+		if spec.override then
+			materialService[spec.base .. "Name"] = variantName
+			overrides += 1
+		end
 	end
 end
-print(string.format("baked %d textured materials into MaterialService", baked))
+-- grime decals in every baked map
+local decals = 0
+local function fillGrime(root)
+	for _, d in root:GetDescendants() do
+		if d:IsA("Decal") and d:HasTag("FZ_Grime") or (d:IsA("Decal") and d:GetAttribute("FZ_Tags") == "FZ_Grime") then
+			local id = if test then "rbxassetid://1" else (assets.Grime or {})[d:GetAttribute("Kind")]
+			if type(id) == "string" and id ~= "" then
+				d.Texture = id
+				decals += 1
+			end
+		end
+	end
+end
+fillGrime(workspace)
+fillGrime(maps)
+print(string.format("baked %d texture variants (%d overrides), %d grime decals", baked, overrides, decals))
 
 fs.writeFile(placePath, roblox.serializePlace(game, true))
 print("wrote " .. placePath)
