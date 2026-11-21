@@ -9,4 +9,14 @@ return {
 	survival_10 = 0, -- survived 10 shifts
 	answered = 0, -- answered the voice
 	stayed_silent = 0, -- stayed silent
+	community = 0, -- joined the official community (exclusive relay badge)
+	-- achievements (same ids as Shared/Achievements.luau)
+	first_contact = 0,
+	unseen = 0,
+	archivist = 0,
+	last_survivor = 0,
+	nobody_left = 0,
+	night_shift_10 = 0,
+	decoder = 0,
+	rescuer = 0,
 }

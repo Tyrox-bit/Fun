@@ -131,6 +131,7 @@ local function start(mode: string, contentId: string): boolean
 	end
 	cleanWorld()
 	HealthService.ResetSessionStats()
+	table.clear(CreatureService.Spotted)
 	InventoryService.RefillCabinets()
 	session = { mode = mode, contentId = contentId, mapId = entry.map, module = module, idleSince = nil }
 	table.clear(entered)
@@ -279,7 +280,14 @@ function SessionService.ResetActive()
 end
 
 function SessionService.Start()
-	local context = { setCheckpoint = SessionService.SetCheckpoint, finish = SessionService.Finish, playersInGame = SessionService.PlayersInGame }
+	local context = {
+		setCheckpoint = SessionService.SetCheckpoint,
+		finish = SessionService.Finish,
+		playersInGame = SessionService.PlayersInGame,
+		leave = function(player: Player)
+			leave(player, true)
+		end,
+	}
 	for _, modules in MODULES do
 		for _, module in modules do
 			module.Init(context)

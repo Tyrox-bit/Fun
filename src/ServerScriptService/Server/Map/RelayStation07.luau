@@ -664,6 +664,17 @@ local function furnish()
 		patrol(node[1], node[2])
 	end
 
+	-- Supernatural photographs (EvidenceService decides what they show)
+	for _, ph in {
+		{ "photo_past_self", "past_self", CFrame.new(80, 3.2, -10) }, -- administration desk
+		{ "photo_team_future", "team_future", CFrame.new(-60, 3.2, -41.2) }, -- research desk
+		{ "photo_mate_dark", "mate_dark", CFrame.new(93, 2.05, -52) }, -- quarters, on a bunk
+	} do
+		local frame = block(props, "Photo", Vector3.new(1.2, 0.05, 0.9), ph[3] * CFrame.Angles(0, math.random() * 0.6 - 0.3, 0), C.Paper, Enum.Material.SmoothPlastic)
+		frame.CanCollide = false
+		interactable(frame, "photo", "INTERACT_LOOK", "OBJECT_PHOTO", { MaxDistance = 7, PhotoId = ph[1], Kind = ph[2] })
+	end
+
 	-- First-aid cabinets (medkits for reviving teammates)
 	for _, cab in {
 		{ CFrame.new(99.3, 5, 62) * CFrame.Angles(0, math.rad(-90), 0) }, -- control room: security station

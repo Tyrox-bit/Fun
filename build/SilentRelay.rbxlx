@@ -84,6 +84,26 @@ TweenService:Create(
       </Properties>
       <Item class="ModuleScript" referent="5">
         <Properties>
+          <string name="Name">Achievements</string>
+          <string name="Source"><![CDATA[-- Achievements: clear conditions, one-time server-side rewards, no daily obligations.
+-- Conditions are checked where the event happens (see AchievementService.Award calls).
+
+return {
+	{ id = "first_contact", name = "ACH_FIRST_CONTACT", description = "ACH_FIRST_CONTACT_DESC", marks = 50 },
+	{ id = "unseen", name = "ACH_UNSEEN", description = "ACH_UNSEEN_DESC", marks = 300 },
+	{ id = "archivist", name = "ACH_ARCHIVIST", description = "ACH_ARCHIVIST_DESC", marks = 250 },
+	{ id = "last_survivor", name = "ACH_LAST_SURVIVOR", description = "ACH_LAST_SURVIVOR_DESC", marks = 300 },
+	{ id = "nobody_left", name = "ACH_NOBODY_LEFT", description = "ACH_NOBODY_LEFT_DESC", marks = 250 },
+	{ id = "forecast_breaker", name = "ACH_BREAKER", description = "ACH_BREAKER_DESC", marks = 100 },
+	{ id = "night_shift_10", name = "ACH_SHIFT10", description = "ACH_SHIFT10_DESC", marks = 400 },
+	{ id = "decoder", name = "ACH_DECODER", description = "ACH_DECODER_DESC", marks = 200 },
+	{ id = "rescuer", name = "ACH_RESCUER", description = "ACH_RESCUER_DESC", marks = 100 },
+}
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="6">
+        <Properties>
           <string name="Name">Assets</string>
           <string name="Source"><![CDATA[-- Asset registry. The ONLY place where Roblox asset ids live.
 -- Empty string = not uploaded yet: the game runs silently / with built-in fallbacks.
@@ -162,7 +182,7 @@ return {
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="6">
+      <Item class="ModuleScript" referent="7">
         <Properties>
           <string name="Name">Badges</string>
           <string name="Source"><![CDATA[-- Roblox badges. Create them in the Creator Hub (Experience -> Associated Items -> Badges)
@@ -176,11 +196,21 @@ return {
 	survival_10 = 0, -- survived 10 shifts
 	answered = 0, -- answered the voice
 	stayed_silent = 0, -- stayed silent
+	community = 0, -- joined the official community (exclusive relay badge)
+	-- achievements (same ids as Shared/Achievements.luau)
+	first_contact = 0,
+	unseen = 0,
+	archivist = 0,
+	last_survivor = 0,
+	nobody_left = 0,
+	night_shift_10 = 0,
+	decoder = 0,
+	rescuer = 0,
 }
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="7">
+      <Item class="ModuleScript" referent="8">
         <Properties>
           <string name="Name">Catalog</string>
           <string name="Source"><![CDATA[-- Shop catalog. Prices are in Signal Marks (earned in-game only).
@@ -302,7 +332,24 @@ return Catalog
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="8">
+      <Item class="ModuleScript" referent="9">
+        <Properties>
+          <string name="Name">Community</string>
+          <string name="Source"><![CDATA[-- Official Roblox community (group) of SILENT RELAY. See docs/COMMUNITY.md.
+-- GroupId = 0: the community feature is hidden in the menu.
+return {
+	GroupId = 0,
+	RewardMarks = 350,
+	-- Friend invites (Lobby -> Invite): both players get this once, when the invited player
+	-- is new to the game and reaches the control room in chapter 1 (or plays 15 minutes).
+	ReferralMarks = 100,
+	ReferralMaxPerPlayer = 10,
+	ReferralMinAccountAgeDays = 7,
+}
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="10">
         <Properties>
           <string name="Name">Config</string>
           <string name="Source"><![CDATA[-- Config: single source of truth for values shared by client and server.
@@ -583,7 +630,7 @@ return Config
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="9">
+      <Item class="ModuleScript" referent="11">
         <Properties>
           <string name="Name">Content</string>
           <string name="Source"><![CDATA[-- Content registry: the single list of everything playable. New chapters, survival
@@ -683,7 +730,7 @@ return Content
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="10">
+      <Item class="ModuleScript" referent="12">
         <Properties>
           <string name="Name">Localization</string>
           <string name="Source"><![CDATA[-- LocalizationManager
@@ -872,11 +919,11 @@ end
 return Localization
 ]]></string>
         </Properties>
-        <Item class="Folder" referent="11">
+        <Item class="Folder" referent="13">
           <Properties>
             <string name="Name">Languages</string>
           </Properties>
-          <Item class="ModuleScript" referent="12">
+          <Item class="ModuleScript" referent="14">
             <Properties>
               <string name="Name">de</string>
               <string name="Source"><![CDATA[-- Deutsch
@@ -1349,11 +1396,99 @@ return {
 	HELP_MARKER = "{name} · HILFE · {seconds}",
 	OBJECT_MEDCABINET = "Erste-Hilfe-Schrank",
 	INTERACT_TAKE_MEDKIT = "Medkit nehmen",
+
+	-- 0.5: evidence, archive, achievements, community, risk
+	AREA_CORE = "ZENTRALKERN",
+	AREA_ANTENNA = "ANTENNE",
+	INTERACT_LOOK = "Ansehen",
+	OBJECT_PHOTO = "Fotografie",
+	PHOTO_CAPTION = "{date} · {place}",
+	PHOTO_PAST_TITLE = "FOTOGRAFIE · ARCHIVABZUG",
+	PHOTO_PAST_BODY = "Die Ecken sind abgegriffen, das Papier vergilbt. Es zeigt dich – genau dort, wo du vor ein paar Minuten gegangen bist.\n\nAuf der Rückseite, mit Bleistift: „Wieder zurück.“",
+	PHOTO_FUTURE_TITLE = "FOTOGRAFIE · DURCHLAUF 0007",
+	PHOTO_FUTURE_BODY = "Dein Team, vor einem Ort, den ihr noch nicht erreicht habt. Der Abzug ist Jahrzehnte alt.\n\nAuf der Rückseite: „Hier bleiben sie immer stehen.“",
+	PHOTO_DARK_TITLE = "FOTOGRAFIE · FLUR",
+	PHOTO_DARK_BODY = "Jemand aus deinem Team steht in einem dunklen Flur, mit dem Gesicht zur Wand. Du bist sicher, dass er die ganze Zeit neben dir war.\n\nAuf der Rückseite: „Zählt sie nicht. Es merkt, wenn ihr zählt.“",
+	ARCH_REC_ARRIVAL_TITLE = "AUFZEICHNUNG · ANKUNFT",
+	ARCH_REC_ARRIVAL_BODY = "„… Relaisanlage 07 an alle, die das empfangen. Bitte. Jemand ist im Gebäude.“\n„Sie sind gerade angekommen. Sie stehen am Tor.“\n\nKanal 0214. Absender: unbekannt.",
+	ARCH_REC_RELAY_TITLE = "AUFZEICHNUNG · DAS RELAIS",
+	ARCH_REC_RELAY_BODY = "„Nicht antworten. Noch nicht.“\n\nZeitstempel: 41 Minuten BEVOR es gesendet wurde.",
+	INSIGHT_WORDS_TITLE = "ERKENNTNIS · DIESELBEN WORTE",
+	INSIGHT_WORDS_BODY = "June Okafor hörte ihre eigene Stimme sagen: „Nicht antworten. Noch nicht.“\nDas Relais hat euch genau dasselbe gesagt.\n\nWer auf dem Nullträger spricht, warnt sich selbst.",
+	INSIGHT_LOOP_TITLE = "ERKENNTNIS · WIE LANGE?",
+	INSIGHT_LOOP_BODY = "Durchlauf 0006. Ein Foto von dir, Jahrzehnte alt. Ein Kalender, der beim 14. November 2009 stehen geblieben ist.\n\nIhr wart nicht das erste Team hier.\nVielleicht warst du nicht einmal das erste Du.",
+	FILE_NULL_TITLE = "AKTE NULL · VERTRAULICH",
+	FILE_NULL_BODY = "Frequenz 0214-0041-0007 akzeptiert.\n\nStaumauer 3, Pegelhaus: Seit dem 14.11.2009 steigt der Wasserstand jedes Jahr um genau 41 Zentimeter. Niemand hat das Schleusentor geöffnet.\n\nJemand wird es tun müssen.",
+	ARCHIVE_INSIGHT = "Neue Erkenntnis im Archiv.",
+	ARCHIVE_NEW = "Im Archiv gespeichert.",
+	ARCHIVE_TERMINAL = "ARCHIVTERMINAL",
+	ARCHIVE_FREQ_PLACEHOLDER = "Frequenz eingeben …",
+	ARCHIVE_FREQ_SEND = "Einstellen",
+	ARCHIVE_LINK_PROGRESS = "[{number}]  ░░ VERKNÜPFUNG UNVOLLSTÄNDIG ({have}/{need} Akten) ░░",
+	ARCHIVE_LOCKED = "[{number}]  ██████ AKTE GESPERRT ██████",
+	ARCHIVE_COUNT = "{found}/{total} Akten geborgen",
+	ARCHIVE_CAT_ALL = "ALLE",
+	ARCHIVE_CAT_PHOTO = "FOTOS",
+	ARCHIVE_CAT_REPORT = "BERICHTE",
+	ARCHIVE_CAT_TAPE = "TONBÄNDER",
+	ARCHIVE_CAT_OBSERVATION = "BEOBACHTUNGEN",
+	ARCHIVE_CAT_RADIO = "FUNKSPRÜCHE",
+	ARCHIVE_CAT_CONFIDENTIAL = "VERTRAULICH",
+	ARCHIVE_CAT_PAST = "VERGANGENES",
+	ARCHIVE_CAT_INSIGHT = "ERKENNTNISSE",
+	ARCHIVE_CAT_ACHIEVEMENTS = "ERFOLGE",
+	ARCHIVE_CAT_TITLES = "TITEL",
+	SECRET_SOLVED = "Signal entschlüsselt. Du bist Nummer {count}, die es gefunden hat.",
+	SECRET_KNOWN = "Dieses Signal hast du schon entschlüsselt.",
+	SECRET_NOTHING = "Auf dieser Frequenz nur Rauschen.",
+	ACH_UNLOCKED = "Erfolg: {name}",
+	ACH_FIRST_CONTACT = "Erstkontakt",
+	ACH_FIRST_CONTACT_DESC = "Empfange deine erste ungewöhnliche Übertragung. (+{marks})",
+	ACH_UNSEEN = "Ungesehen",
+	ACH_UNSEEN_DESC = "Schließe Kapitel 1 ab, ohne dass dich die Kreatur je verfolgt. (+{marks})",
+	ACH_ARCHIVIST = "Archivar",
+	ACH_ARCHIVIST_DESC = "Berge alle Akten der Relaisanlage 07. (+{marks})",
+	ACH_LAST_SURVIVOR = "Letzter Überlebender",
+	ACH_LAST_SURVIVOR_DESC = "Evakuiere im Endlos-Überleben als Einziger deines Teams. (+{marks})",
+	ACH_NOBODY_LEFT = "Niemand bleibt zurück",
+	ACH_NOBODY_LEFT_DESC = "Schließe Kapitel 1 ab oder evakuiert als Team, ohne dass jemand ausscheidet. (+{marks})",
+	ACH_BREAKER = "Prognosebrecher",
+	ACH_BREAKER_DESC = "Brich eine Prognose, bevor sie eintritt. (+{marks})",
+	ACH_SHIFT10 = "Zehn Schichten",
+	ACH_SHIFT10_DESC = "Überstehe 10 Schichten in einem Endlos-Durchgang. (+{marks})",
+	ACH_DECODER = "Entschlüsseler",
+	ACH_DECODER_DESC = "Entschlüssele eine versteckte Frequenz im Archivterminal. (+{marks})",
+	ACH_RESCUER = "Retter",
+	ACH_RESCUER_DESC = "Hilf einem Teammitglied mit einem Medkit wieder auf. (+{marks})",
+	TITLE_RELAY_MEMBER = "Relaisfunker",
+	TITLE_RELAY_MEMBER_HINT = "??? · Exklusives Abzeichen für Mitglieder der offiziellen Community.",
+	COMMUNITY_TITLE = "Community",
+	COMMUNITY_DESC = "Tritt der offiziellen SILENT-RELAY-Community auf Roblox bei und erhalte einmalig: {marks} Signalmarken und den exklusiven Titel „Relaisfunker“.",
+	COMMUNITY_OPTIONAL = "Völlig freiwillig – das ganze Spiel ist auch ohne spielbar.",
+	COMMUNITY_JOIN = "Community beitreten",
+	COMMUNITY_CHECK = "Mitgliedschaft prüfen und einlösen",
+	COMMUNITY_OK = "Willkommen, Relaisfunker! +{marks} Signalmarken.",
+	COMMUNITY_CLAIMED = "Belohnung bereits erhalten. Danke!",
+	COMMUNITY_NOT_MEMBER = "Noch keine Mitgliedschaft gefunden. Wenn deine Anfrage noch aussteht, prüfe nach der Bestätigung erneut.",
+	COMMUNITY_ERROR = "Roblox hat nicht geantwortet. Es wurde nichts verbraucht – versuche es gleich noch einmal.",
+	COMMUNITY_OFF = "Die Community ist noch nicht eingerichtet.",
+	COMMUNITY_JOIN_MANUAL = "Beitreten ist auf diesem Gerät nicht direkt möglich. Öffne die Spielseite und wähle dort die Community.",
+	REFERRAL_REWARD = "Einladungsbelohnung: +100 Signalmarken für dich und deinen Freund.",
+	SV_RISK_PROMPT = "Gesichert: {banked} · nächste Schicht +{nextReward} · Gefahr {danger}/4. Evakuieren oder weiter?",
+	SV_RISK_EVACUATE = "Evakuieren",
+	SV_RISK_CONTINUE = "Weiter vordringen",
+	SV_RISK_CONTINUE_LINE = "Ihr bleibt. Es hat es bemerkt.",
+	SV_RISK_OBJECTIVE = "Abstimmung: evakuieren oder weiter.",
+	SV_EVAC = "Zur Antenne – alle, die noch stehen.",
+	SV_EVAC_LINE = "Evakuierung. Fünfundsiebzig Sekunden. Es wartet nicht.",
+	SV_EVAC_TIMER = "EVAKUIERUNG · {seconds} S",
+	SV_VOTE_TIMER = "ABSTIMMUNG · {seconds} S",
+	SV_LEFT_ALONE = "Du bist allein mit deinem Anteil gegangen: +{marks} Signalmarken.",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="13">
+          <Item class="ModuleScript" referent="15">
             <Properties>
               <string name="Name">en</string>
               <string name="Source"><![CDATA[-- English (reference language and fallback). Every key must exist here.
@@ -1826,11 +1961,99 @@ return {
 	HELP_MARKER = "{name} · HELP · {seconds}",
 	OBJECT_MEDCABINET = "First-aid cabinet",
 	INTERACT_TAKE_MEDKIT = "Take medkit",
+
+	-- 0.5: evidence, archive, achievements, community, risk
+	AREA_CORE = "CENTRAL CORE",
+	AREA_ANTENNA = "ANTENNA",
+	INTERACT_LOOK = "Look at",
+	OBJECT_PHOTO = "Photograph",
+	PHOTO_CAPTION = "{date} · {place}",
+	PHOTO_PAST_TITLE = "PHOTOGRAPH · ARCHIVE PRINT",
+	PHOTO_PAST_BODY = "The corners are worn, the paper has yellowed. It shows you – exactly where you walked a few minutes ago.\n\nOn the back, in pencil: \"Back again.\"",
+	PHOTO_FUTURE_TITLE = "PHOTOGRAPH · RUN 0007",
+	PHOTO_FUTURE_BODY = "Your team, standing in front of a place you have not reached yet. The print is decades old.\n\nOn the back: \"They always stop here.\"",
+	PHOTO_DARK_TITLE = "PHOTOGRAPH · CORRIDOR",
+	PHOTO_DARK_BODY = "Someone from your team stands in a dark corridor, facing the wall. You are sure they were next to you the whole time.\n\nOn the back: \"Don't count them. It notices when you count.\"",
+	ARCH_REC_ARRIVAL_TITLE = "RECORDING · ARRIVAL",
+	ARCH_REC_ARRIVAL_BODY = "\"...Relay 07 to anyone receiving. Please. Someone is inside the building.\"\n\"They just arrived. They're standing at the gate.\"\n\nChannel 0214. Sender: unknown.",
+	ARCH_REC_RELAY_TITLE = "RECORDING · THE RELAY",
+	ARCH_REC_RELAY_BODY = "\"Don't answer. Not yet.\"\n\nTimestamp: 41 minutes BEFORE it was sent.",
+	INSIGHT_WORDS_TITLE = "INSIGHT · THE SAME WORDS",
+	INSIGHT_WORDS_BODY = "June Okafor heard her own voice say: \"Don't answer. Not yet.\"\nThe Relay told you exactly the same.\n\nWhoever speaks on the zero carrier is warning themselves.",
+	INSIGHT_LOOP_TITLE = "INSIGHT · HOW LONG?",
+	INSIGHT_LOOP_BODY = "Run 0006. A photograph of you, decades old. A calendar stuck on 14 November 2009.\n\nYou were not the first team here.\nMaybe you were not even the first you.",
+	FILE_NULL_TITLE = "FILE NULL · CLASSIFIED",
+	FILE_NULL_BODY = "Frequency 0214-0041-0007 accepted.\n\nDam 3, gauge house: since 14.11.2009 the water level has risen by exactly 41 centimetres every year. Nobody opened the floodgate.\n\nSomeone will have to.",
+	ARCHIVE_INSIGHT = "New insight in the archive.",
+	ARCHIVE_NEW = "Saved to the archive.",
+	ARCHIVE_TERMINAL = "ARCHIVE TERMINAL",
+	ARCHIVE_FREQ_PLACEHOLDER = "Enter a frequency…",
+	ARCHIVE_FREQ_SEND = "Tune in",
+	ARCHIVE_LINK_PROGRESS = "[{number}]  ░░ LINK INCOMPLETE ({have}/{need} files) ░░",
+	ARCHIVE_LOCKED = "[{number}]  ██████ FILE LOCKED ██████",
+	ARCHIVE_COUNT = "{found}/{total} files recovered",
+	ARCHIVE_CAT_ALL = "ALL",
+	ARCHIVE_CAT_PHOTO = "PHOTOS",
+	ARCHIVE_CAT_REPORT = "REPORTS",
+	ARCHIVE_CAT_TAPE = "TAPES",
+	ARCHIVE_CAT_OBSERVATION = "OBSERVATIONS",
+	ARCHIVE_CAT_RADIO = "TRANSMISSIONS",
+	ARCHIVE_CAT_CONFIDENTIAL = "CONFIDENTIAL",
+	ARCHIVE_CAT_PAST = "PAST EVENTS",
+	ARCHIVE_CAT_INSIGHT = "INSIGHTS",
+	ARCHIVE_CAT_ACHIEVEMENTS = "ACHIEVEMENTS",
+	ARCHIVE_CAT_TITLES = "TITLES",
+	SECRET_SOLVED = "Signal decoded. You are number {count} to find it.",
+	SECRET_KNOWN = "You already decoded this signal.",
+	SECRET_NOTHING = "Only static on this frequency.",
+	ACH_UNLOCKED = "Achievement: {name}",
+	ACH_FIRST_CONTACT = "First contact",
+	ACH_FIRST_CONTACT_DESC = "Receive your first unusual transmission. (+{marks})",
+	ACH_UNSEEN = "Unseen",
+	ACH_UNSEEN_DESC = "Finish chapter 1 without the creature ever chasing you. (+{marks})",
+	ACH_ARCHIVIST = "Archivist",
+	ACH_ARCHIVIST_DESC = "Recover every file of Relay Station 07. (+{marks})",
+	ACH_LAST_SURVIVOR = "Last survivor",
+	ACH_LAST_SURVIVOR_DESC = "Evacuate from endless survival as the only one of your team who made it. (+{marks})",
+	ACH_NOBODY_LEFT = "Nobody stays behind",
+	ACH_NOBODY_LEFT_DESC = "Finish chapter 1 or evacuate as a team without anyone being eliminated. (+{marks})",
+	ACH_BREAKER = "Forecast breaker",
+	ACH_BREAKER_DESC = "Break a forecast before it comes true. (+{marks})",
+	ACH_SHIFT10 = "Ten shifts",
+	ACH_SHIFT10_DESC = "Survive 10 shifts in one endless survival run. (+{marks})",
+	ACH_DECODER = "Decoder",
+	ACH_DECODER_DESC = "Decode a hidden frequency in the archive terminal. (+{marks})",
+	ACH_RESCUER = "Rescuer",
+	ACH_RESCUER_DESC = "Help a teammate back up with a medkit. (+{marks})",
+	TITLE_RELAY_MEMBER = "Relay operator",
+	TITLE_RELAY_MEMBER_HINT = "??? · Exclusive badge for members of the official community.",
+	COMMUNITY_TITLE = "Community",
+	COMMUNITY_DESC = "Join the official SILENT RELAY community on Roblox and receive once: {marks} signal marks and the exclusive title \"Relay operator\".",
+	COMMUNITY_OPTIONAL = "Completely optional – the whole game is playable without it.",
+	COMMUNITY_JOIN = "Join the community",
+	COMMUNITY_CHECK = "Check membership and claim",
+	COMMUNITY_OK = "Welcome, relay operator! +{marks} signal marks.",
+	COMMUNITY_CLAIMED = "Reward already received. Thank you!",
+	COMMUNITY_NOT_MEMBER = "No membership found yet. If your join request is still pending, check again once it was accepted.",
+	COMMUNITY_ERROR = "Roblox did not answer. Nothing was used up – try again in a moment.",
+	COMMUNITY_OFF = "The community is not set up yet.",
+	COMMUNITY_JOIN_MANUAL = "Joining from here is not available on this device. Open the experience page and choose the community there.",
+	REFERRAL_REWARD = "Invite reward: +100 signal marks for you and your friend.",
+	SV_RISK_PROMPT = "Secured: {banked} · next shift +{nextReward} · danger {danger}/4. Evacuate or push on?",
+	SV_RISK_EVACUATE = "Evacuate",
+	SV_RISK_CONTINUE = "Push on",
+	SV_RISK_CONTINUE_LINE = "You're staying. It noticed.",
+	SV_RISK_OBJECTIVE = "Vote: evacuate or push on.",
+	SV_EVAC = "Get to the antenna – everyone who is still standing.",
+	SV_EVAC_LINE = "Evacuation. Seventy-five seconds. It will not wait.",
+	SV_EVAC_TIMER = "EVACUATION · {seconds} S",
+	SV_VOTE_TIMER = "VOTE · {seconds} S",
+	SV_LEFT_ALONE = "You left alone with your share: +{marks} signal marks.",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="14">
+          <Item class="ModuleScript" referent="16">
             <Properties>
               <string name="Name">es</string>
               <string name="Source"><![CDATA[-- Español (neutro latinoamericano: "tú" para el jugador, "ustedes" para el equipo)
@@ -2303,11 +2526,99 @@ return {
 	HELP_MARKER = "{name} · AYUDA · {seconds}",
 	OBJECT_MEDCABINET = "Botiquín de primeros auxilios",
 	INTERACT_TAKE_MEDKIT = "Tomar botiquín",
+
+	-- 0.5: evidence, archive, achievements, community, risk
+	AREA_CORE = "NÚCLEO CENTRAL",
+	AREA_ANTENNA = "ANTENA",
+	INTERACT_LOOK = "Mirar",
+	OBJECT_PHOTO = "Fotografía",
+	PHOTO_CAPTION = "{date} · {place}",
+	PHOTO_PAST_TITLE = "FOTOGRAFÍA · COPIA DE ARCHIVO",
+	PHOTO_PAST_BODY = "Las esquinas están gastadas y el papel amarillento. Te muestra a ti, justo donde caminaste hace unos minutos.\n\nAl dorso, a lápiz: «Otra vez aquí».",
+	PHOTO_FUTURE_TITLE = "FOTOGRAFÍA · PASADA 0007",
+	PHOTO_FUTURE_BODY = "Tu equipo, frente a un lugar al que aún no han llegado. La copia tiene décadas.\n\nAl dorso: «Siempre se detienen aquí».",
+	PHOTO_DARK_TITLE = "FOTOGRAFÍA · PASILLO",
+	PHOTO_DARK_BODY = "Alguien de tu equipo está en un pasillo oscuro, de cara a la pared. Estás seguro de que estuvo a tu lado todo el tiempo.\n\nAl dorso: «No los cuenten. Se da cuenta cuando cuentan».",
+	ARCH_REC_ARRIVAL_TITLE = "GRABACIÓN · LLEGADA",
+	ARCH_REC_ARRIVAL_BODY = "«...Repetidora 07 a quien esté escuchando. Por favor. Hay alguien dentro del edificio».\n«Acaban de llegar. Están en el portón».\n\nCanal 0214. Remitente: desconocido.",
+	ARCH_REC_RELAY_TITLE = "GRABACIÓN · EL RELÉ",
+	ARCH_REC_RELAY_BODY = "«No respondan. Todavía no».\n\nMarca de tiempo: 41 minutos ANTES de enviarse.",
+	INSIGHT_WORDS_TITLE = "REVELACIÓN · LAS MISMAS PALABRAS",
+	INSIGHT_WORDS_BODY = "June Okafor oyó su propia voz decir: «No respondas. Todavía no».\nEl relé les dijo exactamente lo mismo.\n\nQuien habla en la portadora cero se advierte a sí mismo.",
+	INSIGHT_LOOP_TITLE = "REVELACIÓN · ¿CUÁNTO TIEMPO?",
+	INSIGHT_LOOP_BODY = "Pasada 0006. Una foto tuya de hace décadas. Un calendario detenido en el 14 de noviembre de 2009.\n\nNo fueron el primer equipo aquí.\nQuizá ni siquiera fuiste el primer tú.",
+	FILE_NULL_TITLE = "ARCHIVO NULO · CONFIDENCIAL",
+	FILE_NULL_BODY = "Frecuencia 0214-0041-0007 aceptada.\n\nPresa 3, caseta de aforo: desde el 14.11.2009 el nivel del agua sube exactamente 41 centímetros cada año. Nadie abrió la compuerta.\n\nAlguien tendrá que hacerlo.",
+	ARCHIVE_INSIGHT = "Nueva revelación en el archivo.",
+	ARCHIVE_NEW = "Guardado en el archivo.",
+	ARCHIVE_TERMINAL = "TERMINAL DE ARCHIVO",
+	ARCHIVE_FREQ_PLACEHOLDER = "Introduce una frecuencia…",
+	ARCHIVE_FREQ_SEND = "Sintonizar",
+	ARCHIVE_LINK_PROGRESS = "[{number}]  ░░ ENLACE INCOMPLETO ({have}/{need} archivos) ░░",
+	ARCHIVE_LOCKED = "[{number}]  ██████ ARCHIVO BLOQUEADO ██████",
+	ARCHIVE_COUNT = "{found}/{total} archivos recuperados",
+	ARCHIVE_CAT_ALL = "TODO",
+	ARCHIVE_CAT_PHOTO = "FOTOS",
+	ARCHIVE_CAT_REPORT = "INFORMES",
+	ARCHIVE_CAT_TAPE = "CINTAS",
+	ARCHIVE_CAT_OBSERVATION = "OBSERVACIONES",
+	ARCHIVE_CAT_RADIO = "TRANSMISIONES",
+	ARCHIVE_CAT_CONFIDENTIAL = "CONFIDENCIAL",
+	ARCHIVE_CAT_PAST = "EL PASADO",
+	ARCHIVE_CAT_INSIGHT = "REVELACIONES",
+	ARCHIVE_CAT_ACHIEVEMENTS = "LOGROS",
+	ARCHIVE_CAT_TITLES = "TÍTULOS",
+	SECRET_SOLVED = "Señal descifrada. Eres el número {count} en encontrarla.",
+	SECRET_KNOWN = "Ya descifraste esta señal.",
+	SECRET_NOTHING = "Solo estática en esta frecuencia.",
+	ACH_UNLOCKED = "Logro: {name}",
+	ACH_FIRST_CONTACT = "Primer contacto",
+	ACH_FIRST_CONTACT_DESC = "Recibe tu primera transmisión inusual. (+{marks})",
+	ACH_UNSEEN = "Sin ser visto",
+	ACH_UNSEEN_DESC = "Termina el capítulo 1 sin que la criatura te persiga nunca. (+{marks})",
+	ACH_ARCHIVIST = "Archivista",
+	ACH_ARCHIVIST_DESC = "Recupera todos los archivos de la repetidora 07. (+{marks})",
+	ACH_LAST_SURVIVOR = "Último superviviente",
+	ACH_LAST_SURVIVOR_DESC = "Evacúa en supervivencia sin fin como el único de tu equipo. (+{marks})",
+	ACH_NOBODY_LEFT = "Nadie se queda atrás",
+	ACH_NOBODY_LEFT_DESC = "Termina el capítulo 1 o evacúen en equipo sin que nadie quede eliminado. (+{marks})",
+	ACH_BREAKER = "Rompepronósticos",
+	ACH_BREAKER_DESC = "Rompe un pronóstico antes de que se cumpla. (+{marks})",
+	ACH_SHIFT10 = "Diez turnos",
+	ACH_SHIFT10_DESC = "Supera 10 turnos en una partida de supervivencia sin fin. (+{marks})",
+	ACH_DECODER = "Descifrador",
+	ACH_DECODER_DESC = "Descifra una frecuencia oculta en el terminal de archivo. (+{marks})",
+	ACH_RESCUER = "Rescatador",
+	ACH_RESCUER_DESC = "Levanta a un compañero con un botiquín. (+{marks})",
+	TITLE_RELAY_MEMBER = "Operador del relé",
+	TITLE_RELAY_MEMBER_HINT = "??? · Insignia exclusiva para miembros de la comunidad oficial.",
+	COMMUNITY_TITLE = "Comunidad",
+	COMMUNITY_DESC = "Únete a la comunidad oficial de SILENT RELAY en Roblox y recibe una vez: {marks} marcas de señal y el título exclusivo «Operador del relé».",
+	COMMUNITY_OPTIONAL = "Totalmente opcional: todo el juego se puede jugar sin ello.",
+	COMMUNITY_JOIN = "Unirse a la comunidad",
+	COMMUNITY_CHECK = "Comprobar membresía y reclamar",
+	COMMUNITY_OK = "¡Bienvenido, operador del relé! +{marks} marcas de señal.",
+	COMMUNITY_CLAIMED = "Recompensa ya recibida. ¡Gracias!",
+	COMMUNITY_NOT_MEMBER = "Aún no se encontró la membresía. Si tu solicitud está pendiente, vuelve a comprobar cuando la acepten.",
+	COMMUNITY_ERROR = "Roblox no respondió. No se gastó nada: inténtalo de nuevo en un momento.",
+	COMMUNITY_OFF = "La comunidad aún no está configurada.",
+	COMMUNITY_JOIN_MANUAL = "Unirse desde aquí no está disponible en este dispositivo. Abre la página de la experiencia y elige allí la comunidad.",
+	REFERRAL_REWARD = "Recompensa de invitación: +100 marcas de señal para ti y tu amigo.",
+	SV_RISK_PROMPT = "Asegurado: {banked} · siguiente turno +{nextReward} · peligro {danger}/4. ¿Evacuar o seguir?",
+	SV_RISK_EVACUATE = "Evacuar",
+	SV_RISK_CONTINUE = "Seguir adelante",
+	SV_RISK_CONTINUE_LINE = "Se quedan. Se ha dado cuenta.",
+	SV_RISK_OBJECTIVE = "Votación: evacuar o seguir.",
+	SV_EVAC = "A la antena: todos los que sigan en pie.",
+	SV_EVAC_LINE = "Evacuación. Setenta y cinco segundos. No esperará.",
+	SV_EVAC_TIMER = "EVACUACIÓN · {seconds} S",
+	SV_VOTE_TIMER = "VOTACIÓN · {seconds} S",
+	SV_LEFT_ALONE = "Te fuiste solo con tu parte: +{marks} marcas de señal.",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="15">
+          <Item class="ModuleScript" referent="17">
             <Properties>
               <string name="Name">fr</string>
               <string name="Source"><![CDATA[-- Français
@@ -2780,11 +3091,99 @@ return {
 	HELP_MARKER = "{name} · AIDE · {seconds}",
 	OBJECT_MEDCABINET = "Armoire de premiers secours",
 	INTERACT_TAKE_MEDKIT = "Prendre une trousse",
+
+	-- 0.5: evidence, archive, achievements, community, risk
+	AREA_CORE = "NOYAU CENTRAL",
+	AREA_ANTENNA = "ANTENNE",
+	INTERACT_LOOK = "Regarder",
+	OBJECT_PHOTO = "Photographie",
+	PHOTO_CAPTION = "{date} · {place}",
+	PHOTO_PAST_TITLE = "PHOTOGRAPHIE · TIRAGE D'ARCHIVE",
+	PHOTO_PAST_BODY = "Les coins sont usés, le papier a jauni. On t'y voit – exactement là où tu es passé il y a quelques minutes.\n\nAu dos, au crayon : « De retour. »",
+	PHOTO_FUTURE_TITLE = "PHOTOGRAPHIE · PASSAGE 0007",
+	PHOTO_FUTURE_BODY = "Ton équipe, devant un endroit que vous n'avez pas encore atteint. Le tirage a des décennies.\n\nAu dos : « Ils s'arrêtent toujours ici. »",
+	PHOTO_DARK_TITLE = "PHOTOGRAPHIE · COULOIR",
+	PHOTO_DARK_BODY = "Quelqu'un de ton équipe se tient dans un couloir sombre, face au mur. Tu es sûr qu'il était à côté de toi tout ce temps.\n\nAu dos : « Ne les comptez pas. Il remarque quand vous comptez. »",
+	ARCH_REC_ARRIVAL_TITLE = "ENREGISTREMENT · ARRIVÉE",
+	ARCH_REC_ARRIVAL_BODY = "« ...Ici le relais 07, à quiconque reçoit ce message. Quelqu'un est dans le bâtiment. »\n« Ils viennent d'arriver. Ils sont devant le portail. »\n\nCanal 0214. Émetteur : inconnu.",
+	ARCH_REC_RELAY_TITLE = "ENREGISTREMENT · LE RELAIS",
+	ARCH_REC_RELAY_BODY = "« Ne répondez pas. Pas encore. »\n\nHorodatage : 41 minutes AVANT l'envoi.",
+	INSIGHT_WORDS_TITLE = "DÉCOUVERTE · LES MÊMES MOTS",
+	INSIGHT_WORDS_BODY = "June Okafor a entendu sa propre voix dire : « Ne réponds pas. Pas encore. »\nLe relais vous a dit exactement la même chose.\n\nCelui qui parle sur la porteuse zéro s'avertit lui-même.",
+	INSIGHT_LOOP_TITLE = "DÉCOUVERTE · DEPUIS QUAND ?",
+	INSIGHT_LOOP_BODY = "Passage 0006. Une photo de toi, vieille de plusieurs décennies. Un calendrier bloqué au 14 novembre 2009.\n\nVous n'étiez pas la première équipe ici.\nPeut-être n'étais-tu même pas le premier toi.",
+	FILE_NULL_TITLE = "DOSSIER NUL · CONFIDENTIEL",
+	FILE_NULL_BODY = "Fréquence 0214-0041-0007 acceptée.\n\nBarrage 3, maison de jauge : depuis le 14.11.2009, le niveau de l'eau monte d'exactement 41 centimètres par an. Personne n'a ouvert la vanne.\n\nQuelqu'un devra le faire.",
+	ARCHIVE_INSIGHT = "Nouvelle découverte dans les archives.",
+	ARCHIVE_NEW = "Enregistré dans les archives.",
+	ARCHIVE_TERMINAL = "TERMINAL D'ARCHIVES",
+	ARCHIVE_FREQ_PLACEHOLDER = "Saisir une fréquence…",
+	ARCHIVE_FREQ_SEND = "Syntoniser",
+	ARCHIVE_LINK_PROGRESS = "[{number}]  ░░ LIEN INCOMPLET ({have}/{need} dossiers) ░░",
+	ARCHIVE_LOCKED = "[{number}]  ██████ DOSSIER VERROUILLÉ ██████",
+	ARCHIVE_COUNT = "{found}/{total} dossiers récupérés",
+	ARCHIVE_CAT_ALL = "TOUT",
+	ARCHIVE_CAT_PHOTO = "PHOTOS",
+	ARCHIVE_CAT_REPORT = "RAPPORTS",
+	ARCHIVE_CAT_TAPE = "BANDES",
+	ARCHIVE_CAT_OBSERVATION = "OBSERVATIONS",
+	ARCHIVE_CAT_RADIO = "TRANSMISSIONS",
+	ARCHIVE_CAT_CONFIDENTIAL = "CONFIDENTIEL",
+	ARCHIVE_CAT_PAST = "LE PASSÉ",
+	ARCHIVE_CAT_INSIGHT = "DÉCOUVERTES",
+	ARCHIVE_CAT_ACHIEVEMENTS = "SUCCÈS",
+	ARCHIVE_CAT_TITLES = "TITRES",
+	SECRET_SOLVED = "Signal décodé. Tu es le numéro {count} à l'avoir trouvé.",
+	SECRET_KNOWN = "Tu as déjà décodé ce signal.",
+	SECRET_NOTHING = "Rien que des parasites sur cette fréquence.",
+	ACH_UNLOCKED = "Succès : {name}",
+	ACH_FIRST_CONTACT = "Premier contact",
+	ACH_FIRST_CONTACT_DESC = "Reçois ta première transmission inhabituelle. (+{marks})",
+	ACH_UNSEEN = "Invisible",
+	ACH_UNSEEN_DESC = "Termine le chapitre 1 sans que la créature ne te poursuive jamais. (+{marks})",
+	ACH_ARCHIVIST = "Archiviste",
+	ACH_ARCHIVIST_DESC = "Récupère tous les dossiers du relais 07. (+{marks})",
+	ACH_LAST_SURVIVOR = "Dernier survivant",
+	ACH_LAST_SURVIVOR_DESC = "Évacue en survie sans fin en étant le seul de ton équipe. (+{marks})",
+	ACH_NOBODY_LEFT = "Personne ne reste derrière",
+	ACH_NOBODY_LEFT_DESC = "Termine le chapitre 1 ou évacuez en équipe sans que personne ne soit éliminé. (+{marks})",
+	ACH_BREAKER = "Briseur de prévisions",
+	ACH_BREAKER_DESC = "Déjoue une prévision avant qu'elle ne se réalise. (+{marks})",
+	ACH_SHIFT10 = "Dix postes",
+	ACH_SHIFT10_DESC = "Tiens 10 postes en une seule partie de survie sans fin. (+{marks})",
+	ACH_DECODER = "Décodeur",
+	ACH_DECODER_DESC = "Décode une fréquence cachée dans le terminal d'archives. (+{marks})",
+	ACH_RESCUER = "Sauveteur",
+	ACH_RESCUER_DESC = "Relève un coéquipier avec une trousse de soins. (+{marks})",
+	TITLE_RELAY_MEMBER = "Opérateur du relais",
+	TITLE_RELAY_MEMBER_HINT = "??? · Insigne exclusif pour les membres de la communauté officielle.",
+	COMMUNITY_TITLE = "Communauté",
+	COMMUNITY_DESC = "Rejoins la communauté officielle SILENT RELAY sur Roblox et reçois une fois : {marks} marques de signal et le titre exclusif « Opérateur du relais ».",
+	COMMUNITY_OPTIONAL = "Entièrement facultatif – tout le jeu est jouable sans.",
+	COMMUNITY_JOIN = "Rejoindre la communauté",
+	COMMUNITY_CHECK = "Vérifier l'adhésion et réclamer",
+	COMMUNITY_OK = "Bienvenue, opérateur du relais ! +{marks} marques de signal.",
+	COMMUNITY_CLAIMED = "Récompense déjà reçue. Merci !",
+	COMMUNITY_NOT_MEMBER = "Aucune adhésion trouvée. Si ta demande est en attente, vérifie à nouveau une fois acceptée.",
+	COMMUNITY_ERROR = "Roblox n'a pas répondu. Rien n'a été utilisé – réessaie dans un instant.",
+	COMMUNITY_OFF = "La communauté n'est pas encore configurée.",
+	COMMUNITY_JOIN_MANUAL = "Rejoindre d'ici n'est pas disponible sur cet appareil. Ouvre la page de l'expérience et choisis la communauté.",
+	REFERRAL_REWARD = "Récompense d'invitation : +100 marques de signal pour toi et ton ami.",
+	SV_RISK_PROMPT = "Sécurisé : {banked} · poste suivant +{nextReward} · danger {danger}/4. Évacuer ou continuer ?",
+	SV_RISK_EVACUATE = "Évacuer",
+	SV_RISK_CONTINUE = "Continuer",
+	SV_RISK_CONTINUE_LINE = "Vous restez. Il l'a remarqué.",
+	SV_RISK_OBJECTIVE = "Vote : évacuer ou continuer.",
+	SV_EVAC = "À l'antenne – tous ceux qui tiennent debout.",
+	SV_EVAC_LINE = "Évacuation. Soixante-quinze secondes. Il n'attendra pas.",
+	SV_EVAC_TIMER = "ÉVACUATION · {seconds} S",
+	SV_VOTE_TIMER = "VOTE · {seconds} S",
+	SV_LEFT_ALONE = "Tu es parti seul avec ta part : +{marks} marques de signal.",
 }
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="16">
+          <Item class="ModuleScript" referent="18">
             <Properties>
               <string name="Name">pt_br</string>
               <string name="Source"><![CDATA[-- Português (Brasil)
@@ -3257,30 +3656,131 @@ return {
 	HELP_MARKER = "{name} · AJUDA · {seconds}",
 	OBJECT_MEDCABINET = "Armário de primeiros socorros",
 	INTERACT_TAKE_MEDKIT = "Pegar kit médico",
+
+	-- 0.5: evidence, archive, achievements, community, risk
+	AREA_CORE = "NÚCLEO CENTRAL",
+	AREA_ANTENNA = "ANTENA",
+	INTERACT_LOOK = "Olhar",
+	OBJECT_PHOTO = "Fotografia",
+	PHOTO_CAPTION = "{date} · {place}",
+	PHOTO_PAST_TITLE = "FOTOGRAFIA · CÓPIA DE ARQUIVO",
+	PHOTO_PAST_BODY = "Os cantos estão gastos, o papel amarelado. Mostra você – exatamente onde passou há poucos minutos.\n\nNo verso, a lápis: “De volta.”",
+	PHOTO_FUTURE_TITLE = "FOTOGRAFIA · CICLO 0007",
+	PHOTO_FUTURE_BODY = "Sua equipe, diante de um lugar que vocês ainda não alcançaram. A cópia tem décadas.\n\nNo verso: “Eles sempre param aqui.”",
+	PHOTO_DARK_TITLE = "FOTOGRAFIA · CORREDOR",
+	PHOTO_DARK_BODY = "Alguém da sua equipe está num corredor escuro, de frente para a parede. Você tem certeza de que estava ao seu lado o tempo todo.\n\nNo verso: “Não contem. Ele percebe quando vocês contam.”",
+	ARCH_REC_ARRIVAL_TITLE = "GRAVAÇÃO · CHEGADA",
+	ARCH_REC_ARRIVAL_BODY = "“...Repetidora 07 para quem estiver na escuta. Por favor. Tem alguém dentro do prédio.”\n“Eles acabaram de chegar. Estão no portão.”\n\nCanal 0214. Remetente: desconhecido.",
+	ARCH_REC_RELAY_TITLE = "GRAVAÇÃO · O RELÉ",
+	ARCH_REC_RELAY_BODY = "“Não respondam. Ainda não.”\n\nCarimbo de hora: 41 minutos ANTES de ser enviado.",
+	INSIGHT_WORDS_TITLE = "DESCOBERTA · AS MESMAS PALAVRAS",
+	INSIGHT_WORDS_BODY = "June Okafor ouviu a própria voz dizer: “Não responda. Ainda não.”\nO relé disse exatamente o mesmo a vocês.\n\nQuem fala na portadora zero está avisando a si mesmo.",
+	INSIGHT_LOOP_TITLE = "DESCOBERTA · HÁ QUANTO TEMPO?",
+	INSIGHT_LOOP_BODY = "Ciclo 0006. Uma foto sua, de décadas atrás. Um calendário parado em 14 de novembro de 2009.\n\nVocês não foram a primeira equipe aqui.\nTalvez você nem tenha sido o primeiro você.",
+	FILE_NULL_TITLE = "ARQUIVO NULO · CONFIDENCIAL",
+	FILE_NULL_BODY = "Frequência 0214-0041-0007 aceita.\n\nRepresa 3, casa de medição: desde 14.11.2009 o nível da água sobe exatamente 41 centímetros por ano. Ninguém abriu a comporta.\n\nAlguém vai ter que abrir.",
+	ARCHIVE_INSIGHT = "Nova descoberta no arquivo.",
+	ARCHIVE_NEW = "Salvo no arquivo.",
+	ARCHIVE_TERMINAL = "TERMINAL DE ARQUIVO",
+	ARCHIVE_FREQ_PLACEHOLDER = "Digite uma frequência…",
+	ARCHIVE_FREQ_SEND = "Sintonizar",
+	ARCHIVE_LINK_PROGRESS = "[{number}]  ░░ LIGAÇÃO INCOMPLETA ({have}/{need} arquivos) ░░",
+	ARCHIVE_LOCKED = "[{number}]  ██████ ARQUIVO BLOQUEADO ██████",
+	ARCHIVE_COUNT = "{found}/{total} arquivos recuperados",
+	ARCHIVE_CAT_ALL = "TUDO",
+	ARCHIVE_CAT_PHOTO = "FOTOS",
+	ARCHIVE_CAT_REPORT = "RELATÓRIOS",
+	ARCHIVE_CAT_TAPE = "FITAS",
+	ARCHIVE_CAT_OBSERVATION = "OBSERVAÇÕES",
+	ARCHIVE_CAT_RADIO = "TRANSMISSÕES",
+	ARCHIVE_CAT_CONFIDENTIAL = "CONFIDENCIAL",
+	ARCHIVE_CAT_PAST = "O PASSADO",
+	ARCHIVE_CAT_INSIGHT = "DESCOBERTAS",
+	ARCHIVE_CAT_ACHIEVEMENTS = "CONQUISTAS",
+	ARCHIVE_CAT_TITLES = "TÍTULOS",
+	SECRET_SOLVED = "Sinal decifrado. Você é o número {count} a encontrá-lo.",
+	SECRET_KNOWN = "Você já decifrou este sinal.",
+	SECRET_NOTHING = "Só estática nesta frequência.",
+	ACH_UNLOCKED = "Conquista: {name}",
+	ACH_FIRST_CONTACT = "Primeiro contato",
+	ACH_FIRST_CONTACT_DESC = "Receba sua primeira transmissão incomum. (+{marks})",
+	ACH_UNSEEN = "Sem ser visto",
+	ACH_UNSEEN_DESC = "Termine o capítulo 1 sem que a criatura te persiga. (+{marks})",
+	ACH_ARCHIVIST = "Arquivista",
+	ACH_ARCHIVIST_DESC = "Recupere todos os arquivos da repetidora 07. (+{marks})",
+	ACH_LAST_SURVIVOR = "Último sobrevivente",
+	ACH_LAST_SURVIVOR_DESC = "Evacue na sobrevivência sem fim como o único da sua equipe. (+{marks})",
+	ACH_NOBODY_LEFT = "Ninguém fica para trás",
+	ACH_NOBODY_LEFT_DESC = "Termine o capítulo 1 ou evacuem em equipe sem ninguém ser eliminado. (+{marks})",
+	ACH_BREAKER = "Quebra-previsões",
+	ACH_BREAKER_DESC = "Quebre uma previsão antes que ela se cumpra. (+{marks})",
+	ACH_SHIFT10 = "Dez turnos",
+	ACH_SHIFT10_DESC = "Sobreviva a 10 turnos numa partida de sobrevivência sem fim. (+{marks})",
+	ACH_DECODER = "Decifrador",
+	ACH_DECODER_DESC = "Decifre uma frequência oculta no terminal de arquivo. (+{marks})",
+	ACH_RESCUER = "Socorrista",
+	ACH_RESCUER_DESC = "Levante um colega com um kit médico. (+{marks})",
+	TITLE_RELAY_MEMBER = "Operador do relé",
+	TITLE_RELAY_MEMBER_HINT = "??? · Insígnia exclusiva para membros da comunidade oficial.",
+	COMMUNITY_TITLE = "Comunidade",
+	COMMUNITY_DESC = "Entre na comunidade oficial do SILENT RELAY no Roblox e receba uma vez: {marks} marcas de sinal e o título exclusivo “Operador do relé”.",
+	COMMUNITY_OPTIONAL = "Totalmente opcional – o jogo inteiro pode ser jogado sem isso.",
+	COMMUNITY_JOIN = "Entrar na comunidade",
+	COMMUNITY_CHECK = "Verificar e resgatar",
+	COMMUNITY_OK = "Bem-vindo, operador do relé! +{marks} marcas de sinal.",
+	COMMUNITY_CLAIMED = "Recompensa já recebida. Obrigado!",
+	COMMUNITY_NOT_MEMBER = "Ainda não encontramos sua participação. Se o pedido estiver pendente, verifique de novo depois de aceito.",
+	COMMUNITY_ERROR = "O Roblox não respondeu. Nada foi gasto – tente de novo em instantes.",
+	COMMUNITY_OFF = "A comunidade ainda não foi configurada.",
+	COMMUNITY_JOIN_MANUAL = "Entrar daqui não está disponível neste dispositivo. Abra a página da experiência e escolha a comunidade lá.",
+	REFERRAL_REWARD = "Recompensa de convite: +100 marcas de sinal para você e seu amigo.",
+	SV_RISK_PROMPT = "Garantido: {banked} · próximo turno +{nextReward} · perigo {danger}/4. Evacuar ou continuar?",
+	SV_RISK_EVACUATE = "Evacuar",
+	SV_RISK_CONTINUE = "Seguir em frente",
+	SV_RISK_CONTINUE_LINE = "Vocês ficam. Ele percebeu.",
+	SV_RISK_OBJECTIVE = "Votação: evacuar ou seguir.",
+	SV_EVAC = "Para a antena – todos que ainda estão de pé.",
+	SV_EVAC_LINE = "Evacuação. Setenta e cinco segundos. Ele não vai esperar.",
+	SV_EVAC_TIMER = "EVACUAÇÃO · {seconds} S",
+	SV_VOTE_TIMER = "VOTAÇÃO · {seconds} S",
+	SV_LEFT_ALONE = "Você saiu sozinho com sua parte: +{marks} marcas de sinal.",
 }
 ]]></string>
             </Properties>
           </Item>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="19">
         <Properties>
           <string name="Name">Lore</string>
-          <string name="Source"><![CDATA[-- Hidden story finds ("ghost logs"). Each is a physical object in a map (tag FZ_Interactable,
--- InteractId "lore", attribute LogId). Ids are permanent (saved in data.secrets.logs).
--- They exist to make the twist fair: on a second playthrough these lines read differently.
+          <string name="Source"><![CDATA[-- Archive entries (DAS ARCHIV). Every entry has a permanent id saved in data.secrets.logs.
+--   category: photo | report | tape | observation | radio | confidential | past | insight
+--   links:    insights unlock automatically once every linked entry has been found
+--   photo:    rendered live from avatar copies (see EvidenceService / PhotoView)
+-- New entries for new chapters are simply appended here (+ texts in the language files).
 
 return {
-	{ id = "calendar_2009", title = "CAL_TITLE", body = "CAL_BODY", map = "relay07" },
-	{ id = "log_okafor", title = "LOG_OKAFOR_TITLE", body = "LOG_OKAFOR_BODY", map = "relay07" },
-	{ id = "log_venn", title = "LOG_VENN_TITLE", body = "LOG_VENN_BODY", map = "relay07" },
-	{ id = "log_ehle", title = "LOG_EHLE_TITLE", body = "LOG_EHLE_BODY", map = "relay07" },
-	{ id = "log_0006", title = "LOG_0006_TITLE", body = "LOG_0006_BODY", map = "relay07" },
+	-- Chapter 1 · Relay Station 07
+	{ id = "rec_c1_arrival", category = "radio", title = "ARCH_REC_ARRIVAL_TITLE", body = "ARCH_REC_ARRIVAL_BODY", map = "relay07" },
+	{ id = "rec_c1_relay", category = "radio", title = "ARCH_REC_RELAY_TITLE", body = "ARCH_REC_RELAY_BODY", map = "relay07" },
+	{ id = "calendar_2009", category = "past", title = "CAL_TITLE", body = "CAL_BODY", map = "relay07" },
+	{ id = "log_okafor", category = "tape", title = "LOG_OKAFOR_TITLE", body = "LOG_OKAFOR_BODY", map = "relay07" },
+	{ id = "log_venn", category = "report", title = "LOG_VENN_TITLE", body = "LOG_VENN_BODY", map = "relay07" },
+	{ id = "log_ehle", category = "observation", title = "LOG_EHLE_TITLE", body = "LOG_EHLE_BODY", map = "relay07" },
+	{ id = "log_0006", category = "confidential", title = "LOG_0006_TITLE", body = "LOG_0006_BODY", map = "relay07" },
+	{ id = "photo_past_self", category = "photo", title = "PHOTO_PAST_TITLE", body = "PHOTO_PAST_BODY", map = "relay07", photo = "past_self" },
+	{ id = "photo_team_future", category = "photo", title = "PHOTO_FUTURE_TITLE", body = "PHOTO_FUTURE_BODY", map = "relay07", photo = "team_future" },
+	{ id = "photo_mate_dark", category = "photo", title = "PHOTO_DARK_TITLE", body = "PHOTO_DARK_BODY", map = "relay07", photo = "mate_dark" },
+	-- Insights: connections between documents (optional secrets)
+	{ id = "insight_same_words", category = "insight", title = "INSIGHT_WORDS_TITLE", body = "INSIGHT_WORDS_BODY", map = "relay07", links = { "log_okafor", "rec_c1_relay" }, reward = 100 },
+	{ id = "insight_how_long", category = "insight", title = "INSIGHT_LOOP_TITLE", body = "INSIGHT_LOOP_BODY", map = "relay07", links = { "log_0006", "photo_past_self", "calendar_2009" }, reward = 150 },
+	-- Community secret (see Shared/SecretsRegistry): only unlocked by solving it
+	{ id = "file_null", category = "confidential", title = "FILE_NULL_TITLE", body = "FILE_NULL_BODY", map = "relay07", secret = true },
 }
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="18">
+      <Item class="ModuleScript" referent="20">
         <Properties>
           <string name="Name">Net</string>
           <string name="Source"><![CDATA[-- Net: declares every remote in one place. The server creates them, clients wait for them.
@@ -3310,6 +3810,7 @@ local EVENTS = {
 	"Decision", -- S->C (decision | nil) open / update / close a team decision
 	"DecisionVote", -- C->S (decisionId, optionIndex)
 	"UseItem", -- C->S (slot)
+	"Photo", -- S->C (photo) supernatural evidence to render
 }
 
 local FUNCTIONS = {
@@ -3319,6 +3820,8 @@ local FUNCTIONS = {
 	"ShopAction", -- C->S (action, itemId) -> result
 	"Session", -- C->S (action, mode, contentId) -> result
 	"GetLeaderboard", -- C->S (survivalId) -> top entries
+	"SolveSecret", -- C->S (text) -> secret result
+	"Community", -- C->S ("status" | "claim") -> community reward
 }
 
 local Net = {}
@@ -3374,7 +3877,26 @@ return Net
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="19">
+      <Item class="ModuleScript" referent="21">
+        <Properties>
+          <string name="Name">SecretsRegistry</string>
+          <string name="Source"><![CDATA[-- Community secrets: puzzles hidden in the maps, fully solvable inside the game.
+-- Public part only (what unlocks, rewards). The ANSWERS live in
+-- ServerStorage/Secrets/SecretAnswers.luau and never reach a client.
+-- Add a new secret: one entry here + one answer there + its archive file in Lore.luau.
+
+return {
+	{
+		id = "zero_frequency",
+		unlock = "file_null", -- archive entry revealed when solved
+		marks = 250,
+		-- in-world clues: the fax time (02:14), June's tape (41 minutes), the core screen (run 0007)
+	},
+}
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">SessionState</string>
           <string name="Source"><![CDATA[-- SessionState: session-wide story state (shared by the whole team in this server).
@@ -3434,7 +3956,7 @@ return SessionState
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">Signal</string>
           <string name="Source"><![CDATA[-- Signal: tiny, leak-safe event implementation used by client and server modules.
@@ -3503,7 +4025,7 @@ return Signal
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">Titles</string>
           <string name="Source"><![CDATA[-- Profile titles: earned by playing, never bought. Shown next to your name in the team
@@ -3530,7 +4052,7 @@ Titles.List = {
 	end },
 	{ id = "archivist", name = "TITLE_ARCHIVIST", hint = "TITLE_ARCHIVIST_HINT", earned = function(data)
 		for _, entry in Lore do
-			if entry.map == "relay07" and not data.secrets.logs[entry.id] then
+			if entry.map == "relay07" and not entry.secret and not data.secrets.logs[entry.id] then
 				return false
 			end
 		end
@@ -3550,6 +4072,10 @@ Titles.List = {
 	{ id = "silent", name = "TITLE_SILENT", hint = "TITLE_SILENT_HINT", earned = function(data)
 		return data.storyChoices.c1_answer == 2
 	end },
+	-- exclusive cosmetic badge for members of the official community
+	{ id = "relay_member", name = "TITLE_RELAY_MEMBER", hint = "TITLE_RELAY_MEMBER_HINT", earned = function(data)
+		return data.community ~= nil and data.community.claimed ~= nil
+	end },
 }
 
 function Titles.Get(id: string)
@@ -3565,7 +4091,7 @@ return Titles
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">Updates</string>
           <string name="Source"><![CDATA[-- Update log shown in "What's new" (main menu, small link - never a pop-up).
@@ -3588,15 +4114,15 @@ return {
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="23">
+  <Item class="ServerScriptService" referent="26">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Folder" referent="24">
+    <Item class="Folder" referent="27">
       <Properties>
         <string name="Name">Server</string>
       </Properties>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="28">
         <Properties>
           <string name="Name">AdminConfig</string>
           <string name="Source"><![CDATA[-- Who may use the owner/maintenance tools.
@@ -3619,11 +4145,11 @@ return {
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="26">
+      <Item class="Folder" referent="29">
         <Properties>
           <string name="Name">Chapters</string>
         </Properties>
-        <Item class="ModuleScript" referent="27">
+        <Item class="ModuleScript" referent="30">
           <Properties>
             <string name="Name">Chapter1</string>
             <string name="Source"><![CDATA[-- Chapter 1 "The Reception" on Relay Station 07.
@@ -3663,9 +4189,13 @@ local DecisionService = require(Services.DecisionService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local DoorService = require(Services.DoorService)
+local HealthService = require(Services.HealthService)
 local AnalyticsTracker = require(Services.AnalyticsTracker)
 local BadgeTracker = require(Services.BadgeTracker)
 local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
+local LoreService = require(Services.LoreService)
+local AchievementService = require(Services.AchievementService)
+local ReferralService = require(Services.ReferralService)
 
 local Chapter1 = {}
 Chapter1.StartCheckpoint = "C1_START"
@@ -4107,6 +4637,7 @@ function Chapter1.Init(context)
 		end
 		StoryService.SetFlag("C1_FaxRead", true)
 		step("Fax")
+		LoreService.UnlockAll(ctx.playersInGame(), "rec_c1_relay")
 		relay("RADIO_C1_003", nil, 3)
 		askAnswer()
 	end)
@@ -4118,6 +4649,9 @@ function Chapter1.Init(context)
 		DecisionService.Cancel()
 		state.stage = "power"
 		step("Power")
+		for _, p in ctx.playersInGame() do
+			ReferralService.Complete(p) -- invited new players: reached the control room
+		end
 		ctx.setCheckpoint("C1_CONTROL")
 		relay("RADIO_C1_POWER")
 		StoryService.SetObjective("OBJECTIVE_POWER", { count = systemsOn(), total = 2 })
@@ -4264,6 +4798,13 @@ function Chapter1.Init(context)
 				DataService.SaveNow(p)
 				Net.Event("Notify"):FireClient(p, "CHAPTER_COMPLETE")
 				BadgeTracker.Award(p, "ch1_complete")
+				if not CreatureService.Spotted[p] then
+					AchievementService.Award(p, "unseen")
+				end
+				local team = ctx.playersInGame()
+				if #team >= 2 and next(HealthService.SessionStats.eliminated) == nil then
+					AchievementService.Award(p, "nobody_left")
+				end
 			end
 		end
 	end)
@@ -4280,6 +4821,12 @@ function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
 	if state.stage == "arrival" then
 		AnalyticsTracker.ChapterStep(player, "Chapter1", "Gate")
 		StoryService.Sequence(player, ARRIVAL)
+		task.delay(12, function()
+			if player.Parent then
+				LoreService.Unlock(player, "rec_c1_arrival", true)
+				AchievementService.Award(player, "first_contact")
+			end
+		end)
 		if StoryService.GetObjective() == nil then
 			task.delay(14, function()
 				if active and StoryService.GetObjective() == nil then
@@ -4295,11 +4842,11 @@ return Chapter1
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="28">
+      <Item class="Folder" referent="31">
         <Properties>
           <string name="Name">Creature</string>
         </Properties>
-        <Item class="ModuleScript" referent="29">
+        <Item class="ModuleScript" referent="32">
           <Properties>
             <string name="Name">Rig</string>
             <string name="Source"><![CDATA[-- Creature rig factory.
@@ -4442,11 +4989,11 @@ return Rig
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="30">
+      <Item class="Folder" referent="33">
         <Properties>
           <string name="Name">Director</string>
         </Properties>
-        <Item class="ModuleScript" referent="31">
+        <Item class="ModuleScript" referent="34">
           <Properties>
             <string name="Name">HorrorEvents</string>
             <string name="Source"><![CDATA[-- The shared pool of psychological horror events (used by every mode).
@@ -4521,7 +5068,7 @@ return HorrorEvents
           </Properties>
         </Item>
       </Item>
-      <Item class="Script" referent="32">
+      <Item class="Script" referent="35">
         <Properties>
           <string name="Name">Main</string>
           <token name="RunContext">0</token>
@@ -4547,6 +5094,10 @@ local SERVICES = {
 	"HealthService",
 	"InventoryService",
 	"LoreService",
+	"EvidenceService",
+	"SecretService",
+	"CommunityService",
+	"ReferralService",
 	"VoiceService",
 	"ShopService",
 	"CreatureService",
@@ -4579,11 +5130,11 @@ print("[FZ] Server ready")
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="33">
+      <Item class="Folder" referent="36">
         <Properties>
           <string name="Name">Map</string>
         </Properties>
-        <Item class="ModuleScript" referent="34">
+        <Item class="ModuleScript" referent="37">
           <Properties>
             <string name="Name">RelayStation07</string>
             <string name="Source"><![CDATA[-- Relay Station 07 - script-built playable map following the concept floor plan:
@@ -5252,6 +5803,17 @@ local function furnish()
 		patrol(node[1], node[2])
 	end
 
+	-- Supernatural photographs (EvidenceService decides what they show)
+	for _, ph in {
+		{ "photo_past_self", "past_self", CFrame.new(80, 3.2, -10) }, -- administration desk
+		{ "photo_team_future", "team_future", CFrame.new(-60, 3.2, -41.2) }, -- research desk
+		{ "photo_mate_dark", "mate_dark", CFrame.new(93, 2.05, -52) }, -- quarters, on a bunk
+	} do
+		local frame = block(props, "Photo", Vector3.new(1.2, 0.05, 0.9), ph[3] * CFrame.Angles(0, math.random() * 0.6 - 0.3, 0), C.Paper, Enum.Material.SmoothPlastic)
+		frame.CanCollide = false
+		interactable(frame, "photo", "INTERACT_LOOK", "OBJECT_PHOTO", { MaxDistance = 7, PhotoId = ph[1], Kind = ph[2] })
+	end
+
 	-- First-aid cabinets (medkits for reviving teammates)
 	for _, cab in {
 		{ CFrame.new(99.3, 5, 62) * CFrame.Angles(0, math.rad(-90), 0) }, -- control room: security station
@@ -5541,11 +6103,11 @@ return Map
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="35">
+      <Item class="Folder" referent="38">
         <Properties>
           <string name="Name">Modes</string>
         </Properties>
-        <Item class="ModuleScript" referent="36">
+        <Item class="ModuleScript" referent="39">
           <Properties>
             <string name="Name">Survival</string>
             <string name="Source"><![CDATA[-- Endless survival "Night shift" (works on any map that provides the tagged objects).
@@ -5579,6 +6141,8 @@ local LeaderboardService = require(Services.LeaderboardService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local InventoryService = require(Services.InventoryService)
+local DecisionService = require(Services.DecisionService)
+local AchievementService = require(Services.AchievementService)
 local BadgeTracker = require(Services.BadgeTracker)
 local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
 
@@ -5757,6 +6321,8 @@ end
 -- Tasks
 ---------------------------------------------------------------------------
 local completeTask: (r: Run) -> ()
+local startEvacuation: (r: Run) -> ()
+local EVAC_SECONDS = 75
 
 local function spawnFuses(r: Run)
 	if r.fuses then
@@ -5874,33 +6440,72 @@ completeTask = function(r: Run)
 	InventoryService.RefillCabinets()
 	say("SV_SHIFT_DONE", { shift = r.shift })
 	InventoryService.SpawnWorldItems(Config.Inventory.SurvivalItemsPerBreak)
-	objective("SV_BREAK", { seconds = SC.BreakSeconds })
-	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
 	publish()
-	local current = token
-	task.delay(SC.BreakSeconds, function()
-		if token == current and run == r and r.phase == "break" then
-			startShift(r, r.shift + 1)
-		end
-	end)
+	-- RISK OR RESCUE: the team decides. Secured marks, next reward and danger are shown.
+	local nextShift = r.shift + 1
+	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
+	DecisionService.Ask({
+		id = "sv_risk_" .. r.shift,
+		prompt = "SV_RISK_PROMPT",
+		promptParams = {
+			banked = r.banked,
+			nextReward = SC.ShiftReward + SC.ShiftRewardGrowth * nextShift,
+			danger = math.clamp(math.ceil(nextShift / 3), 1, 4),
+		},
+		options = { "SV_RISK_EVACUATE", "SV_RISK_CONTINUE" },
+		seconds = SC.BreakSeconds,
+		default = 1,
+		tieBreak = 1, -- a tie evacuates: one player alone can never drag the team further
+		onDecided = function(index)
+			if run ~= r or r.phase ~= "break" then
+				return
+			end
+			if index == 1 then
+				startEvacuation(r)
+			else
+				say("SV_RISK_CONTINUE_LINE")
+				local current = token
+				task.delay(6, function()
+					if token == current and run == r and r.phase == "break" then
+						startShift(r, nextShift)
+					end
+				end)
+			end
+		end,
+	}, aliveInGame)
+	objective("SV_RISK_OBJECTIVE")
 end
 
 ---------------------------------------------------------------------------
 -- Run end
 ---------------------------------------------------------------------------
-local function endRun(r: Run, extracted: boolean)
+-- extracted: true (everyone), false (wipe) or a set of players who made it out
+local function endRun(r: Run, extracted: boolean | { [Player]: boolean })
 	if r.phase == "ended" then
 		return
 	end
 	r.phase = "ended"
+	DecisionService.Cancel()
 	publish()
 	clearEvent(r)
 	CreatureService.SetAIEnabled(false)
-	local factor = if extracted then 1 + SC.ExtractBonus else SC.WipeKeep
-	local marks = math.floor(r.banked * factor)
 	local survivalId = r.entry.id
+	local participants = {}
 	for player in r.participants do
 		if player.Parent then
+			table.insert(participants, player)
+		end
+	end
+	local outCount = 0
+	for _, player in participants do
+		if extracted == true or (type(extracted) == "table" and extracted[player]) then
+			outCount += 1
+		end
+	end
+	for _, player in participants do
+		local madeIt = extracted == true or (type(extracted) == "table" and extracted[player] == true)
+		local marks = math.floor(r.banked * (if madeIt then 1 + SC.ExtractBonus else SC.WipeKeep))
+		do
 			local newBest = false
 			DataService.Mutate(player, function(data)
 				local stats = data.modes.survival[survivalId] or { best = 0, runs = 0 }
@@ -5918,9 +6523,19 @@ local function endRun(r: Run, extracted: boolean)
 			task.spawn(LeaderboardService.Submit, survivalId, player.UserId, r.completed)
 			StoryService.ShowDocument(player, {
 				title = "SV_RESULT_TITLE",
-				body = if extracted then "SV_RESULT_EXTRACTED" else "SV_RESULT_LOST",
+				body = if madeIt then "SV_RESULT_EXTRACTED" else "SV_RESULT_LOST",
 				params = { shifts = r.completed, marks = marks },
 			})
+			if r.completed >= 10 then
+				AchievementService.Award(player, "night_shift_10")
+			end
+			if madeIt and #participants >= 2 then
+				if outCount == 1 then
+					AchievementService.Award(player, "last_survivor")
+				elseif outCount == #participants and next(HealthService.SessionStats.eliminated) == nil then
+					AchievementService.Award(player, "nobody_left")
+				end
+			end
 			if newBest then
 				Net.Event("Notify"):FireClient(player, "SV_NEW_BEST")
 			end
@@ -5937,6 +6552,42 @@ local function endRun(r: Run, extracted: boolean)
 	task.delay(15, function() -- time to read the shift report
 		if token == current and run == r then
 			ctx.finish()
+		end
+	end)
+end
+
+-- Evacuation: the team has 75 s to reach the antenna. The creature keeps hunting (with
+-- the current difficulty, no new events) - a real but fair chance to get out.
+local function antennaPosition(): Vector3?
+	return interactablePosition("c1_antenna")
+end
+
+local function playersAtAntenna(): { [Player]: boolean }
+	local center = antennaPosition()
+	local set = {}
+	if not center then
+		return set
+	end
+	for _, player in aliveInGame() do
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root and (root.Position - center).Magnitude <= SC.ExtractRadius then
+			set[player] = true
+		end
+	end
+	return set
+end
+
+startEvacuation = function(r: Run)
+	r.phase = "evac"
+	CreatureService.SetAIEnabled(true)
+	say("SV_EVAC_LINE")
+	objective("SV_EVAC")
+	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + EVAC_SECONDS)
+	publish()
+	local current = token
+	task.delay(EVAC_SECONDS, function()
+		if token == current and run == r and r.phase == "evac" then
+			endRun(r, playersAtAntenna())
 		end
 	end)
 end
@@ -6146,21 +6797,29 @@ function Survival.Init(context)
 		end)
 	end
 
-	-- Voluntary extraction during a break: the whole (standing) team must be there.
-	InteractionService.Register("c1_antenna", function(player, cabinet)
+	-- Antenna: during an evacuation the whole standing team leaves together; during a shift a
+	-- single player may leave alone with their share (nobody is held hostage by the vote).
+	InteractionService.Register("c1_antenna", function(player)
 		local r = run
-		if not active or not r or r.phase ~= "break" then
+		if not active or not r then
 			return
 		end
-		local center = (cabinet :: BasePart).Position
-		for _, other in aliveInGame() do
-			local root = other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if not root or (root.Position - center).Magnitude > SC.ExtractRadius then
-				Net.Event("Notify"):FireClient(player, "SV_EXTRACT_NEED_TEAM")
-				return
+		if r.phase == "evac" then
+			local here = playersAtAntenna()
+			for _, other in aliveInGame() do
+				if not here[other] then
+					Net.Event("Notify"):FireClient(player, "SV_EXTRACT_NEED_TEAM")
+					return
+				end
 			end
+			endRun(r, here)
+		elseif r.phase == "task" and r.banked > 0 and #aliveInGame() > 1 then
+			local share = r.banked
+			r.participants[player] = nil
+			DataService.Grant(player, share)
+			Net.Event("Notify"):FireClient(player, "SV_LEFT_ALONE", { marks = share })
+			ctx.leave(player)
 		end
-		endRun(r, true)
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)
@@ -6175,11 +6834,65 @@ return Survival
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="37">
+      <Item class="Folder" referent="40">
         <Properties>
           <string name="Name">Services</string>
         </Properties>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="41">
+          <Properties>
+            <string name="Name">AchievementService</string>
+            <string name="Source"><![CDATA[-- AchievementService: one-time achievements with server-side rewards.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Achievements = require(Shared.Achievements)
+local Net = require(Shared.Net)
+
+local DataService = require(script.Parent.DataService)
+local BadgeTracker = require(script.Parent.BadgeTracker)
+
+local AchievementService = {}
+
+local function definition(id: string)
+	for _, item in Achievements do
+		if item.id == id then
+			return item
+		end
+	end
+	return nil
+end
+
+function AchievementService.Has(player: Player, id: string): boolean
+	local profile = DataService.Get(player)
+	return profile ~= nil and profile.Data.achievements[id] ~= nil
+end
+
+function AchievementService.Award(player: Player, id: string)
+	local item = definition(id)
+	local profile = DataService.Get(player)
+	if not item or not profile or profile.Data.achievements[id] then
+		return
+	end
+	DataService.Mutate(player, function(data)
+		data.achievements[id] = os.time()
+	end)
+	Net.Event("Notify"):FireClient(player, "ACH_UNLOCKED", { name = item.name })
+	if item.marks and item.marks > 0 then
+		task.delay(2.5, function()
+			if player.Parent then
+				DataService.Grant(player, item.marks)
+			end
+		end)
+	end
+	BadgeTracker.Award(player, id)
+end
+
+return AchievementService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="42">
           <Properties>
             <string name="Name">AdminService</string>
             <string name="Source"><![CDATA[-- AdminService: server-side authorization and audit log for maintenance tools.
@@ -6560,7 +7273,7 @@ return AdminService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="43">
           <Properties>
             <string name="Name">AnalyticsTracker</string>
             <string name="Source"><![CDATA[-- AnalyticsTracker: measures where players stop, without collecting anything personal.
@@ -6632,7 +7345,7 @@ return AnalyticsTracker
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="44">
           <Properties>
             <string name="Name">BadgeTracker</string>
             <string name="Source"><![CDATA[-- BadgeTracker: awards Roblox badges configured in Shared/Badges.luau (id 0 = skipped).
@@ -6668,7 +7381,7 @@ return BadgeTracker
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">CodeService</string>
             <string name="Source"><![CDATA[-- CodeService: redeemable codes hidden inside the game world.
@@ -6752,7 +7465,89 @@ return CodeService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="46">
+          <Properties>
+            <string name="Name">CommunityService</string>
+            <string name="Source"><![CDATA[-- CommunityService: one-time reward for joining the official Roblox community (group).
+--   * Membership is checked on the server (Player:IsInGroupAsync, fallback IsInGroup)
+--   * The claim is stored in the save -> it can never be claimed twice
+--   * Join requests that still wait for approval simply are not members yet: the player
+--     can check again later (rate limited); failed web calls never consume the claim
+--   * Playing never requires the community
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Community = require(Shared.Community)
+local Net = require(Shared.Net)
+
+local DataService = require(script.Parent.DataService)
+local BadgeTracker = require(script.Parent.BadgeTracker)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local CommunityService = {}
+
+local function isMember(player: Player): boolean?
+	local groupId = Community.GroupId
+	local ok, result = pcall(function()
+		return (player :: any):IsInGroupAsync(groupId)
+	end)
+	if ok and type(result) == "boolean" then
+		return result
+	end
+	ok, result = pcall(player.IsInGroup, player, groupId) -- older API (cached per server)
+	if ok and type(result) == "boolean" then
+		return result
+	end
+	return nil -- unknown: web request failed
+end
+
+function CommunityService.Start()
+	local limiter = RateLimiter.new(2, 0.1)
+	Net.Function("Community").OnServerInvoke = function(player: Player, action: any)
+		if Community.GroupId <= 0 then
+			return { status = "off" }
+		end
+		local profile = DataService.Get(player)
+		if not profile then
+			return { status = "error" }
+		end
+		local claimed = profile.Data.community.claimed ~= nil
+		if action == "status" then
+			return { status = if claimed then "claimed" else "open", groupId = Community.GroupId, marks = Community.RewardMarks }
+		elseif action ~= "claim" then
+			return { status = "error" }
+		end
+		if claimed then
+			return { status = "claimed" }
+		end
+		if not limiter:Allow(player) then
+			return { status = "rate" }
+		end
+		if not profile.Persistent then
+			return { status = "error" }
+		end
+		local member = isMember(player)
+		if member == nil then
+			return { status = "error" }
+		elseif not member then
+			return { status = "not_member" }
+		end
+		DataService.Mutate(player, function(data)
+			data.community.claimed = os.time()
+		end)
+		DataService.Grant(player, Community.RewardMarks)
+		DataService.SaveNow(player)
+		BadgeTracker.Award(player, "community")
+		return { status = "ok", marks = Community.RewardMarks }
+	end
+end
+
+return CommunityService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">CreatureService</string>
             <string name="Source"><![CDATA[-- CreatureService: server-authoritative AI for "Der Lauscher".
@@ -6812,6 +7607,9 @@ type Creature = {
 }
 
 local creatures: { Creature } = {}
+
+-- Players a creature has chased this session ("Unseen" achievement).
+CreatureService.Spotted = {} :: { [Player]: boolean }
 local aiEnabled = true
 local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance, sight = 1 }
 local ventsEnabled = true -- story: only when the ventilation has power
@@ -6861,6 +7659,9 @@ local function setState(c: Creature, state: string)
 	end
 	if state == "Chase" then
 		Net.Event("Sfx"):FireAllClients("creature_alert", c.root)
+		if c.targetPlayer then
+			CreatureService.Spotted[c.targetPlayer] = true
+		end
 	end
 end
 
@@ -7432,7 +8233,7 @@ return CreatureService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">DataService</string>
             <string name="Source"><![CDATA[-- DataService: persistent player data with session locking.
@@ -7517,7 +8318,12 @@ local function defaultData(): { [string]: any }
 		secrets = {
 			forecastsBroken = {}, -- [forecastId] = true
 			logs = {}, -- [logId] = unix time (archive entries)
+			photos = {}, -- [photoId] = { area, date, kind } (no images, no other players)
+			solved = {}, -- [secretId] = unix time (community secrets)
 		},
+		achievements = {}, -- [achievementId] = unix time
+		community = {}, -- { claimed = unix time }
+		referral = {}, -- { by = inviterUserId, rewarded = time, rewardedInvites = n }
 		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
 		lastSession = {}, -- { placeId, jobId, code?, time } for "back to your team" after a disconnect
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
@@ -7901,6 +8707,7 @@ function DataService.Start()
 			seenContent = deepCopy(data.seenContent),
 			lastSeenUpdate = data.lastSeenUpdate,
 			secrets = deepCopy(data.secrets),
+			achievements = deepCopy(data.achievements),
 			storyChoices = deepCopy(data.storyChoices),
 			inventory = deepCopy(data.inventory),
 			equipped = deepCopy(data.equipped),
@@ -7914,7 +8721,7 @@ return DataService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">DecisionService</string>
             <string name="Source"><![CDATA[-- DecisionService: team decisions with consequences ("Entscheiden -> Konsequenzen").
@@ -7938,6 +8745,8 @@ local DecisionService = {}
 export type Decision = {
 	id: string,
 	prompt: string, -- localization key
+	promptParams: { [string]: any }?,
+	tieBreak: number?, -- option chosen on a tie (e.g. "evacuate" - nobody can sabotage alone)
 	options: { string }, -- localization keys
 	seconds: number,
 	default: number,
@@ -7973,6 +8782,7 @@ local function payload(r: Running)
 	return {
 		id = r.decision.id,
 		prompt = r.decision.prompt,
+		promptParams = r.decision.promptParams,
 		options = r.decision.options,
 		ends = r.ends,
 		counts = counts,
@@ -7992,6 +8802,19 @@ local function finish(r: Running)
 		local first = r.firstVoteAt[index] or math.huge
 		if count > bestCount or (count == bestCount and count > 0 and first < bestTime) then
 			best, bestCount, bestTime = index, count, first
+		end
+	end
+	if r.decision.tieBreak then
+		local top, tied = 0, 0
+		for _, count in counts do
+			if count > top then
+				top, tied = count, 1
+			elseif count == top and count > 0 then
+				tied += 1
+			end
+		end
+		if tied > 1 then
+			best = r.decision.tieBreak
 		end
 	end
 	StoryService.SetFlag("Choice_" .. r.decision.id, best)
@@ -8078,7 +8901,7 @@ return DecisionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">DirectorService</string>
             <string name="Source"><![CDATA[-- DirectorService ("HorrorDirector"): decides WHEN a scare happens, so scares stay earned.
@@ -8282,7 +9105,7 @@ return DirectorService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">DoorService</string>
             <string name="Source"><![CDATA[-- DoorService: sliding doors (tag FZ_Door). Opening makes noise; locked doors buzz.
@@ -8371,7 +9194,136 @@ return DoorService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="52">
+          <Properties>
+            <string name="Name">EvidenceService</string>
+            <string name="Source"><![CDATA[-- EvidenceService: supernatural photographs.
+-- Photos are physical objects (tag FZ_Interactable, InteractId "photo", attributes PhotoId +
+-- Kind). When picked up, the server decides WHAT the photo shows from real session context:
+--   past_self   : you, in the area where you actually were about five minutes ago
+--   team_future : your team in front of a place you have not reached yet
+--   mate_dark   : a teammate standing in a dark corridor (solo: you, with someone behind)
+-- The client renders it live from avatar copies (ViewportFrame) - no screenshots, nothing
+-- stored except the photo id and an area name. No personal data is evaluated.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local InteractionService = require(script.Parent.InteractionService)
+local DirectorService = require(script.Parent.DirectorService)
+local DataService = require(script.Parent.DataService)
+local LoreService = require(script.Parent.LoreService)
+
+local EvidenceService = {}
+
+local HISTORY_SECONDS = 600
+local history: { [Player]: { { time: number, area: string } } } = {}
+
+local FUTURE_AREA_BY_OBJECTIVE = {
+	OBJECTIVE_CHECK_GATEHOUSE = "CONTROL",
+	OBJECTIVE_REACH_CONTROL = "CONTROL",
+	OBJECTIVE_POWER = "B",
+	OBJECTIVE_FIND_FUSES = "B",
+	OBJECTIVE_RELAY_B = "CORE",
+	OBJECTIVE_CORE = "CORE",
+	OBJECTIVE_ANTENNA = "ANTENNA",
+}
+
+local function areaAgo(player: Player, seconds: number): string?
+	local list = history[player]
+	if not list or #list == 0 then
+		return nil
+	end
+	local target = os.clock() - seconds
+	local best = list[1]
+	for _, entry in list do
+		if entry.time <= target then
+			best = entry
+		end
+	end
+	return best.area
+end
+
+local function randomPastDate(): string
+	-- somewhere between 1979 (station built) and the night of 2009
+	local year = math.random(1979, 2009)
+	return string.format("%02d.%02d.%d", math.random(1, 28), math.random(1, 12), year)
+end
+
+function EvidenceService.Start()
+	-- coarse movement history (area names only, every 5 s, 10 minutes)
+	task.spawn(function()
+		while true do
+			task.wait(5)
+			for _, player in Players:GetPlayers() do
+				local root = player:GetAttribute("FZ_InGame") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					local area = DirectorService.AreaOf(root.Position)
+					if area then
+						local list = history[player] or {}
+						history[player] = list
+						table.insert(list, { time = os.clock(), area = area })
+						while list[1] and os.clock() - list[1].time > HISTORY_SECONDS do
+							table.remove(list, 1)
+						end
+					end
+				end
+			end
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		history[player] = nil
+	end)
+
+	InteractionService.Register("photo", function(player, object)
+		local id = object:GetAttribute("PhotoId")
+		local kind = object:GetAttribute("Kind")
+		if type(id) ~= "string" or type(kind) ~= "string" then
+			return
+		end
+		local photo = { id = id, kind = kind, date = randomPastDate(), subjects = { player.UserId } }
+		if kind == "past_self" then
+			photo.area = areaAgo(player, 300) or areaAgo(player, 60) or "HALL"
+		elseif kind == "team_future" then
+			photo.area = FUTURE_AREA_BY_OBJECTIVE[SessionState.Get("Objective") or ""] or "CORE"
+			for _, other in Players:GetPlayers() do
+				if other ~= player and other:GetAttribute("FZ_InGame") then
+					table.insert(photo.subjects, other.UserId)
+				end
+			end
+		else -- mate_dark
+			photo.area = "HALL"
+			local others = {}
+			for _, other in Players:GetPlayers() do
+				if other ~= player and other:GetAttribute("FZ_InGame") then
+					table.insert(others, other)
+				end
+			end
+			if #others > 0 then
+				photo.subjects = { others[math.random(1, #others)].UserId }
+			else
+				photo.figureBehind = true -- solo: you, and something behind you
+			end
+		end
+		Net.Event("Photo"):FireClient(player, photo)
+		-- Archive: only id + area are stored (re-rendered with avatars when viewed)
+		if LoreService.Unlock(player, id) then
+			DataService.Mutate(player, function(data)
+				data.secrets.photos[id] = { area = photo.area, date = photo.date, kind = kind }
+			end)
+		end
+	end)
+end
+
+return EvidenceService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">FlashlightService</string>
             <string name="Source"><![CDATA[-- FlashlightService: replicated flashlight so teammates see each other's light.
@@ -8445,7 +9397,7 @@ return FlashlightService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">ForecastService</string>
             <string name="Source"><![CDATA[-- ForecastService: the core mechanic "the radio tells you the future - you decide whether
@@ -8466,6 +9418,7 @@ local StoryService = require(script.Parent.StoryService)
 local InteractionService = require(script.Parent.InteractionService)
 local DataService = require(script.Parent.DataService)
 local BadgeTracker = require(script.Parent.BadgeTracker)
+local AchievementService = require(script.Parent.AchievementService)
 
 local ForecastService = {}
 
@@ -8533,6 +9486,7 @@ local function tryBreak(player: Player, instance: Instance, interactId: string)
 				data.secrets.forecastsBroken[forecast.id] = true
 			end)
 			BadgeTracker.Award(p, "forecast_breaker")
+			AchievementService.Award(p, "forecast_breaker")
 		end
 	end
 	if forecast.brokenLine then
@@ -8556,7 +9510,7 @@ return ForecastService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">HealthService</string>
             <string name="Source"><![CDATA[-- HealthService: damage, downed state and revive. Nobody dies instantly:
@@ -8767,6 +9721,7 @@ function HealthService.Start()
 		end
 		local reviveHealth = tonumber(helper:GetAttribute("FZ_ReviveHealth")) or HC.ReviveHealth
 		HealthService.Revive(target, reviveHealth)
+		require(script.Parent.AchievementService).Award(helper, "rescuer")
 	end)
 
 	local function onCharacter(player: Player, character: Model)
@@ -8872,7 +9827,7 @@ return HealthService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">InteractionService</string>
             <string name="Source"><![CDATA[-- InteractionService: one interaction system for every platform.
@@ -8996,7 +9951,7 @@ return InteractionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="57">
           <Properties>
             <string name="Name">InventoryService</string>
             <string name="Source"><![CDATA[-- InventoryService: small hotbar per player and session (bandages, syringes).
@@ -9213,7 +10168,7 @@ return InventoryService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">LeaderboardService</string>
             <string name="Source"><![CDATA[-- LeaderboardService: global best shifts per survival map (OrderedDataStore).
@@ -9309,27 +10264,29 @@ return LeaderboardService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">LoreService</string>
-            <string name="Source"><![CDATA[-- LoreService: hidden finds (Shared/Lore.luau). Reading one opens the document, saves it
--- to the player's archive (Extras -> Archive) and pays a small reward the first time.
+            <string name="Source"><![CDATA[-- LoreService: DAS ARCHIV on the server. Finds are saved per player (data.secrets.logs),
+-- first finds pay a small reward, and insights unlock when their linked entries are known.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Lore = require(Shared.Lore)
+local Net = require(Shared.Net)
 
 local InteractionService = require(script.Parent.InteractionService)
 local StoryService = require(script.Parent.StoryService)
 local DataService = require(script.Parent.DataService)
 local BadgeTracker = require(script.Parent.BadgeTracker)
+local AchievementService = require(script.Parent.AchievementService)
 
 local LoreService = {}
 
 local REWARD = 50
 
-local function entry(id: string)
+function LoreService.Entry(id: string)
 	for _, item in Lore do
 		if item.id == id then
 			return item
@@ -9338,31 +10295,75 @@ local function entry(id: string)
 	return nil
 end
 
+local function checkInsights(player: Player)
+	local profile = DataService.Get(player)
+	if not profile then
+		return
+	end
+	local logs = profile.Data.secrets.logs
+	for _, item in Lore do
+		if item.links and not logs[item.id] then
+			local complete = true
+			for _, link in item.links do
+				if not logs[link] then
+					complete = false
+				end
+			end
+			if complete then
+				DataService.Mutate(player, function(data)
+					data.secrets.logs[item.id] = os.time()
+				end)
+				DataService.Grant(player, item.reward or REWARD)
+				Net.Event("Notify"):FireClient(player, "ARCHIVE_INSIGHT")
+			end
+		end
+	end
+	-- every regular find of Relay Station 07 -> badge
+	local all = true
+	for _, item in Lore do
+		if item.map == "relay07" and not item.links and not item.secret and not logs[item.id] then
+			all = false
+		end
+	end
+	if all then
+		BadgeTracker.Award(player, "ch1_archive")
+		AchievementService.Award(player, "archivist")
+	end
+end
+
+-- Saves an entry for a player (no document is shown). Returns true on a first find.
+function LoreService.Unlock(player: Player, id: string, silent: boolean?): boolean
+	local item = LoreService.Entry(id)
+	local profile = DataService.Get(player)
+	if not item or not profile or profile.Data.secrets.logs[id] then
+		return false
+	end
+	DataService.Mutate(player, function(data)
+		data.secrets.logs[id] = os.time()
+	end)
+	if not silent then
+		DataService.Grant(player, REWARD)
+		Net.Event("Notify"):FireClient(player, "ARCHIVE_NEW")
+	end
+	checkInsights(player)
+	return true
+end
+
+function LoreService.UnlockAll(players: { Player }, id: string)
+	for _, player in players do
+		LoreService.Unlock(player, id, true)
+	end
+end
+
 function LoreService.Start()
 	InteractionService.Register("lore", function(player, object)
 		local id = object:GetAttribute("LogId")
-		local item = type(id) == "string" and entry(id)
+		local item = type(id) == "string" and LoreService.Entry(id)
 		if not item then
 			return
 		end
 		StoryService.ShowDocument(player, { title = item.title, body = item.body })
-		local profile = DataService.Get(player)
-		if not profile or profile.Data.secrets.logs[id] then
-			return
-		end
-		DataService.Mutate(player, function(data)
-			data.secrets.logs[id] = os.time()
-		end)
-		DataService.Grant(player, REWARD)
-		local complete = true
-		for _, other in Lore do
-			if other.map == item.map and not profile.Data.secrets.logs[other.id] then
-				complete = false
-			end
-		end
-		if complete and item.map == "relay07" then
-			BadgeTracker.Award(player, "ch1_archive")
-		end
+		LoreService.Unlock(player, id)
 	end)
 end
 
@@ -9370,7 +10371,7 @@ return LoreService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="54">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">MapService</string>
             <string name="Source"><![CDATA[-- MapService: exactly one map is loaded per server. Sources, in this order:
@@ -9448,7 +10449,7 @@ return MapService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">MovementGuardService</string>
             <string name="Source"><![CDATA[-- MovementGuardService: server-side sanity check against speed exploits.
@@ -9534,7 +10535,7 @@ return MovementGuardService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="62">
           <Properties>
             <string name="Name">NoiseService</string>
             <string name="Source"><![CDATA[-- NoiseService: everything the creature can hear goes through here.
@@ -9588,7 +10589,7 @@ return NoiseService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="63">
           <Properties>
             <string name="Name">PartyService</string>
             <string name="Source"><![CDATA[-- PartyService: "private session". The host invites everyone in this server who is in the
@@ -9707,7 +10708,7 @@ return PartyService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="64">
           <Properties>
             <string name="Name">PlaceService</string>
             <string name="Source"><![CDATA[-- PlaceService: server-side teleports between places of this experience.
@@ -9813,7 +10814,7 @@ return PlaceService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="65">
           <Properties>
             <string name="Name">PowerService</string>
             <string name="Source"><![CDATA[-- PowerService: sector power. Switches tagged lights (FZ_SectorLight) and unlocks/locks
@@ -9888,7 +10889,221 @@ return PowerService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="66">
+          <Properties>
+            <string name="Name">ReferralService</string>
+            <string name="Source"><![CDATA[-- ReferralService: small one-time reward when a NEW player joins through a friend's invite.
+--   * The invite carries LaunchData "ref:<inviterUserId>" (ExperienceInviteOptions);
+--     the server reads it from Player:GetJoinData() - nothing the client claims is trusted
+--   * Only for genuinely new players (first session), account at least 7 days old,
+--     never your own id, once per invited account, at most 10 rewards per inviter
+--   * Reward only after a real condition: reaching the control room in chapter 1 or
+--     15 minutes of play. Pressing "invite" alone never rewards anything.
+--   * If the inviter is offline the reward waits in a DataStore and is paid on their
+--     next join.
+
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Community = require(Shared.Community)
+local Net = require(Shared.Net)
+
+local DataService = require(script.Parent.DataService)
+
+local ReferralService = {}
+
+local store = nil
+pcall(function()
+	store = DataStoreService:GetDataStore("FZ_Referrals_v1")
+end)
+
+local pending: { [Player]: { inviter: number, since: number } } = {}
+
+local function payInviter(inviterId: number)
+	local inviter = Players:GetPlayerByUserId(inviterId)
+	if inviter and DataService.Get(inviter) then
+		local paid = false
+		DataService.Mutate(inviter, function(data)
+			if (data.referral.rewardedInvites or 0) < Community.ReferralMaxPerPlayer then
+				data.referral.rewardedInvites = (data.referral.rewardedInvites or 0) + 1
+				paid = true
+			end
+		end)
+		if paid then
+			DataService.Grant(inviter, Community.ReferralMarks)
+			Net.Event("Notify"):FireClient(inviter, "REFERRAL_REWARD")
+		end
+		return
+	end
+	if store then
+		pcall(function()
+			store:UpdateAsync(tostring(inviterId), function(old)
+				local entry = if type(old) == "table" then old else { pending = 0 }
+				entry.pending = (entry.pending or 0) + 1
+				return entry
+			end)
+		end)
+	end
+end
+
+-- Called when the invited player fulfils the condition.
+function ReferralService.Complete(player: Player)
+	local entry = pending[player]
+	if not entry then
+		return
+	end
+	pending[player] = nil
+	local profile = DataService.Get(player)
+	if not profile or profile.Data.referral.rewarded then
+		return
+	end
+	DataService.Mutate(player, function(data)
+		data.referral.rewarded = os.time()
+	end)
+	DataService.Grant(player, Community.ReferralMarks)
+	Net.Event("Notify"):FireClient(player, "REFERRAL_REWARD")
+	payInviter(entry.inviter)
+end
+
+function ReferralService.Start()
+	DataService.ProfileLoaded:Connect(function(player, profile)
+		-- 1) rewards waiting for this player as an inviter
+		if store and profile.Persistent then
+			local count = 0
+			pcall(function()
+				store:UpdateAsync(tostring(player.UserId), function(old)
+					if type(old) ~= "table" or (old.pending or 0) <= 0 then
+						return nil
+					end
+					count = old.pending
+					old.pending = 0
+					return old
+				end)
+			end)
+			for _ = 1, count do
+				payInviter(player.UserId)
+			end
+		end
+		-- 2) did this NEW player arrive through an invite?
+		local ok, joinData = pcall(player.GetJoinData, player)
+		local launch = ok and type(joinData) == "table" and joinData.LaunchData
+		local inviter = type(launch) == "string" and tonumber(string.match(launch, "^ref:(%d+)$"))
+		if not inviter or inviter == player.UserId then
+			return
+		end
+		if profile.Data.stats.sessions > 1 or profile.Data.referral.by or player.AccountAge < Community.ReferralMinAccountAgeDays then
+			return
+		end
+		DataService.Mutate(player, function(data)
+			data.referral.by = inviter
+		end)
+		pending[player] = { inviter = inviter, since = os.clock() }
+	end)
+
+	-- time-based condition (15 minutes)
+	task.spawn(function()
+		while true do
+			task.wait(30)
+			for player, entry in pending do
+				if os.clock() - entry.since > 15 * 60 then
+					ReferralService.Complete(player)
+				end
+			end
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		pending[player] = nil
+	end)
+end
+
+return ReferralService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="67">
+          <Properties>
+            <string name="Name">SecretService</string>
+            <string name="Source"><![CDATA[-- SecretService: community secrets. Answers are checked on the server only, each secret
+-- can be solved once per player, and a global counter shows how many players solved it
+-- ("You are number 37") - the community can puzzle together without any external site.
+
+local DataStoreService = game:GetService("DataStoreService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+local Registry = require(Shared.SecretsRegistry)
+
+local DataService = require(script.Parent.DataService)
+local LoreService = require(script.Parent.LoreService)
+local AchievementService = require(script.Parent.AchievementService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local Answers = require(ServerStorage:WaitForChild("Secrets"):WaitForChild("SecretAnswers"))
+
+local SecretService = {}
+
+local counter = nil
+pcall(function()
+	counter = DataStoreService:GetDataStore("FZ_SecretSolvers_v1")
+end)
+
+local function normalize(text: string): string
+	return (string.gsub(string.upper(text), "[^%w]", ""))
+end
+
+local function solve(player: Player, raw: any)
+	if type(raw) ~= "string" or #raw > 64 then
+		return { status = "nothing" }
+	end
+	local input = normalize(raw)
+	for _, secret in Registry do
+		for _, answer in Answers[secret.id] or {} do
+			if input == normalize(answer) then
+				local profile = DataService.Get(player)
+				if not profile or not profile.Persistent then
+					return { status = "nothing" }
+				end
+				if profile.Data.secrets.solved[secret.id] then
+					return { status = "known", unlock = secret.unlock }
+				end
+				DataService.Mutate(player, function(data)
+					data.secrets.solved[secret.id] = os.time()
+				end)
+				LoreService.Unlock(player, secret.unlock, true)
+				DataService.Grant(player, secret.marks or 0)
+				AchievementService.Award(player, "decoder")
+				local solvers = 0
+				if counter then
+					pcall(function()
+						solvers = counter:IncrementAsync(secret.id, 1)
+					end)
+				end
+				return { status = "ok", unlock = secret.unlock, solvers = solvers }
+			end
+		end
+	end
+	return { status = "nothing" }
+end
+
+function SecretService.Start()
+	local limiter = RateLimiter.new(5, 0.1) -- burst 5, then one try every 10 s (no brute force)
+	Net.Function("SolveSecret").OnServerInvoke = function(player: Player, raw: any)
+		if not limiter:Allow(player) then
+			return { status = "rate" }
+		end
+		return solve(player, raw)
+	end
+end
+
+return SecretService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="68">
           <Properties>
             <string name="Name">SessionService</string>
             <string name="Source"><![CDATA[-- SessionService: what the team in this server is currently playing.
@@ -10024,6 +11239,7 @@ local function start(mode: string, contentId: string): boolean
 	end
 	cleanWorld()
 	HealthService.ResetSessionStats()
+	table.clear(CreatureService.Spotted)
 	InventoryService.RefillCabinets()
 	session = { mode = mode, contentId = contentId, mapId = entry.map, module = module, idleSince = nil }
 	table.clear(entered)
@@ -10172,7 +11388,14 @@ function SessionService.ResetActive()
 end
 
 function SessionService.Start()
-	local context = { setCheckpoint = SessionService.SetCheckpoint, finish = SessionService.Finish, playersInGame = SessionService.PlayersInGame }
+	local context = {
+		setCheckpoint = SessionService.SetCheckpoint,
+		finish = SessionService.Finish,
+		playersInGame = SessionService.PlayersInGame,
+		leave = function(player: Player)
+			leave(player, true)
+		end,
+	}
 	for _, modules in MODULES do
 		for _, module in modules do
 			module.Init(context)
@@ -10257,7 +11480,7 @@ return SessionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="61">
+        <Item class="ModuleScript" referent="69">
           <Properties>
             <string name="Name">SettingsService</string>
             <string name="Source"><![CDATA[-- SettingsService: persists player settings (language, subtitles, accessibility, graphics).
@@ -10299,7 +11522,7 @@ return SettingsService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="62">
+        <Item class="ModuleScript" referent="70">
           <Properties>
             <string name="Name">ShopService</string>
             <string name="Source"><![CDATA[-- ShopService: unlock and equip items with earned Signal Marks (server-authoritative).
@@ -10496,7 +11719,7 @@ return ShopService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="63">
+        <Item class="ModuleScript" referent="71">
           <Properties>
             <string name="Name">StoryService</string>
             <string name="Source"><![CDATA[-- StoryService: sends story content (subtitles, documents, objectives) to clients.
@@ -10585,7 +11808,7 @@ return StoryService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="64">
+        <Item class="ModuleScript" referent="72">
           <Properties>
             <string name="Name">VoiceService</string>
             <string name="Source"><![CDATA[-- VoiceService: proximity voice + walkie-talkie radio on top of the Roblox Audio API.
@@ -10735,11 +11958,11 @@ return VoiceService
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="65">
+      <Item class="Folder" referent="73">
         <Properties>
           <string name="Name">Util</string>
         </Properties>
-        <Item class="ModuleScript" referent="66">
+        <Item class="ModuleScript" referent="74">
           <Properties>
             <string name="Name">RateLimiter</string>
             <string name="Source"><![CDATA[-- Token-bucket rate limiter per player. Every client->server remote uses one.
@@ -10792,15 +12015,15 @@ return RateLimiter
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="67">
+  <Item class="ServerStorage" referent="75">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="Folder" referent="68">
+    <Item class="Folder" referent="76">
       <Properties>
         <string name="Name">Secrets</string>
       </Properties>
-      <Item class="ModuleScript" referent="69">
+      <Item class="ModuleScript" referent="77">
         <Properties>
           <string name="Name">Codes</string>
           <string name="Source"><![CDATA[-- Redeemable codes. Lives in ServerStorage: never replicated to clients.
@@ -10817,20 +12040,31 @@ return {
 ]]></string>
         </Properties>
       </Item>
+      <Item class="ModuleScript" referent="78">
+        <Properties>
+          <string name="Name">SecretAnswers</string>
+          <string name="Source"><![CDATA[-- Answers to community secrets. Server only. Compared after normalising the input
+-- (uppercase, letters and digits only), so "0214 · 0041 · 0007" works as well.
+return {
+	zero_frequency = { "021400410007" },
+}
+]]></string>
+        </Properties>
+      </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="70">
+  <Item class="StarterPlayer" referent="79">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <token name="CameraMode">1</token>
       <float name="CharacterWalkSpeed">10</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterCharacterScripts" referent="71">
+    <Item class="StarterCharacterScripts" referent="80">
       <Properties>
         <string name="Name">StarterCharacterScripts</string>
       </Properties>
-      <Item class="Script" referent="72">
+      <Item class="Script" referent="81">
         <Properties>
           <string name="Name">Health</string>
           <token name="RunContext">0</token>
@@ -10840,19 +12074,19 @@ return {
         </Properties>
       </Item>
     </Item>
-    <Item class="StarterPlayerScripts" referent="73">
+    <Item class="StarterPlayerScripts" referent="82">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="74">
+      <Item class="Folder" referent="83">
         <Properties>
           <string name="Name">Client</string>
         </Properties>
-        <Item class="Folder" referent="75">
+        <Item class="Folder" referent="84">
           <Properties>
             <string name="Name">Controllers</string>
           </Properties>
-          <Item class="ModuleScript" referent="76">
+          <Item class="ModuleScript" referent="85">
             <Properties>
               <string name="Name">AudioController</string>
               <string name="Source"><![CDATA[-- AudioController: every non-voice sound on the client.
@@ -11225,7 +12459,7 @@ return AudioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="77">
+          <Item class="ModuleScript" referent="86">
             <Properties>
               <string name="Name">CreatureVisualsController</string>
               <string name="Source"><![CDATA[-- CreatureVisualsController: everything the player SEES and HEARS of the creature.
@@ -11443,7 +12677,7 @@ return CreatureVisualsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="78">
+          <Item class="ModuleScript" referent="87">
             <Properties>
               <string name="Name">DirectorController</string>
               <string name="Source"><![CDATA[-- DirectorController: performs the HorrorDirector's moments on THIS client only.
@@ -12073,7 +13307,7 @@ return DirectorController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="79">
+          <Item class="ModuleScript" referent="88">
             <Properties>
               <string name="Name">EquipmentController</string>
               <string name="Source"><![CDATA[-- EquipmentController: client side of shop equipment.
@@ -12191,7 +13425,7 @@ return EquipmentController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="80">
+          <Item class="ModuleScript" referent="89">
             <Properties>
               <string name="Name">FlashlightController</string>
               <string name="Source"><![CDATA[-- FlashlightController: precise camera-aligned light for the local player, plus the
@@ -12342,7 +13576,7 @@ return FlashlightController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="81">
+          <Item class="ModuleScript" referent="90">
             <Properties>
               <string name="Name">GraphicsController</string>
               <string name="Source"><![CDATA[-- GraphicsController: quality profiles for the parts an experience may control itself.
@@ -12519,7 +13753,7 @@ return GraphicsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="82">
+          <Item class="ModuleScript" referent="91">
             <Properties>
               <string name="Name">HealthController</string>
               <string name="Source"><![CDATA[-- HealthController: health HUD (only visible when hurt), damage vignette, downed overlay.
@@ -12625,7 +13859,7 @@ return HealthController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="83">
+          <Item class="ModuleScript" referent="92">
             <Properties>
               <string name="Name">InputController</string>
               <string name="Source"><![CDATA[-- InputController: one logical action layer for keyboard/mouse, gamepad and touch.
@@ -12967,7 +14201,7 @@ return InputController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="84">
+          <Item class="ModuleScript" referent="93">
             <Properties>
               <string name="Name">InventoryController</string>
               <string name="Source"><![CDATA[-- InventoryController: the hotbar. Only visible when you carry something.
@@ -13077,7 +14311,7 @@ return InventoryController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="85">
+          <Item class="ModuleScript" referent="94">
             <Properties>
               <string name="Name">MovementController</string>
               <string name="Source"><![CDATA[-- MovementController: slow walk, short limited sprint with stamina.
@@ -13211,7 +14445,7 @@ return MovementController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="86">
+          <Item class="ModuleScript" referent="95">
             <Properties>
               <string name="Name">PromptController</string>
               <string name="Source"><![CDATA[-- PromptController: our own interaction prompt (all prompts use Style = Custom).
@@ -13402,7 +14636,7 @@ return PromptController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="87">
+          <Item class="ModuleScript" referent="96">
             <Properties>
               <string name="Name">RadioController</string>
               <string name="Source"><![CDATA[-- RadioController: the walkie-talkie in your hand.
@@ -13649,7 +14883,7 @@ return RadioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="88">
+          <Item class="ModuleScript" referent="97">
             <Properties>
               <string name="Name">RescueController</string>
               <string name="Source"><![CDATA[-- RescueController: everything around being down and helping someone up.
@@ -13863,7 +15097,7 @@ return RescueController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="89">
+          <Item class="ModuleScript" referent="98">
             <Properties>
               <string name="Name">SettingsController</string>
               <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
@@ -13954,7 +15188,7 @@ return SettingsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="90">
+          <Item class="ModuleScript" referent="99">
             <Properties>
               <string name="Name">VoiceController</string>
               <string name="Source"><![CDATA[-- VoiceController: hearing voices on this client.
@@ -14197,7 +15431,7 @@ return VoiceController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="91">
+          <Item class="ModuleScript" referent="100">
             <Properties>
               <string name="Name">WorldTextController</string>
               <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
@@ -14288,7 +15522,7 @@ return WorldTextController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="92">
+        <Item class="LocalScript" referent="101">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- SILENT RELAY - client bootstrap.
@@ -14561,6 +15795,20 @@ end
 
 Net.Event("Subtitle").OnClientEvent:Connect(Hud.ShowSubtitle)
 Net.Event("Document").OnClientEvent:Connect(Hud.ShowDocument)
+Net.Event("Photo").OnClientEvent:Connect(function(photo)
+	if type(photo) ~= "table" or type(photo.id) ~= "string" then
+		return
+	end
+	local entry = nil
+	for _, item in require(Shared.Lore) do
+		if item.id == photo.id then
+			entry = item
+		end
+	end
+	if entry then
+		Hud.ShowDocument({ title = entry.title, body = entry.body, photo = photo })
+	end
+end)
 Net.Event("Notify").OnClientEvent:Connect(function(key, params)
 	if type(key) == "string" then
 		Hud.Notify(key, if type(params) == "table" then params else nil)
@@ -14728,10 +15976,11 @@ local function updateStatus()
 		Hud.SetStatus(nil)
 		return
 	end
-	if SessionState.Get("SvPhase") == "break" then
+	local phase = SessionState.Get("SvPhase")
+	if phase == "break" or phase == "evac" then
 		local ends = SessionState.Get("SvBreakEnds")
 		local seconds = if type(ends) == "number" then math.max(0, math.ceil(ends - workspace:GetServerTimeNow())) else 0
-		Hud.SetStatus("SV_BREAK_TIMER", { seconds = seconds })
+		Hud.SetStatus(if phase == "evac" then "SV_EVAC_TIMER" else "SV_VOTE_TIMER", { seconds = seconds })
 	else
 		local event = SessionState.Get("SvEvent")
 		Hud.SetStatus("SV_SHIFT", { shift = shift }, if type(event) == "string" then event else nil)
@@ -14743,7 +15992,7 @@ end
 task.spawn(function()
 	while true do
 		task.wait(1)
-		if SessionState.Get("SvPhase") == "break" then
+		if SessionState.Get("SvPhase") == "break" or SessionState.Get("SvPhase") == "evac" then
 			updateStatus()
 		end
 	end
@@ -14835,11 +16084,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="93">
+        <Item class="Folder" referent="102">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="94">
+          <Item class="ModuleScript" referent="103">
             <Properties>
               <string name="Name">Components</string>
               <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
@@ -15188,7 +16437,7 @@ return Components
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="95">
+          <Item class="ModuleScript" referent="104">
             <Properties>
               <string name="Name">DebugOverlay</string>
               <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
@@ -15268,7 +16517,7 @@ return DebugOverlay
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="96">
+          <Item class="ModuleScript" referent="105">
             <Properties>
               <string name="Name">DecisionPanel</string>
               <string name="Source"><![CDATA[-- DecisionPanel: the team vote UI. Big buttons, live vote counts, a time bar.
@@ -15421,7 +16670,7 @@ return DecisionPanel
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="97">
+          <Item class="ModuleScript" referent="106">
             <Properties>
               <string name="Name">Hud</string>
               <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
@@ -15441,6 +16690,7 @@ local GuiService = game:GetService("GuiService")
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 
 local Components = require(script.Parent.Components)
+local PhotoView = require(script.Parent.PhotoView)
 local AudioController = require(script.Parent.Parent.Controllers.AudioController)
 local Theme = require(script.Parent.Theme)
 
@@ -15572,6 +16822,14 @@ function Hud.ShowObjective(key: string?, announce: boolean?, params: { [string]:
 end
 
 function Hud.Notify(key: string, params: { [string]: any }?)
+	-- params may carry text keys (e.g. an achievement name): show them translated
+	if params then
+		local translated = {}
+		for name, value in params do
+			translated[name] = if type(value) == "string" and string.match(value, "^[A-Z][A-Z0-9_]+$") and Localization.Has(value) then Localization.T(value) else value
+		end
+		params = translated
+	end
 	notifyToken += 1
 	local token = notifyToken
 	Localization.Bind(notifyLabel, key, params)
@@ -15665,6 +16923,17 @@ function Hud.ShowDocument(document: { [string]: any })
 	if type(document.date) == "number" then
 		params = params or {}
 		params.date = formatDate(document.date)
+	end
+	if type(document.photo) == "table" then
+		local photo = PhotoView.Build(document.photo)
+		photo.LayoutOrder = 0
+		photo.ZIndex = 22
+		for _, d in photo:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex = 23
+			end
+		end
+		photo.Parent = panel
 	end
 	local title = Components.Text({ Key = document.title, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = panel })
 	title.ZIndex = 22
@@ -15799,7 +17068,156 @@ return Hud
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="98">
+          <Item class="ModuleScript" referent="107">
+            <Properties>
+              <string name="Name">PhotoView</string>
+              <string name="Source"><![CDATA[-- PhotoView: renders a "supernatural" photograph from live avatar copies in a small
+-- prepared scene (ViewportFrame). Sepia print, white border, a date from long ago.
+-- Subjects that are no longer in the server are shown as dark silhouettes.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
+
+local Theme = require(script.Parent.Theme)
+
+local PhotoView = {}
+
+local function slab(world: Instance, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.Size = size
+	p.CFrame = cf
+	p.Color = color
+	p.Material = material or Enum.Material.Concrete
+	p.Parent = world
+	return p
+end
+
+local function silhouette(world: Instance, cf: CFrame, tall: boolean?)
+	local model = Instance.new("Model")
+	local color = Color3.fromRGB(12, 10, 10)
+	local scale = if tall then 1.7 else 1
+	slab(model, Vector3.new(1.2, 2.2, 0.7) * scale, cf * CFrame.new(0, 3 * scale, 0), color, Enum.Material.SmoothPlastic)
+	slab(model, Vector3.new(1, 1, 1) * scale, cf * CFrame.new(0, 4.7 * scale, 0), color, Enum.Material.SmoothPlastic)
+	slab(model, Vector3.new(1.2, 2, 0.6) * scale, cf * CFrame.new(0, 1 * scale, 0), color, Enum.Material.SmoothPlastic)
+	model.Parent = world
+end
+
+local function avatarCopy(userId: number): Model?
+	local member = Players:GetPlayerByUserId(userId)
+	local character = member and member.Character
+	if not character then
+		return nil
+	end
+	local archivable = character.Archivable
+	character.Archivable = true
+	local copy = character:Clone()
+	character.Archivable = archivable
+	if not copy then
+		return nil
+	end
+	for _, d in copy:GetDescendants() do
+		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("Sound") or d:IsA("Light") or d:IsA("BillboardGui") or d:IsA("ProximityPrompt") then
+			d:Destroy()
+		elseif d:IsA("BasePart") then
+			d.Anchored = true
+		end
+	end
+	return copy
+end
+
+-- Scene per area type: hallway, room, core door, antenna.
+local function buildScene(world: Instance, area: string)
+	local wall = Color3.fromRGB(110, 106, 98)
+	if area == "CORE" then
+		slab(world, Vector3.new(30, 1, 30), CFrame.new(0, -0.5, -10), Color3.fromRGB(70, 68, 64))
+		slab(world, Vector3.new(18, 14, 1), CFrame.new(0, 7, -20), Color3.fromRGB(60, 66, 66), Enum.Material.Metal)
+		slab(world, Vector3.new(14, 0.6, 1.2), CFrame.new(0, 7.5, -19.6), Color3.fromRGB(200, 60, 50), Enum.Material.Neon)
+	elseif area == "ANTENNA" then
+		slab(world, Vector3.new(60, 1, 60), CFrame.new(0, -0.5, -20), Color3.fromRGB(50, 56, 46), Enum.Material.Grass)
+		for i = 0, 6 do
+			slab(world, Vector3.new(0.6, 6, 0.6), CFrame.new(-4 + i * 0.2, 3 + i * 6, -30), Color3.fromRGB(90, 50, 40), Enum.Material.Metal)
+		end
+	elseif area == "HALL" then
+		slab(world, Vector3.new(14, 1, 60), CFrame.new(0, -0.5, -20), Color3.fromRGB(60, 62, 58))
+		slab(world, Vector3.new(1, 14, 60), CFrame.new(-7, 7, -20), wall)
+		slab(world, Vector3.new(1, 14, 60), CFrame.new(7, 7, -20), wall)
+	else
+		slab(world, Vector3.new(30, 1, 30), CFrame.new(0, -0.5, -12), Color3.fromRGB(84, 76, 62), Enum.Material.Plastic)
+		slab(world, Vector3.new(30, 14, 1), CFrame.new(0, 7, -26), wall)
+		slab(world, Vector3.new(6, 0.3, 3), CFrame.new(-6, 3, -18), Color3.fromRGB(82, 62, 44), Enum.Material.Wood)
+		slab(world, Vector3.new(3, 7, 2), CFrame.new(8, 3.5, -22), Color3.fromRGB(64, 84, 82), Enum.Material.Metal)
+	end
+end
+
+-- photo = { id, kind, area, date, subjects = {userId...}, figureBehind? }
+function PhotoView.Build(photo: { [string]: any }): Frame
+	local frame = Instance.new("Frame")
+	frame.Name = "Photo"
+	frame.Size = UDim2.new(1, 0, 0, 300)
+	frame.BackgroundColor3 = Color3.fromRGB(236, 230, 214) -- white print border
+	frame.BorderSizePixel = 0
+	local padding = Instance.new("UIPadding")
+	padding.PaddingTop = UDim.new(0, 10)
+	padding.PaddingLeft = UDim.new(0, 10)
+	padding.PaddingRight = UDim.new(0, 10)
+	padding.PaddingBottom = UDim.new(0, 34)
+	padding.Parent = frame
+
+	local viewport = Instance.new("ViewportFrame")
+	viewport.Size = UDim2.fromScale(1, 1)
+	viewport.BackgroundColor3 = Color3.fromRGB(40, 32, 22)
+	viewport.ImageColor3 = Color3.fromRGB(235, 205, 160) -- sepia
+	viewport.Ambient = Color3.fromRGB(150, 130, 100)
+	viewport.LightColor = Color3.fromRGB(255, 225, 180)
+	viewport.Parent = frame
+	local world = Instance.new("WorldModel")
+	world.Parent = viewport
+	buildScene(world, tostring(photo.area or "HALL"))
+
+	local subjects = photo.subjects or {}
+	for index, userId in subjects do
+		local cf = CFrame.new((index - 1) * 3 - (#subjects - 1) * 1.5, 3, -14 - (index % 2) * 2) * CFrame.Angles(0, math.rad(if photo.kind == "past_self" then 160 else 180), 0)
+		local copy = avatarCopy(userId)
+		if copy then
+			copy:PivotTo(cf)
+			copy.Parent = world
+		else
+			silhouette(world, cf - Vector3.new(0, 3, 0))
+		end
+	end
+	if photo.figureBehind or photo.kind == "mate_dark" then
+		silhouette(world, CFrame.new(1.5, 0, -24), true)
+	end
+
+	local camera = Instance.new("Camera")
+	camera.FieldOfView = 55
+	camera.CFrame = CFrame.lookAt(Vector3.new(3, 8, 6), Vector3.new(0, 3, -16))
+	camera.Parent = viewport
+	viewport.CurrentCamera = camera
+
+	local caption = Instance.new("TextLabel")
+	caption.BackgroundTransparency = 1
+	caption.AnchorPoint = Vector2.new(0, 0)
+	caption.Position = UDim2.new(0, 0, 1, 4)
+	caption.Size = UDim2.new(1, 0, 0, 24)
+	caption.Font = Theme.Fonts.Mono
+	caption.TextSize = 15
+	caption.TextXAlignment = Enum.TextXAlignment.Left
+	caption.TextColor3 = Color3.fromRGB(60, 50, 40)
+	caption.AutoLocalize = false
+	caption.Text = Localization.T("PHOTO_CAPTION", { date = tostring(photo.date or "??.??.19??"), place = Localization.T("AREA_" .. tostring(photo.area or "UNKNOWN")) })
+	caption.Parent = frame
+	return frame
+end
+
+return PhotoView
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="108">
             <Properties>
               <string name="Name">Router</string>
               <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
@@ -15966,11 +17384,11 @@ return Router
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="99">
+          <Item class="Folder" referent="109">
             <Properties>
               <string name="Name">Screens</string>
             </Properties>
-            <Item class="ModuleScript" referent="100">
+            <Item class="ModuleScript" referent="110">
               <Properties>
                 <string name="Name">Admin</string>
                 <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
@@ -16082,39 +17500,265 @@ return Admin
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="101">
+            <Item class="ModuleScript" referent="111">
               <Properties>
                 <string name="Name">Archive</string>
-                <string name="Source"><![CDATA[-- Archive: everything you have found and decided, plus your titles.
--- Unfound entries show as "???" so players know there is more to discover.
+                <string name="Source"><![CDATA[-- DAS ARCHIV: the station's archive terminal.
+-- Green monospace, file numbers, categories, locked files that do not reveal their content,
+-- link progress for insights ("2/3 files"), a frequency input for hidden secrets, and the
+-- player's earned titles. Opens documents and re-renders photographs on demand.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Localization = require(Shared.Localization)
 local Lore = require(Shared.Lore)
 local Net = require(Shared.Net)
 local Titles = require(Shared.Titles)
+local Achievements = require(Shared.Achievements)
 
 local Components = require(script.Parent.Parent.Components)
 local Theme = require(script.Parent.Parent.Theme)
 
 local Archive = {}
 
+local GREEN = Color3.fromRGB(120, 230, 150)
+local GREEN_DIM = Color3.fromRGB(60, 120, 80)
+local CATEGORIES = { "all", "photo", "report", "tape", "observation", "radio", "confidential", "past", "insight", "achievements", "titles" }
+
+local function terminalText(props)
+	props.Font = Theme.Fonts.Mono
+	props.Color = props.Color or GREEN
+	local label = Components.Text(props)
+	label.TextStrokeTransparency = 0.85
+	return label
+end
+
 function Archive.new(router)
 	local app = router.App
-	local root, column = Components.ScreenRoot("Archive")
-	local scroll = Components.ScrollColumn(column, UDim2.fromScale(1, 1))
-	local order = 0
-	local function nextOrder()
-		order += 1
-		return order
+	local root = Instance.new("CanvasGroup")
+	root.Name = "Archive"
+	root.BackgroundColor3 = Color3.fromRGB(4, 10, 6)
+	root.BackgroundTransparency = 0.08
+	root.Size = UDim2.fromScale(1, 1)
+
+	-- scanlines (static, no flicker)
+	local scan = Instance.new("Frame")
+	scan.BackgroundTransparency = 1
+	scan.Size = UDim2.fromScale(1, 1)
+	scan.ZIndex = 5
+	scan.Parent = root
+	local gradient = Instance.new("UIGradient")
+	local points = {}
+	for i = 0, 18 do
+		table.insert(points, NumberSequenceKeypoint.new(i / 18, if i % 2 == 0 then 0.94 else 1))
 	end
-	Components.Heading(scroll, "ARCHIVE_TITLE", nextOrder())
-	local loading = Components.Text({ Key = "LEADERBOARD_LOADING", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, LayoutOrder = nextOrder(), Parent = scroll })
-	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 999, Parent = scroll, OnActivated = function()
+	gradient.Transparency = NumberSequence.new(points)
+	gradient.Rotation = 90
+	gradient.Parent = scan
+	scan.BackgroundColor3 = Color3.new(0, 0, 0)
+	scan.BackgroundTransparency = 0
+
+	local column = Instance.new("Frame")
+	column.BackgroundTransparency = 1
+	column.AnchorPoint = Vector2.new(0.5, 0.5)
+	column.Position = UDim2.fromScale(0.5, 0.5)
+	column.Size = UDim2.new(1, -48, 1, -32)
+	column.Parent = root
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(760, math.huge)
+	limit.Parent = column
+
+	terminalText({ Text = "RELAY 07 · " .. Localization.T("ARCHIVE_TERMINAL") .. " · " .. Players.LocalPlayer.DisplayName, TextSize = 14, Color = GREEN_DIM, Size = UDim2.new(1, 0, 0, 20), Parent = column })
+	terminalText({ Key = "ARCHIVE_TITLE", TextSize = 26, Size = UDim2.new(1, 0, 0, 34), Position = UDim2.fromOffset(0, 20), Parent = column })
+
+	local tabs = Instance.new("ScrollingFrame")
+	tabs.BackgroundTransparency = 1
+	tabs.BorderSizePixel = 0
+	tabs.Position = UDim2.fromOffset(0, 58)
+	tabs.Size = UDim2.new(1, 0, 0, 38)
+	tabs.CanvasSize = UDim2.new()
+	tabs.AutomaticCanvasSize = Enum.AutomaticSize.X
+	tabs.ScrollingDirection = Enum.ScrollingDirection.X
+	tabs.ScrollBarThickness = 0
+	tabs.Selectable = false
+	tabs.Parent = column
+	Components.List(tabs, 4, true)
+
+	local list = Components.ScrollColumn(column, UDim2.new(1, 0, 1, -200), UDim2.fromOffset(0, 100))
+	list.ScrollBarImageColor3 = GREEN_DIM
+
+	-- frequency input (secrets)
+	local inputRow = Instance.new("Frame")
+	inputRow.BackgroundTransparency = 1
+	inputRow.AnchorPoint = Vector2.new(0, 1)
+	inputRow.Position = UDim2.new(0, 0, 1, -52)
+	inputRow.Size = UDim2.new(1, 0, 0, 40)
+	inputRow.Parent = column
+	local box = Instance.new("TextBox")
+	box.AutoLocalize = false
+	box.ClearTextOnFocus = false
+	box.Text = ""
+	box.Font = Theme.Fonts.Mono
+	box.TextSize = 18
+	box.TextColor3 = GREEN
+	box.PlaceholderColor3 = GREEN_DIM
+	box.BackgroundColor3 = Color3.fromRGB(8, 22, 12)
+	box.BorderSizePixel = 0
+	box.Size = UDim2.new(0.62, -6, 1, 0)
+	box.TextXAlignment = Enum.TextXAlignment.Left
+	box.Selectable = true
+	Localization.Bind(box, "ARCHIVE_FREQ_PLACEHOLDER", nil, "PlaceholderText")
+	Components.Padding(box, 10, 0)
+	box.Parent = inputRow
+	local status = terminalText({ Text = "", TextSize = 14, Color = GREEN_DIM, Size = UDim2.new(1, 0, 0, 18), AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -96), Parent = column })
+
+	local back = Components.Button({ Key = "MENU_BACK", Height = 44, Parent = column })
+	back.Instance.AnchorPoint = Vector2.new(0, 1)
+	back.Instance.Position = UDim2.fromScale(0, 1)
+	back.Instance.Size = UDim2.new(1, 0, 0, 44)
+	back.Instance.Activated:Connect(function()
 		router:Pop()
+	end)
+
+	local data = { logs = {}, photos = {}, achievements = {} }
+	local titlesEarned, equippedTitle = {}, nil
+	local category = "all"
+	local render: () -> ()
+
+	local transmit = Components.Button({ Key = "ARCHIVE_FREQ_SEND", Height = 40, Parent = inputRow, OnActivated = function()
+		local text = box.Text
+		if #string.gsub(text, "%s", "") == 0 then
+			return
+		end
+		local ok, result = pcall(function()
+			return Net.Function("SolveSecret"):InvokeServer(text)
+		end)
+		local outcome = if ok and type(result) == "table" then result.status else "error"
+		status.TextColor3 = if outcome == "ok" then GREEN else GREEN_DIM
+		Localization.Bind(status, if outcome == "ok" then "SECRET_SOLVED" elseif outcome == "known" then "SECRET_KNOWN" elseif outcome == "rate" then "CODE_RATE_LIMITED" else "SECRET_NOTHING", { count = if ok and type(result) == "table" then result.solvers or 0 else 0 })
+		if outcome == "ok" then
+			box.Text = ""
+			data.logs[result.unlock] = os.time()
+			render()
+		end
 	end })
+	transmit.Instance.AnchorPoint = Vector2.new(1, 0)
+	transmit.Instance.Position = UDim2.fromScale(1, 0)
+	transmit.Instance.Size = UDim2.new(0.38, 0, 1, 0)
+	transmit.Label.TextSize = 15
+
+	local function openEntry(item)
+		local doc = { title = item.title, body = item.body }
+		if item.photo then
+			local saved = data.photos[item.id] or {}
+			doc.photo = {
+				id = item.id,
+				kind = item.photo,
+				area = saved.area or "HALL",
+				date = saved.date,
+				subjects = { Players.LocalPlayer.UserId }, -- others are never stored: silhouettes
+				figureBehind = item.photo == "mate_dark",
+			}
+		end
+		app.Hud.ShowDocument(doc)
+	end
+
+	render = function()
+		for _, child in list:GetChildren() do
+			if child:IsA("GuiObject") then
+				child:Destroy()
+			end
+		end
+		local order = 0
+		if category == "achievements" then
+			for _, achievement in Achievements do
+				order += 1
+				local done = data.achievements[achievement.id] ~= nil
+				terminalText({ Text = (if done then "[OK]  " else "[  ]  ") .. Localization.T(achievement.name), TextSize = 16, Color = if done then GREEN else GREEN_DIM, LayoutOrder = order, Parent = list })
+				order += 1
+				terminalText({ Key = achievement.description, Params = { marks = achievement.marks }, TextSize = 13, Color = GREEN_DIM, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = order, Parent = list })
+			end
+			return
+		end
+		if category == "titles" then
+			for _, title in Titles.List do
+				order += 1
+				if titlesEarned[title.id] then
+					local button
+					button = Components.Button({ Key = title.name, TagKey = if equippedTitle == title.id then "SHOP_EQUIPPED" else "SHOP_EQUIP", Height = 40, LayoutOrder = order, Parent = list, OnActivated = function()
+						local wearing = equippedTitle == title.id
+						pcall(function()
+							Net.Function("ShopAction"):InvokeServer("title", if wearing then "" else title.id)
+						end)
+						equippedTitle = if wearing then nil else title.id
+						render()
+					end })
+					button.Label.TextColor3 = GREEN
+				else
+					terminalText({ Key = title.hint, TextSize = 15, Color = GREEN_DIM, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = order, Parent = list })
+				end
+			end
+			return
+		end
+		local found, total = 0, 0
+		for index, item in Lore do
+			if category == "all" or item.category == category then
+				total += 1
+				order += 1
+				local number = string.format("07-%02d", index)
+				if data.logs[item.id] then
+					found += 1
+					local button = Components.Button({
+						Text = string.format("[%s]  %s", number, Localization.T(item.title)),
+						TagKey = "ARCHIVE_CAT_" .. string.upper(item.category),
+						Height = 40,
+						LayoutOrder = order,
+						Parent = list,
+						OnActivated = function()
+							openEntry(item)
+						end,
+					})
+					button.Label.Font = Theme.Fonts.Mono
+					button.Label.TextSize = 15
+					button.Label.TextColor3 = GREEN
+					button.Tag.TextColor3 = GREEN_DIM
+				elseif item.links then
+					local have = 0
+					for _, link in item.links do
+						if data.logs[link] then
+							have += 1
+						end
+					end
+					terminalText({ Key = "ARCHIVE_LINK_PROGRESS", Params = { number = number, have = have, need = #item.links }, TextSize = 15, Color = GREEN_DIM, LayoutOrder = order, Parent = list })
+				else
+					terminalText({ Key = "ARCHIVE_LOCKED", Params = { number = number }, TextSize = 15, Color = GREEN_DIM, LayoutOrder = order, Parent = list })
+				end
+			end
+		end
+		order += 1
+		terminalText({ Key = "ARCHIVE_COUNT", Params = { found = found, total = total }, TextSize = 13, Color = GREEN_DIM, LayoutOrder = order, Parent = list })
+	end
+
+	local tabButtons = {}
+	for index, name in CATEGORIES do
+		local tab = Components.Button({ Key = "ARCHIVE_CAT_" .. string.upper(name), Height = 34, LayoutOrder = index, Parent = tabs, OnActivated = function()
+			category = name
+			for n, b in tabButtons do
+				b.SetFocused(n == name)
+			end
+			render()
+		end })
+		tab.Instance.Size = UDim2.fromOffset(150, 34)
+		tab.Instance.AutomaticSize = Enum.AutomaticSize.X
+		tab.Label.Font = Theme.Fonts.Mono
+		tab.Label.TextSize = 14
+		tab.Label.TextColor3 = GREEN
+		tabButtons[name] = tab
+	end
+	tabButtons.all.SetFocused(true)
+	render()
 
 	task.spawn(function()
 		local okProfile, profile = pcall(function()
@@ -16123,87 +17767,111 @@ function Archive.new(router)
 		local okShop, shop = pcall(function()
 			return Net.Function("ShopAction"):InvokeServer("get")
 		end)
-		if not scroll.Parent then
+		if not list.Parent then
 			return
 		end
-		loading:Destroy()
-		profile = if okProfile and type(profile) == "table" then profile else app.Profile
-		local secrets = profile.secrets or { logs = {}, forecastsBroken = {} }
-		local choices = profile.storyChoices or {}
-
-		-- Finds
-		Components.Text({ Key = "ARCHIVE_FINDS", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = nextOrder(), Parent = scroll })
-		for _, item in Lore do
-			if secrets.logs[item.id] then
-				Components.Button({ Key = item.title, Height = 40, LayoutOrder = nextOrder(), Parent = scroll, OnActivated = function()
-					app.Hud.ShowDocument({ title = item.title, body = item.body })
-				end })
-			else
-				Components.Text({ Text = "  ???", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextFaint, LayoutOrder = nextOrder(), Parent = scroll })
-			end
-		end
-
-		-- Decisions and forecasts
-		Components.Spacer(scroll, 8, nextOrder())
-		Components.Text({ Key = "ARCHIVE_DECISIONS", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = nextOrder(), Parent = scroll })
-		local answer = choices.c1_answer
-		Components.Text({
-			Key = if answer == 1 then "ARCHIVE_C1_ANSWERED" elseif answer == 2 then "ARCHIVE_C1_SILENT" else "ARCHIVE_C1_OPEN",
-			TextSize = Theme.Sizes.TextBody,
-			Color = Theme.Colors.Text,
-			AutoY = true,
-			Size = UDim2.fromScale(1, 0),
-			LayoutOrder = nextOrder(),
-			Parent = scroll,
-		})
-		local broken = 0
-		for _ in secrets.forecastsBroken or {} do
-			broken += 1
-		end
-		Components.Text({ Key = "ARCHIVE_FORECASTS", Params = { count = broken }, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.Text, LayoutOrder = nextOrder(), Parent = scroll })
-
-		-- Titles
-		Components.Spacer(scroll, 8, nextOrder())
-		Components.Text({ Key = "ARCHIVE_TITLES", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = nextOrder(), Parent = scroll })
-		local earned = {}
+		local secrets = (okProfile and type(profile) == "table" and profile.secrets) or app.Profile.secrets or {}
+		data.logs = secrets.logs or {}
+		data.photos = secrets.photos or {}
+		data.achievements = (okProfile and type(profile) == "table" and profile.achievements) or {}
 		if okShop and type(shop) == "table" then
 			for _, id in shop.titles or {} do
-				earned[id] = true
+				titlesEarned[id] = true
 			end
+			equippedTitle = shop.equipped and shop.equipped.title
 		end
-		local equipped = okShop and type(shop) == "table" and shop.equipped and shop.equipped.title
-		for _, title in Titles.List do
-			if earned[title.id] then
-				local button
-				button = Components.Button({
-					Key = title.name,
-					TagKey = if equipped == title.id then "SHOP_EQUIPPED" else "SHOP_EQUIP",
-					Height = 40,
-					LayoutOrder = nextOrder(),
-					Parent = scroll,
-					OnActivated = function()
-						local wearing = equipped == title.id
-						pcall(function()
-							Net.Function("ShopAction"):InvokeServer("title", if wearing then "" else title.id)
-						end)
-						equipped = if wearing then nil else title.id
-						Localization.Bind(button.Tag, if equipped == title.id then "SHOP_EQUIPPED" else "SHOP_EQUIP")
-					end,
-				})
-			else
-				Components.Text({ Key = title.hint, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextFaint, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = nextOrder(), Parent = scroll })
-			end
-		end
+		render()
 	end)
 
-	return { Root = root, Focus = back.Instance }
+	return { Root = root, Focus = tabButtons.all.Instance }
 end
 
 return Archive
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="102">
+            <Item class="ModuleScript" referent="112">
+              <Properties>
+                <string name="Name">Community</string>
+                <string name="Source"><![CDATA[-- Community: optional one-time reward for joining the official Roblox community.
+-- Nothing is required to play. The reward is only granted after the SERVER confirmed the
+-- membership. Pending join requests: check again after they were accepted.
+
+local GroupService = game:GetService("GroupService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Community = require(Shared.Community)
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local Components = require(script.Parent.Parent.Components)
+local Theme = require(script.Parent.Parent.Theme)
+
+local CommunityScreen = {}
+
+local STATUS = {
+	ok = "COMMUNITY_OK",
+	claimed = "COMMUNITY_CLAIMED",
+	not_member = "COMMUNITY_NOT_MEMBER",
+	rate = "CODE_RATE_LIMITED",
+	error = "COMMUNITY_ERROR",
+	off = "COMMUNITY_OFF",
+}
+
+function CommunityScreen.new(router)
+	local root, column = Components.ScreenRoot("Community")
+	local layout = Components.List(column, Theme.Sizes.Gap)
+	layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	Components.Heading(column, "COMMUNITY_TITLE", 1)
+	Components.Text({ Key = "COMMUNITY_DESC", Params = { marks = Community.RewardMarks }, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.Text, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 2, Parent = column })
+	Components.Text({ Key = "COMMUNITY_OPTIONAL", TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 3, Parent = column })
+	local status = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.TextDim, AutoY = true, Size = UDim2.fromScale(1, 0), LayoutOrder = 8, Parent = column })
+
+	local function show(result)
+		local key = STATUS[type(result) == "table" and result.status or "error"] or "COMMUNITY_ERROR"
+		status.TextColor3 = if key == "COMMUNITY_OK" or key == "COMMUNITY_CLAIMED" then Theme.Colors.Relay else Theme.Colors.TextDim
+		Localization.Bind(status, key, { marks = Community.RewardMarks })
+	end
+
+	local join = Components.Button({ Key = "COMMUNITY_JOIN", LayoutOrder = 5, Parent = column, OnActivated = function()
+		task.spawn(function()
+			local ok = pcall(function()
+				(GroupService :: any):PromptJoinAsync(Community.GroupId)
+			end)
+			if not ok then
+				Localization.Bind(status, "COMMUNITY_JOIN_MANUAL")
+			end
+		end)
+	end })
+	Components.Button({ Key = "COMMUNITY_CHECK", LayoutOrder = 6, Parent = column, OnActivated = function()
+		local ok, result = pcall(function()
+			return Net.Function("Community"):InvokeServer("claim")
+		end)
+		show(if ok then result else nil)
+	end })
+	Components.Spacer(column, 8, 9)
+	Components.Button({ Key = "MENU_BACK", LayoutOrder = 10, Parent = column, OnActivated = function()
+		router:Pop()
+	end })
+
+	task.spawn(function()
+		local ok, result = pcall(function()
+			return Net.Function("Community"):InvokeServer("status")
+		end)
+		if ok and type(result) == "table" and result.status == "claimed" then
+			show(result)
+		end
+	end)
+	return { Root = root, Focus = join.Instance }
+end
+
+return CommunityScreen
+]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="113">
               <Properties>
                 <string name="Name">Extras</string>
                 <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
@@ -16324,6 +17992,11 @@ function Extras.new(router)
 	Components.Button({ Key = "ARCHIVE_TITLE", LayoutOrder = 9, Parent = column, OnActivated = function()
 		router:Push(require(script.Parent.Archive))
 	end })
+	if require(Shared.Community).GroupId > 0 then
+		Components.Button({ Key = "COMMUNITY_TITLE", LayoutOrder = 9, Parent = column, OnActivated = function()
+			router:Push(require(script.Parent.Community))
+		end })
+	end
 	maintenance = Components.Button({ Key = "ADMIN_TITLE", LayoutOrder = 10, Parent = column, OnActivated = function()
 		router:Push(require(script.Parent.Admin))
 	end })
@@ -16352,7 +18025,7 @@ return Extras
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="103">
+            <Item class="ModuleScript" referent="114">
               <Properties>
                 <string name="Name">LanguageSelect</string>
                 <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
@@ -16454,7 +18127,7 @@ return LanguageSelect
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="104">
+            <Item class="ModuleScript" referent="115">
               <Properties>
                 <string name="Name">Leaderboard</string>
                 <string name="Source"><![CDATA[-- Global best shifts for one survival map (top 10) + your own best.
@@ -16523,7 +18196,7 @@ return Leaderboard
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="105">
+            <Item class="ModuleScript" referent="116">
               <Properties>
                 <string name="Name">Lobby</string>
                 <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
@@ -16616,7 +18289,15 @@ function Lobby.new(router)
 		task.spawn(function()
 			local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, Players.LocalPlayer)
 			if ok and canInvite then
-				pcall(SocialService.PromptGameInvite, SocialService, Players.LocalPlayer)
+				-- The invite carries who invited (server checks it on join; tapping alone pays nothing).
+				local sent = pcall(function()
+					local options = Instance.new("ExperienceInviteOptions")
+					options.LaunchData = "ref:" .. Players.LocalPlayer.UserId
+					SocialService:PromptGameInvite(Players.LocalPlayer, options)
+				end)
+				if not sent then
+					pcall(SocialService.PromptGameInvite, SocialService, Players.LocalPlayer)
+				end
 			else
 				app.Hud.Notify("LOBBY_INVITE_UNAVAILABLE")
 			end
@@ -16647,7 +18328,7 @@ return Lobby
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="106">
+            <Item class="ModuleScript" referent="117">
               <Properties>
                 <string name="Name">MainMenu</string>
                 <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
@@ -16716,6 +18397,9 @@ function MainMenu.new(router, args)
 	Components.Button({ Key = "MENU_LOBBY", LayoutOrder = 11, Parent = column, OnActivated = function()
 		router:Push(Lobby)
 	end })
+	Components.Button({ Key = "ARCHIVE_TITLE", LayoutOrder = 12, Parent = column, OnActivated = function()
+		router:Push(require(script.Parent.Archive))
+	end })
 	Components.Button({ Key = "MENU_SHOP", LayoutOrder = 13, Parent = column, OnActivated = function()
 		router:Push(Shop)
 	end })
@@ -16771,7 +18455,7 @@ return MainMenu
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="107">
+            <Item class="ModuleScript" referent="118">
               <Properties>
                 <string name="Name">Play</string>
                 <string name="Source"><![CDATA[-- Play: choose a story chapter or a survival map. Everything comes from Shared/Content,
@@ -16901,7 +18585,7 @@ return Play
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="108">
+            <Item class="ModuleScript" referent="119">
               <Properties>
                 <string name="Name">Settings</string>
                 <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
@@ -17168,7 +18852,7 @@ return Settings
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="109">
+            <Item class="ModuleScript" referent="120">
               <Properties>
                 <string name="Name">Shop</string>
                 <string name="Source"><![CDATA[-- Shop: tabs (Equipment / Upgrades / Cosmetics) with large cards, Signal Mark balance,
@@ -17417,7 +19101,7 @@ return Shop
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="110">
+            <Item class="ModuleScript" referent="121">
               <Properties>
                 <string name="Name">Updates</string>
                 <string name="Source"><![CDATA[-- "What's new": optional, opened by the player from the main menu. Never a pop-up.
@@ -17471,7 +19155,7 @@ return UpdatesScreen
               </Properties>
             </Item>
           </Item>
-          <Item class="ModuleScript" referent="111">
+          <Item class="ModuleScript" referent="122">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
@@ -17529,7 +19213,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="VoiceChatService" referent="112">
+  <Item class="VoiceChatService" referent="123">
     <Properties>
       <string name="Name">VoiceChatService</string>
       <bool name="EnableDefaultVoice">false</bool>

@@ -15,6 +15,7 @@ local GuiService = game:GetService("GuiService")
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 
 local Components = require(script.Parent.Components)
+local PhotoView = require(script.Parent.PhotoView)
 local AudioController = require(script.Parent.Parent.Controllers.AudioController)
 local Theme = require(script.Parent.Theme)
 
@@ -146,6 +147,14 @@ function Hud.ShowObjective(key: string?, announce: boolean?, params: { [string]:
 end
 
 function Hud.Notify(key: string, params: { [string]: any }?)
+	-- params may carry text keys (e.g. an achievement name): show them translated
+	if params then
+		local translated = {}
+		for name, value in params do
+			translated[name] = if type(value) == "string" and string.match(value, "^[A-Z][A-Z0-9_]+$") and Localization.Has(value) then Localization.T(value) else value
+		end
+		params = translated
+	end
 	notifyToken += 1
 	local token = notifyToken
 	Localization.Bind(notifyLabel, key, params)
@@ -239,6 +248,17 @@ function Hud.ShowDocument(document: { [string]: any })
 	if type(document.date) == "number" then
 		params = params or {}
 		params.date = formatDate(document.date)
+	end
+	if type(document.photo) == "table" then
+		local photo = PhotoView.Build(document.photo)
+		photo.LayoutOrder = 0
+		photo.ZIndex = 22
+		for _, d in photo:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex = 23
+			end
+		end
+		photo.Parent = panel
 	end
 	local title = Components.Text({ Key = document.title, Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = 1, Parent = panel })
 	title.ZIndex = 22

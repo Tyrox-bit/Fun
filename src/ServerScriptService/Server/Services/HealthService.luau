@@ -206,6 +206,7 @@ function HealthService.Start()
 		end
 		local reviveHealth = tonumber(helper:GetAttribute("FZ_ReviveHealth")) or HC.ReviveHealth
 		HealthService.Revive(target, reviveHealth)
+		require(script.Parent.AchievementService).Award(helper, "rescuer")
 	end)
 
 	local function onCharacter(player: Player, character: Model)

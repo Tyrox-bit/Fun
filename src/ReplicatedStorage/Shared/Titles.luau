@@ -22,7 +22,7 @@ Titles.List = {
 	end },
 	{ id = "archivist", name = "TITLE_ARCHIVIST", hint = "TITLE_ARCHIVIST_HINT", earned = function(data)
 		for _, entry in Lore do
-			if entry.map == "relay07" and not data.secrets.logs[entry.id] then
+			if entry.map == "relay07" and not entry.secret and not data.secrets.logs[entry.id] then
 				return false
 			end
 		end
@@ -41,6 +41,10 @@ Titles.List = {
 	end },
 	{ id = "silent", name = "TITLE_SILENT", hint = "TITLE_SILENT_HINT", earned = function(data)
 		return data.storyChoices.c1_answer == 2
+	end },
+	-- exclusive cosmetic badge for members of the official community
+	{ id = "relay_member", name = "TITLE_RELAY_MEMBER", hint = "TITLE_RELAY_MEMBER_HINT", earned = function(data)
+		return data.community ~= nil and data.community.claimed ~= nil
 	end },
 }
 

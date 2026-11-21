@@ -55,6 +55,9 @@ type Creature = {
 }
 
 local creatures: { Creature } = {}
+
+-- Players a creature has chased this session ("Unseen" achievement).
+CreatureService.Spotted = {} :: { [Player]: boolean }
 local aiEnabled = true
 local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance, sight = 1 }
 local ventsEnabled = true -- story: only when the ventilation has power
@@ -104,6 +107,9 @@ local function setState(c: Creature, state: string)
 	end
 	if state == "Chase" then
 		Net.Event("Sfx"):FireAllClients("creature_alert", c.root)
+		if c.targetPlayer then
+			CreatureService.Spotted[c.targetPlayer] = true
+		end
 	end
 end
 

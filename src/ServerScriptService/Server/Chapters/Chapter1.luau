@@ -35,9 +35,13 @@ local DecisionService = require(Services.DecisionService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local DoorService = require(Services.DoorService)
+local HealthService = require(Services.HealthService)
 local AnalyticsTracker = require(Services.AnalyticsTracker)
 local BadgeTracker = require(Services.BadgeTracker)
 local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
+local LoreService = require(Services.LoreService)
+local AchievementService = require(Services.AchievementService)
+local ReferralService = require(Services.ReferralService)
 
 local Chapter1 = {}
 Chapter1.StartCheckpoint = "C1_START"
@@ -479,6 +483,7 @@ function Chapter1.Init(context)
 		end
 		StoryService.SetFlag("C1_FaxRead", true)
 		step("Fax")
+		LoreService.UnlockAll(ctx.playersInGame(), "rec_c1_relay")
 		relay("RADIO_C1_003", nil, 3)
 		askAnswer()
 	end)
@@ -490,6 +495,9 @@ function Chapter1.Init(context)
 		DecisionService.Cancel()
 		state.stage = "power"
 		step("Power")
+		for _, p in ctx.playersInGame() do
+			ReferralService.Complete(p) -- invited new players: reached the control room
+		end
 		ctx.setCheckpoint("C1_CONTROL")
 		relay("RADIO_C1_POWER")
 		StoryService.SetObjective("OBJECTIVE_POWER", { count = systemsOn(), total = 2 })
@@ -636,6 +644,13 @@ function Chapter1.Init(context)
 				DataService.SaveNow(p)
 				Net.Event("Notify"):FireClient(p, "CHAPTER_COMPLETE")
 				BadgeTracker.Award(p, "ch1_complete")
+				if not CreatureService.Spotted[p] then
+					AchievementService.Award(p, "unseen")
+				end
+				local team = ctx.playersInGame()
+				if #team >= 2 and next(HealthService.SessionStats.eliminated) == nil then
+					AchievementService.Award(p, "nobody_left")
+				end
 			end
 		end
 	end)
@@ -652,6 +667,12 @@ function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
 	if state.stage == "arrival" then
 		AnalyticsTracker.ChapterStep(player, "Chapter1", "Gate")
 		StoryService.Sequence(player, ARRIVAL)
+		task.delay(12, function()
+			if player.Parent then
+				LoreService.Unlock(player, "rec_c1_arrival", true)
+				AchievementService.Award(player, "first_contact")
+			end
+		end)
 		if StoryService.GetObjective() == nil then
 			task.delay(14, function()
 				if active and StoryService.GetObjective() == nil then

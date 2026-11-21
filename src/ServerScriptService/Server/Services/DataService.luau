@@ -80,7 +80,12 @@ local function defaultData(): { [string]: any }
 		secrets = {
 			forecastsBroken = {}, -- [forecastId] = true
 			logs = {}, -- [logId] = unix time (archive entries)
+			photos = {}, -- [photoId] = { area, date, kind } (no images, no other players)
+			solved = {}, -- [secretId] = unix time (community secrets)
 		},
+		achievements = {}, -- [achievementId] = unix time
+		community = {}, -- { claimed = unix time }
+		referral = {}, -- { by = inviterUserId, rewarded = time, rewardedInvites = n }
 		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
 		lastSession = {}, -- { placeId, jobId, code?, time } for "back to your team" after a disconnect
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
@@ -464,6 +469,7 @@ function DataService.Start()
 			seenContent = deepCopy(data.seenContent),
 			lastSeenUpdate = data.lastSeenUpdate,
 			secrets = deepCopy(data.secrets),
+			achievements = deepCopy(data.achievements),
 			storyChoices = deepCopy(data.storyChoices),
 			inventory = deepCopy(data.inventory),
 			equipped = deepCopy(data.equipped),

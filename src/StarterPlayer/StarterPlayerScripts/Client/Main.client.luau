@@ -268,6 +268,20 @@ end
 
 Net.Event("Subtitle").OnClientEvent:Connect(Hud.ShowSubtitle)
 Net.Event("Document").OnClientEvent:Connect(Hud.ShowDocument)
+Net.Event("Photo").OnClientEvent:Connect(function(photo)
+	if type(photo) ~= "table" or type(photo.id) ~= "string" then
+		return
+	end
+	local entry = nil
+	for _, item in require(Shared.Lore) do
+		if item.id == photo.id then
+			entry = item
+		end
+	end
+	if entry then
+		Hud.ShowDocument({ title = entry.title, body = entry.body, photo = photo })
+	end
+end)
 Net.Event("Notify").OnClientEvent:Connect(function(key, params)
 	if type(key) == "string" then
 		Hud.Notify(key, if type(params) == "table" then params else nil)
@@ -435,10 +449,11 @@ local function updateStatus()
 		Hud.SetStatus(nil)
 		return
 	end
-	if SessionState.Get("SvPhase") == "break" then
+	local phase = SessionState.Get("SvPhase")
+	if phase == "break" or phase == "evac" then
 		local ends = SessionState.Get("SvBreakEnds")
 		local seconds = if type(ends) == "number" then math.max(0, math.ceil(ends - workspace:GetServerTimeNow())) else 0
-		Hud.SetStatus("SV_BREAK_TIMER", { seconds = seconds })
+		Hud.SetStatus(if phase == "evac" then "SV_EVAC_TIMER" else "SV_VOTE_TIMER", { seconds = seconds })
 	else
 		local event = SessionState.Get("SvEvent")
 		Hud.SetStatus("SV_SHIFT", { shift = shift }, if type(event) == "string" then event else nil)
@@ -450,7 +465,7 @@ end
 task.spawn(function()
 	while true do
 		task.wait(1)
-		if SessionState.Get("SvPhase") == "break" then
+		if SessionState.Get("SvPhase") == "break" or SessionState.Get("SvPhase") == "evac" then
 			updateStatus()
 		end
 	end

@@ -116,6 +116,11 @@ function Extras.new(router)
 	Components.Button({ Key = "ARCHIVE_TITLE", LayoutOrder = 9, Parent = column, OnActivated = function()
 		router:Push(require(script.Parent.Archive))
 	end })
+	if require(Shared.Community).GroupId > 0 then
+		Components.Button({ Key = "COMMUNITY_TITLE", LayoutOrder = 9, Parent = column, OnActivated = function()
+			router:Push(require(script.Parent.Community))
+		end })
+	end
 	maintenance = Components.Button({ Key = "ADMIN_TITLE", LayoutOrder = 10, Parent = column, OnActivated = function()
 		router:Push(require(script.Parent.Admin))
 	end })

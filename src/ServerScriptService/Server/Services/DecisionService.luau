@@ -19,6 +19,8 @@ local DecisionService = {}
 export type Decision = {
 	id: string,
 	prompt: string, -- localization key
+	promptParams: { [string]: any }?,
+	tieBreak: number?, -- option chosen on a tie (e.g. "evacuate" - nobody can sabotage alone)
 	options: { string }, -- localization keys
 	seconds: number,
 	default: number,
@@ -54,6 +56,7 @@ local function payload(r: Running)
 	return {
 		id = r.decision.id,
 		prompt = r.decision.prompt,
+		promptParams = r.decision.promptParams,
 		options = r.decision.options,
 		ends = r.ends,
 		counts = counts,
@@ -73,6 +76,19 @@ local function finish(r: Running)
 		local first = r.firstVoteAt[index] or math.huge
 		if count > bestCount or (count == bestCount and count > 0 and first < bestTime) then
 			best, bestCount, bestTime = index, count, first
+		end
+	end
+	if r.decision.tieBreak then
+		local top, tied = 0, 0
+		for _, count in counts do
+			if count > top then
+				top, tied = count, 1
+			elseif count == top and count > 0 then
+				tied += 1
+			end
+		end
+		if tied > 1 then
+			best = r.decision.tieBreak
 		end
 	end
 	StoryService.SetFlag("Choice_" .. r.decision.id, best)

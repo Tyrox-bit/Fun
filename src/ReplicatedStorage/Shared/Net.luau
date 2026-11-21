@@ -25,6 +25,7 @@ local EVENTS = {
 	"Decision", -- S->C (decision | nil) open / update / close a team decision
 	"DecisionVote", -- C->S (decisionId, optionIndex)
 	"UseItem", -- C->S (slot)
+	"Photo", -- S->C (photo) supernatural evidence to render
 }
 
 local FUNCTIONS = {
@@ -34,6 +35,8 @@ local FUNCTIONS = {
 	"ShopAction", -- C->S (action, itemId) -> result
 	"Session", -- C->S (action, mode, contentId) -> result
 	"GetLeaderboard", -- C->S (survivalId) -> top entries
+	"SolveSecret", -- C->S (text) -> secret result
+	"Community", -- C->S ("status" | "claim") -> community reward
 }
 
 local Net = {}

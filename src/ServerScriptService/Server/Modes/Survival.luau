@@ -29,6 +29,8 @@ local LeaderboardService = require(Services.LeaderboardService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
 local InventoryService = require(Services.InventoryService)
+local DecisionService = require(Services.DecisionService)
+local AchievementService = require(Services.AchievementService)
 local BadgeTracker = require(Services.BadgeTracker)
 local HorrorEvents = require(script.Parent.Parent.Director.HorrorEvents)
 
@@ -207,6 +209,8 @@ end
 -- Tasks
 ---------------------------------------------------------------------------
 local completeTask: (r: Run) -> ()
+local startEvacuation: (r: Run) -> ()
+local EVAC_SECONDS = 75
 
 local function spawnFuses(r: Run)
 	if r.fuses then
@@ -324,33 +328,72 @@ completeTask = function(r: Run)
 	InventoryService.RefillCabinets()
 	say("SV_SHIFT_DONE", { shift = r.shift })
 	InventoryService.SpawnWorldItems(Config.Inventory.SurvivalItemsPerBreak)
-	objective("SV_BREAK", { seconds = SC.BreakSeconds })
-	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
 	publish()
-	local current = token
-	task.delay(SC.BreakSeconds, function()
-		if token == current and run == r and r.phase == "break" then
-			startShift(r, r.shift + 1)
-		end
-	end)
+	-- RISK OR RESCUE: the team decides. Secured marks, next reward and danger are shown.
+	local nextShift = r.shift + 1
+	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
+	DecisionService.Ask({
+		id = "sv_risk_" .. r.shift,
+		prompt = "SV_RISK_PROMPT",
+		promptParams = {
+			banked = r.banked,
+			nextReward = SC.ShiftReward + SC.ShiftRewardGrowth * nextShift,
+			danger = math.clamp(math.ceil(nextShift / 3), 1, 4),
+		},
+		options = { "SV_RISK_EVACUATE", "SV_RISK_CONTINUE" },
+		seconds = SC.BreakSeconds,
+		default = 1,
+		tieBreak = 1, -- a tie evacuates: one player alone can never drag the team further
+		onDecided = function(index)
+			if run ~= r or r.phase ~= "break" then
+				return
+			end
+			if index == 1 then
+				startEvacuation(r)
+			else
+				say("SV_RISK_CONTINUE_LINE")
+				local current = token
+				task.delay(6, function()
+					if token == current and run == r and r.phase == "break" then
+						startShift(r, nextShift)
+					end
+				end)
+			end
+		end,
+	}, aliveInGame)
+	objective("SV_RISK_OBJECTIVE")
 end
 
 ---------------------------------------------------------------------------
 -- Run end
 ---------------------------------------------------------------------------
-local function endRun(r: Run, extracted: boolean)
+-- extracted: true (everyone), false (wipe) or a set of players who made it out
+local function endRun(r: Run, extracted: boolean | { [Player]: boolean })
 	if r.phase == "ended" then
 		return
 	end
 	r.phase = "ended"
+	DecisionService.Cancel()
 	publish()
 	clearEvent(r)
 	CreatureService.SetAIEnabled(false)
-	local factor = if extracted then 1 + SC.ExtractBonus else SC.WipeKeep
-	local marks = math.floor(r.banked * factor)
 	local survivalId = r.entry.id
+	local participants = {}
 	for player in r.participants do
 		if player.Parent then
+			table.insert(participants, player)
+		end
+	end
+	local outCount = 0
+	for _, player in participants do
+		if extracted == true or (type(extracted) == "table" and extracted[player]) then
+			outCount += 1
+		end
+	end
+	for _, player in participants do
+		local madeIt = extracted == true or (type(extracted) == "table" and extracted[player] == true)
+		local marks = math.floor(r.banked * (if madeIt then 1 + SC.ExtractBonus else SC.WipeKeep))
+		do
 			local newBest = false
 			DataService.Mutate(player, function(data)
 				local stats = data.modes.survival[survivalId] or { best = 0, runs = 0 }
@@ -368,9 +411,19 @@ local function endRun(r: Run, extracted: boolean)
 			task.spawn(LeaderboardService.Submit, survivalId, player.UserId, r.completed)
 			StoryService.ShowDocument(player, {
 				title = "SV_RESULT_TITLE",
-				body = if extracted then "SV_RESULT_EXTRACTED" else "SV_RESULT_LOST",
+				body = if madeIt then "SV_RESULT_EXTRACTED" else "SV_RESULT_LOST",
 				params = { shifts = r.completed, marks = marks },
 			})
+			if r.completed >= 10 then
+				AchievementService.Award(player, "night_shift_10")
+			end
+			if madeIt and #participants >= 2 then
+				if outCount == 1 then
+					AchievementService.Award(player, "last_survivor")
+				elseif outCount == #participants and next(HealthService.SessionStats.eliminated) == nil then
+					AchievementService.Award(player, "nobody_left")
+				end
+			end
 			if newBest then
 				Net.Event("Notify"):FireClient(player, "SV_NEW_BEST")
 			end
@@ -387,6 +440,42 @@ local function endRun(r: Run, extracted: boolean)
 	task.delay(15, function() -- time to read the shift report
 		if token == current and run == r then
 			ctx.finish()
+		end
+	end)
+end
+
+-- Evacuation: the team has 75 s to reach the antenna. The creature keeps hunting (with
+-- the current difficulty, no new events) - a real but fair chance to get out.
+local function antennaPosition(): Vector3?
+	return interactablePosition("c1_antenna")
+end
+
+local function playersAtAntenna(): { [Player]: boolean }
+	local center = antennaPosition()
+	local set = {}
+	if not center then
+		return set
+	end
+	for _, player in aliveInGame() do
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root and (root.Position - center).Magnitude <= SC.ExtractRadius then
+			set[player] = true
+		end
+	end
+	return set
+end
+
+startEvacuation = function(r: Run)
+	r.phase = "evac"
+	CreatureService.SetAIEnabled(true)
+	say("SV_EVAC_LINE")
+	objective("SV_EVAC")
+	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + EVAC_SECONDS)
+	publish()
+	local current = token
+	task.delay(EVAC_SECONDS, function()
+		if token == current and run == r and r.phase == "evac" then
+			endRun(r, playersAtAntenna())
 		end
 	end)
 end
@@ -596,21 +685,29 @@ function Survival.Init(context)
 		end)
 	end
 
-	-- Voluntary extraction during a break: the whole (standing) team must be there.
-	InteractionService.Register("c1_antenna", function(player, cabinet)
+	-- Antenna: during an evacuation the whole standing team leaves together; during a shift a
+	-- single player may leave alone with their share (nobody is held hostage by the vote).
+	InteractionService.Register("c1_antenna", function(player)
 		local r = run
-		if not active or not r or r.phase ~= "break" then
+		if not active or not r then
 			return
 		end
-		local center = (cabinet :: BasePart).Position
-		for _, other in aliveInGame() do
-			local root = other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if not root or (root.Position - center).Magnitude > SC.ExtractRadius then
-				Net.Event("Notify"):FireClient(player, "SV_EXTRACT_NEED_TEAM")
-				return
+		if r.phase == "evac" then
+			local here = playersAtAntenna()
+			for _, other in aliveInGame() do
+				if not here[other] then
+					Net.Event("Notify"):FireClient(player, "SV_EXTRACT_NEED_TEAM")
+					return
+				end
 			end
+			endRun(r, here)
+		elseif r.phase == "task" and r.banked > 0 and #aliveInGame() > 1 then
+			local share = r.banked
+			r.participants[player] = nil
+			DataService.Grant(player, share)
+			Net.Event("Notify"):FireClient(player, "SV_LEFT_ALONE", { marks = share })
+			ctx.leave(player)
 		end
-		endRun(r, true)
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)

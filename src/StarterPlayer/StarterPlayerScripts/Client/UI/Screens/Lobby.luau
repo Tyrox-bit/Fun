@@ -88,7 +88,15 @@ function Lobby.new(router)
 		task.spawn(function()
 			local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, Players.LocalPlayer)
 			if ok and canInvite then
-				pcall(SocialService.PromptGameInvite, SocialService, Players.LocalPlayer)
+				-- The invite carries who invited (server checks it on join; tapping alone pays nothing).
+				local sent = pcall(function()
+					local options = Instance.new("ExperienceInviteOptions")
+					options.LaunchData = "ref:" .. Players.LocalPlayer.UserId
+					SocialService:PromptGameInvite(Players.LocalPlayer, options)
+				end)
+				if not sent then
+					pcall(SocialService.PromptGameInvite, SocialService, Players.LocalPlayer)
+				end
 			else
 				app.Hud.Notify("LOBBY_INVITE_UNAVAILABLE")
 			end
