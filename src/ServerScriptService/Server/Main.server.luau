@@ -18,6 +18,7 @@ local SERVICES = {
 	"DoorService",
 	"PowerService",
 	"HealthService",
+	"InventoryService",
 	"VoiceService",
 	"ShopService",
 	"CreatureService",

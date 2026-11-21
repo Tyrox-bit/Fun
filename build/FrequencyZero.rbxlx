@@ -98,6 +98,9 @@ TweenService:Create(
 
 return {
 	Sounds = {
+		music_menu = "",
+		tension_low = "",
+		tension_high = "",
 		radio_static_loop = "",
 		radio_squelch_on = "",
 		radio_squelch_off = "",
@@ -310,6 +313,14 @@ Config.Settings = {
 		default = "auto",
 	},
 	brightness = { kind = "int", min = 0, max = 10, default = 5 },
+	volumeMaster = { kind = "int", min = 0, max = 10, default = 8 },
+	volumeEffects = { kind = "int", min = 0, max = 10, default = 10 },
+	volumeAmbience = { kind = "int", min = 0, max = 10, default = 8 },
+	volumeVoice = { kind = "int", min = 0, max = 10, default = 10 },
+	volumeMusic = { kind = "int", min = 0, max = 10, default = 6 },
+	volumeUI = { kind = "int", min = 0, max = 10, default = 6 },
+	reduceFlicker = { kind = "bool", default = false },
+	alwaysShowHealth = { kind = "bool", default = false },
 	radioMode = {
 		kind = "enum",
 		values = { "hold", "toggle" },
@@ -319,15 +330,33 @@ Config.Settings = {
 }
 
 -- Display order + localization keys for the settings screen.
+Config.SettingsCategories = { "general", "graphics", "audio", "controls", "accessibility" }
+Config.SettingsCategoryLabels = {
+	general = "SETTINGS_CAT_GENERAL",
+	graphics = "SETTINGS_CAT_GRAPHICS",
+	audio = "SETTINGS_CAT_AUDIO",
+	controls = "SETTINGS_CAT_CONTROLS",
+	accessibility = "SETTINGS_CAT_ACCESS",
+}
+
+-- Display order, category + localization keys for the settings screen.
 Config.SettingsOrder = {
-	{ key = "language", label = "SETTINGS_LANGUAGE" },
-	{ key = "subtitles", label = "SETTINGS_SUBTITLES" },
-	{ key = "subtitleSize", label = "SETTINGS_SUBTITLE_SIZE" },
-	{ key = "scareIntensity", label = "SETTINGS_SCARE", description = "SETTINGS_SCARE_DESC" },
-	{ key = "cameraEffects", label = "SETTINGS_CAMERA", description = "SETTINGS_CAMERA_DESC" },
-	{ key = "graphics", label = "SETTINGS_GRAPHICS", description = "SETTINGS_GRAPHICS_DESC" },
-	{ key = "brightness", label = "SETTINGS_BRIGHTNESS", description = "SETTINGS_BRIGHTNESS_DESC" },
-	{ key = "radioMode", label = "SETTINGS_RADIO_MODE", description = "SETTINGS_RADIO_MODE_DESC" },
+	{ key = "language", category = "general", label = "SETTINGS_LANGUAGE" },
+	{ key = "subtitles", category = "general", label = "SETTINGS_SUBTITLES" },
+	{ key = "subtitleSize", category = "general", label = "SETTINGS_SUBTITLE_SIZE" },
+	{ key = "graphics", category = "graphics", label = "SETTINGS_GRAPHICS", description = "SETTINGS_GRAPHICS_DESC" },
+	{ key = "brightness", category = "graphics", label = "SETTINGS_BRIGHTNESS", description = "SETTINGS_BRIGHTNESS_DESC" },
+	{ key = "cameraEffects", category = "graphics", label = "SETTINGS_CAMERA", description = "SETTINGS_CAMERA_DESC" },
+	{ key = "volumeMaster", category = "audio", label = "SETTINGS_VOL_MASTER" },
+	{ key = "volumeEffects", category = "audio", label = "SETTINGS_VOL_EFFECTS" },
+	{ key = "volumeAmbience", category = "audio", label = "SETTINGS_VOL_AMBIENCE" },
+	{ key = "volumeVoice", category = "audio", label = "SETTINGS_VOL_VOICE", description = "SETTINGS_VOL_VOICE_DESC" },
+	{ key = "volumeMusic", category = "audio", label = "SETTINGS_VOL_MUSIC" },
+	{ key = "volumeUI", category = "audio", label = "SETTINGS_VOL_UI" },
+	{ key = "radioMode", category = "controls", label = "SETTINGS_RADIO_MODE", description = "SETTINGS_RADIO_MODE_DESC" },
+	{ key = "scareIntensity", category = "accessibility", label = "SETTINGS_SCARE", description = "SETTINGS_SCARE_DESC" },
+	{ key = "reduceFlicker", category = "accessibility", label = "SETTINGS_FLICKER", description = "SETTINGS_FLICKER_DESC" },
+	{ key = "alwaysShowHealth", category = "accessibility", label = "SETTINGS_HEALTH", description = "SETTINGS_HEALTH_DESC" },
 }
 
 function Config.ValidateSetting(key: any, value: any): (boolean, any)
@@ -475,6 +504,22 @@ Config.Survival = {
 	MaxSpeedScale = 1.25,
 	MaxHearingScale = 1.6,
 	SessionIdleEnd = 20, -- seconds without players in game before a session ends
+}
+
+---------------------------------------------------------------------------
+-- Items (hotbar). Found in the world; medic set starts with some.
+---------------------------------------------------------------------------
+Config.Items = {
+	bandage = { name = "ITEM_BANDAGE", heal = 35, useTime = 1.5 },
+	syringe = { name = "ITEM_SYRINGE", heal = 100, useTime = 1 },
+}
+Config.Inventory = {
+	Slots = 3,
+	TechnicianSlots = 4,
+	MedicHealBonus = 1.5,
+	MedicStart = { "bandage", "bandage", "syringe" },
+	WorldItems = 4, -- placed at random FZ_ItemSpot spots when a session starts
+	SurvivalItemsPerBreak = 2,
 }
 
 Config.Rewards = {
@@ -1145,6 +1190,43 @@ return {
 	HINT_RELAY = "Relais B ist an der hinteren Wand der Labore, westlich vom Kern.",
 	HINT_CORE = "Die Kerntüren sind jetzt offen. Die Konsole steht in der Mitte.",
 	HINT_ANTENNA = "Raus durch den Haupteingang, dann links über den Hof zum roten Turm.",
+
+	-- 0.4: settings categories, audio, controls, items
+	SETTINGS_CAT_GENERAL = "Allgemein",
+	SETTINGS_CAT_GRAPHICS = "Grafik",
+	SETTINGS_CAT_AUDIO = "Audio",
+	SETTINGS_CAT_CONTROLS = "Steuerung",
+	SETTINGS_CAT_ACCESS = "Barrierefreiheit",
+	SETTINGS_VOL_MASTER = "Gesamtlautstärke",
+	SETTINGS_VOL_EFFECTS = "Effekte",
+	SETTINGS_VOL_AMBIENCE = "Umgebung",
+	SETTINGS_VOL_VOICE = "Stimmen und Funk",
+	SETTINGS_VOL_VOICE_DESC = "Voice-Chat und Funk deiner Mitspieler.",
+	SETTINGS_VOL_MUSIC = "Musik und Spannung",
+	SETTINGS_VOL_UI = "Menügeräusche",
+	SETTINGS_FLICKER = "Lichtflackern reduzieren",
+	SETTINGS_FLICKER_DESC = "Schaltet flackernde Lichter bei Schreckmomenten ab.",
+	SETTINGS_HEALTH = "Gesundheit immer anzeigen",
+	SETTINGS_HEALTH_DESC = "Sonst erscheint die Anzeige nur, wenn du verletzt bist.",
+	CONTROL_INTERACT = "Interagieren",
+	CONTROL_SPRINT = "Rennen",
+	CONTROL_LIGHT = "Taschenlampe",
+	CONTROL_RADIO = "Funken",
+	CONTROL_MIC = "Mikrofon stumm / frei",
+	CONTROL_NIGHT = "Nachtsicht",
+	CONTROL_ITEMS = "Gegenstände benutzen",
+	CONTROL_MENU = "Menü",
+	CONTROL_BACK = "Zurück",
+	CONTROL_DEVICE_KEYBOARD = "TASTATUR UND MAUS",
+	CONTROL_DEVICE_GAMEPAD = "CONTROLLER",
+	CONTROL_DEVICE_TOUCH = "TOUCH",
+	PAD_LEFT = "Steuerkreuz links",
+	PAD_UP = "Steuerkreuz oben",
+	PAD_RIGHT_Y = "Steuerkreuz rechts, dann Y",
+	TOUCH_TAP = "Antippen",
+	ITEM_BANDAGE = "Verband",
+	ITEM_SYRINGE = "Spritze",
+	INV_FULL = "Deine Hände sind voll.",
 }
 ]]></string>
             </Properties>
@@ -1513,6 +1595,43 @@ return {
 	HINT_RELAY = "Relay B is on the far wall of the laboratories, west of the core.",
 	HINT_CORE = "The core doors are open now. The console is in the middle.",
 	HINT_ANTENNA = "Out through the main entrance, then left across the yard to the red tower.",
+
+	-- 0.4: settings categories, audio, controls, items
+	SETTINGS_CAT_GENERAL = "General",
+	SETTINGS_CAT_GRAPHICS = "Graphics",
+	SETTINGS_CAT_AUDIO = "Audio",
+	SETTINGS_CAT_CONTROLS = "Controls",
+	SETTINGS_CAT_ACCESS = "Accessibility",
+	SETTINGS_VOL_MASTER = "Master volume",
+	SETTINGS_VOL_EFFECTS = "Effects",
+	SETTINGS_VOL_AMBIENCE = "Ambience",
+	SETTINGS_VOL_VOICE = "Voices and radio",
+	SETTINGS_VOL_VOICE_DESC = "Your teammates' voice chat and radio.",
+	SETTINGS_VOL_MUSIC = "Music and tension",
+	SETTINGS_VOL_UI = "Menu sounds",
+	SETTINGS_FLICKER = "Reduce light flicker",
+	SETTINGS_FLICKER_DESC = "Turns off flickering lights used for scares.",
+	SETTINGS_HEALTH = "Always show health",
+	SETTINGS_HEALTH_DESC = "Otherwise the bar only appears when you are hurt.",
+	CONTROL_INTERACT = "Interact",
+	CONTROL_SPRINT = "Run",
+	CONTROL_LIGHT = "Flashlight",
+	CONTROL_RADIO = "Talk on the radio",
+	CONTROL_MIC = "Mute / unmute microphone",
+	CONTROL_NIGHT = "Night vision",
+	CONTROL_ITEMS = "Use items",
+	CONTROL_MENU = "Menu",
+	CONTROL_BACK = "Back",
+	CONTROL_DEVICE_KEYBOARD = "KEYBOARD AND MOUSE",
+	CONTROL_DEVICE_GAMEPAD = "CONTROLLER",
+	CONTROL_DEVICE_TOUCH = "TOUCH",
+	PAD_LEFT = "D-pad left",
+	PAD_UP = "D-pad up",
+	PAD_RIGHT_Y = "D-pad right, then Y",
+	TOUCH_TAP = "Tap",
+	ITEM_BANDAGE = "Bandage",
+	ITEM_SYRINGE = "Syringe",
+	INV_FULL = "Your hands are full.",
 }
 ]]></string>
             </Properties>
@@ -1881,6 +2000,43 @@ return {
 	HINT_RELAY = "El relé B está en la pared del fondo de los laboratorios, al oeste del núcleo.",
 	HINT_CORE = "Las puertas del núcleo ya están abiertas. La consola está en el centro.",
 	HINT_ANTENNA = "Salgan por la entrada principal y luego a la izquierda por el patio hasta la torre roja.",
+
+	-- 0.4: settings categories, audio, controls, items
+	SETTINGS_CAT_GENERAL = "General",
+	SETTINGS_CAT_GRAPHICS = "Gráficos",
+	SETTINGS_CAT_AUDIO = "Audio",
+	SETTINGS_CAT_CONTROLS = "Controles",
+	SETTINGS_CAT_ACCESS = "Accesibilidad",
+	SETTINGS_VOL_MASTER = "Volumen general",
+	SETTINGS_VOL_EFFECTS = "Efectos",
+	SETTINGS_VOL_AMBIENCE = "Ambiente",
+	SETTINGS_VOL_VOICE = "Voces y radio",
+	SETTINGS_VOL_VOICE_DESC = "El chat de voz y la radio de tus compañeros.",
+	SETTINGS_VOL_MUSIC = "Música y tensión",
+	SETTINGS_VOL_UI = "Sonidos del menú",
+	SETTINGS_FLICKER = "Reducir parpadeo de luces",
+	SETTINGS_FLICKER_DESC = "Desactiva las luces parpadeantes de los sustos.",
+	SETTINGS_HEALTH = "Mostrar siempre la salud",
+	SETTINGS_HEALTH_DESC = "Si no, la barra solo aparece cuando estás herido.",
+	CONTROL_INTERACT = "Interactuar",
+	CONTROL_SPRINT = "Correr",
+	CONTROL_LIGHT = "Linterna",
+	CONTROL_RADIO = "Hablar por radio",
+	CONTROL_MIC = "Silenciar / activar micrófono",
+	CONTROL_NIGHT = "Visión nocturna",
+	CONTROL_ITEMS = "Usar objetos",
+	CONTROL_MENU = "Menú",
+	CONTROL_BACK = "Atrás",
+	CONTROL_DEVICE_KEYBOARD = "TECLADO Y RATÓN",
+	CONTROL_DEVICE_GAMEPAD = "MANDO",
+	CONTROL_DEVICE_TOUCH = "TÁCTIL",
+	PAD_LEFT = "Cruceta izquierda",
+	PAD_UP = "Cruceta arriba",
+	PAD_RIGHT_Y = "Cruceta derecha y luego Y",
+	TOUCH_TAP = "Tocar",
+	ITEM_BANDAGE = "Venda",
+	ITEM_SYRINGE = "Jeringa",
+	INV_FULL = "Tienes las manos llenas.",
 }
 ]]></string>
             </Properties>
@@ -2249,6 +2405,43 @@ return {
 	HINT_RELAY = "Le relais B est sur le mur du fond des laboratoires, à l'ouest du noyau.",
 	HINT_CORE = "Les portes du noyau sont ouvertes. La console est au centre.",
 	HINT_ANTENNA = "Sortez par l'entrée principale, puis à gauche à travers la cour jusqu'à la tour rouge.",
+
+	-- 0.4: settings categories, audio, controls, items
+	SETTINGS_CAT_GENERAL = "Général",
+	SETTINGS_CAT_GRAPHICS = "Graphismes",
+	SETTINGS_CAT_AUDIO = "Audio",
+	SETTINGS_CAT_CONTROLS = "Commandes",
+	SETTINGS_CAT_ACCESS = "Accessibilité",
+	SETTINGS_VOL_MASTER = "Volume général",
+	SETTINGS_VOL_EFFECTS = "Effets",
+	SETTINGS_VOL_AMBIENCE = "Ambiance",
+	SETTINGS_VOL_VOICE = "Voix et radio",
+	SETTINGS_VOL_VOICE_DESC = "Le chat vocal et la radio de tes coéquipiers.",
+	SETTINGS_VOL_MUSIC = "Musique et tension",
+	SETTINGS_VOL_UI = "Sons du menu",
+	SETTINGS_FLICKER = "Réduire le scintillement",
+	SETTINGS_FLICKER_DESC = "Désactive les lumières qui clignotent lors des frayeurs.",
+	SETTINGS_HEALTH = "Toujours afficher la santé",
+	SETTINGS_HEALTH_DESC = "Sinon, la barre n'apparaît que lorsque tu es blessé.",
+	CONTROL_INTERACT = "Interagir",
+	CONTROL_SPRINT = "Courir",
+	CONTROL_LIGHT = "Lampe torche",
+	CONTROL_RADIO = "Parler à la radio",
+	CONTROL_MIC = "Couper / réactiver le micro",
+	CONTROL_NIGHT = "Vision nocturne",
+	CONTROL_ITEMS = "Utiliser des objets",
+	CONTROL_MENU = "Menu",
+	CONTROL_BACK = "Retour",
+	CONTROL_DEVICE_KEYBOARD = "CLAVIER ET SOURIS",
+	CONTROL_DEVICE_GAMEPAD = "MANETTE",
+	CONTROL_DEVICE_TOUCH = "TACTILE",
+	PAD_LEFT = "Croix gauche",
+	PAD_UP = "Croix haut",
+	PAD_RIGHT_Y = "Croix droite, puis Y",
+	TOUCH_TAP = "Toucher",
+	ITEM_BANDAGE = "Bandage",
+	ITEM_SYRINGE = "Seringue",
+	INV_FULL = "Tu as les mains pleines.",
 }
 ]]></string>
             </Properties>
@@ -2617,6 +2810,43 @@ return {
 	HINT_RELAY = "O relé B fica na parede do fundo dos laboratórios, a oeste do núcleo.",
 	HINT_CORE = "As portas do núcleo estão abertas. O console fica no meio.",
 	HINT_ANTENNA = "Saiam pela entrada principal e depois à esquerda pelo pátio até a torre vermelha.",
+
+	-- 0.4: settings categories, audio, controls, items
+	SETTINGS_CAT_GENERAL = "Geral",
+	SETTINGS_CAT_GRAPHICS = "Gráficos",
+	SETTINGS_CAT_AUDIO = "Áudio",
+	SETTINGS_CAT_CONTROLS = "Controles",
+	SETTINGS_CAT_ACCESS = "Acessibilidade",
+	SETTINGS_VOL_MASTER = "Volume geral",
+	SETTINGS_VOL_EFFECTS = "Efeitos",
+	SETTINGS_VOL_AMBIENCE = "Ambiente",
+	SETTINGS_VOL_VOICE = "Vozes e rádio",
+	SETTINGS_VOL_VOICE_DESC = "O chat de voz e o rádio dos seus colegas.",
+	SETTINGS_VOL_MUSIC = "Música e tensão",
+	SETTINGS_VOL_UI = "Sons do menu",
+	SETTINGS_FLICKER = "Reduzir piscar de luzes",
+	SETTINGS_FLICKER_DESC = "Desliga as luzes piscando nos sustos.",
+	SETTINGS_HEALTH = "Sempre mostrar a vida",
+	SETTINGS_HEALTH_DESC = "Caso contrário, a barra só aparece quando você está ferido.",
+	CONTROL_INTERACT = "Interagir",
+	CONTROL_SPRINT = "Correr",
+	CONTROL_LIGHT = "Lanterna",
+	CONTROL_RADIO = "Falar no rádio",
+	CONTROL_MIC = "Silenciar / ativar microfone",
+	CONTROL_NIGHT = "Visão noturna",
+	CONTROL_ITEMS = "Usar itens",
+	CONTROL_MENU = "Menu",
+	CONTROL_BACK = "Voltar",
+	CONTROL_DEVICE_KEYBOARD = "TECLADO E MOUSE",
+	CONTROL_DEVICE_GAMEPAD = "CONTROLE",
+	CONTROL_DEVICE_TOUCH = "TOQUE",
+	PAD_LEFT = "Direcional esquerdo",
+	PAD_UP = "Direcional cima",
+	PAD_RIGHT_Y = "Direcional direito, depois Y",
+	TOUCH_TAP = "Tocar",
+	ITEM_BANDAGE = "Atadura",
+	ITEM_SYRINGE = "Seringa",
+	INV_FULL = "Suas mãos estão cheias.",
 }
 ]]></string>
             </Properties>
@@ -2652,6 +2882,7 @@ local EVENTS = {
 	"Scare", -- S->C (beat, data) HorrorDirector moments (often for ONE player only)
 	"Decision", -- S->C (decision | nil) open / update / close a team decision
 	"DecisionVote", -- C->S (decisionId, optionIndex)
+	"UseItem", -- C->S (slot)
 }
 
 local FUNCTIONS = {
@@ -3725,6 +3956,7 @@ local SERVICES = {
 	"DoorService",
 	"PowerService",
 	"HealthService",
+	"InventoryService",
 	"VoiceService",
 	"ShopService",
 	"CreatureService",
@@ -4416,6 +4648,19 @@ local function furnish()
 		patrol(node[1], node[2])
 	end
 
+	-- Item spots (bandages / syringes are placed at random spots per session)
+	for _, cf in {
+		CFrame.new(69, 3.45, -10), CFrame.new(80, 3.45, 10), CFrame.new(57.2, 2.2, -52), CFrame.new(-60, 3.45, -40.8),
+		CFrame.new(-86, 3.4, 5), CFrame.new(-68, 3.4, -15), CFrame.new(-90, 0.4, 82), CFrame.new(62, 3.45, 45),
+		CFrame.new(-30, 0.4, -58), CFrame.new(30, 0.4, 58), CFrame.new(4, 0.4, -16), CFrame.new(90, 3.2, -30),
+	} do
+		local spot = block(props, "ItemSpot", Vector3.new(1, 1, 1), cf, C.Concrete)
+		spot.Transparency = 1
+		spot.CanCollide = false
+		spot.CanQuery = false
+		CollectionService:AddTag(spot, "FZ_ItemSpot")
+	end
+
 	local spawn = block(props, "CreatureSpawn", Vector3.new(2, 1, 2), CFrame.new(-80, 3, -78), C.Concrete)
 	spawn.Transparency = 1
 	spawn.CanCollide = false
@@ -4683,6 +4928,7 @@ local DoorService = require(Services.DoorService)
 local LeaderboardService = require(Services.LeaderboardService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
+local InventoryService = require(Services.InventoryService)
 
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
@@ -4973,6 +5219,7 @@ completeTask = function(r: Run)
 		end
 	end
 	say("SV_SHIFT_DONE", { shift = r.shift })
+	InventoryService.SpawnWorldItems(Config.Inventory.SurvivalItemsPerBreak)
 	objective("SV_BREAK", { seconds = SC.BreakSeconds })
 	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
 	publish()
@@ -7471,6 +7718,13 @@ function HealthService.Revive(target: Player, healthValue: number)
 	lastDamage[target] = os.clock()
 end
 
+function HealthService.Heal(player: Player, amount: number)
+	local humanoid = humanoidOf(player)
+	if humanoid and not HealthService.IsDowned(player) and humanoid.Health > 0 then
+		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + amount)
+	end
+end
+
 function HealthService.HealAll()
 	for _, player in Players:GetPlayers() do
 		local humanoid = humanoidOf(player)
@@ -7676,6 +7930,183 @@ return InteractionService
         </Item>
         <Item class="ModuleScript" referent="44">
           <Properties>
+            <string name="Name">InventoryService</string>
+            <string name="Source"><![CDATA[-- InventoryService: small hotbar per player and session (bandages, syringes).
+-- Server-authoritative; replicated as the player attribute "FZ_Items" ("bandage,syringe").
+--   * 3 slots, technician set 4
+--   * medic set: starts every session with 2 bandages + 1 syringe and heals 50 % more
+--   * a syringe also gets you back up when you are down (self-revive)
+-- Items reset per session; they are not a currency and cannot be bought.
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Net = require(Shared.Net)
+
+local InteractionService = require(script.Parent.InteractionService)
+local HealthService = require(script.Parent.HealthService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local InventoryService = {}
+
+local inventories: { [Player]: { string } } = {}
+local using: { [Player]: boolean } = {}
+local worldFolder: Folder? = nil
+
+local function slots(player: Player): number
+	return if player:GetAttribute("FZ_Set") == "set_technician" then Config.Inventory.TechnicianSlots else Config.Inventory.Slots
+end
+
+local function publish(player: Player)
+	player:SetAttribute("FZ_Items", table.concat(inventories[player] or {}, ","))
+	player:SetAttribute("FZ_ItemSlots", slots(player))
+end
+
+function InventoryService.Give(player: Player, itemId: string): boolean
+	local list = inventories[player]
+	if not list then
+		list = {}
+		inventories[player] = list
+	end
+	if not Config.Items[itemId] or #list >= slots(player) then
+		return false
+	end
+	table.insert(list, itemId)
+	publish(player)
+	return true
+end
+
+function InventoryService.Reset(player: Player)
+	inventories[player] = {}
+	if player:GetAttribute("FZ_Set") == "set_medic" then
+		for _, itemId in Config.Inventory.MedicStart do
+			InventoryService.Give(player, itemId)
+		end
+	end
+	publish(player)
+end
+
+function InventoryService.Clear(player: Player)
+	inventories[player] = {}
+	publish(player)
+end
+
+function InventoryService.ClearWorld()
+	if worldFolder then
+		worldFolder:Destroy()
+		worldFolder = nil
+	end
+end
+
+-- Places random items at free FZ_ItemSpot spots.
+function InventoryService.SpawnWorldItems(count: number)
+	if not worldFolder or not worldFolder.Parent then
+		local folder = Instance.new("Folder")
+		folder.Name = "FZ_WorldItems"
+		folder.Parent = workspace
+		worldFolder = folder
+	end
+	local folder = worldFolder :: Folder
+	local spots = {}
+	for _, spot in CollectionService:GetTagged("FZ_ItemSpot") do
+		if spot:IsA("BasePart") and not spot:GetAttribute("Occupied") then
+			table.insert(spots, spot)
+		end
+	end
+	for _ = 1, math.min(count, #spots) do
+		local spot = table.remove(spots, math.random(1, #spots))
+		local itemId = if math.random() < 0.7 then "bandage" else "syringe"
+		local part = Instance.new("Part")
+		part.Name = itemId
+		part.Anchored = true
+		part.CanCollide = false
+		part.Size = if itemId == "bandage" then Vector3.new(0.9, 0.5, 0.9) else Vector3.new(0.25, 0.25, 1.2)
+		part.Color = if itemId == "bandage" then Color3.fromRGB(226, 222, 210) else Color3.fromRGB(120, 200, 220)
+		part.Material = if itemId == "bandage" then Enum.Material.Fabric else Enum.Material.Glass
+		part.CFrame = spot.CFrame
+		local glow = Instance.new("PointLight")
+		glow.Range = 4
+		glow.Brightness = 0.6
+		glow.Color = Color3.fromRGB(200, 230, 255)
+		glow.Parent = part
+		part:SetAttribute("InteractId", "item")
+		part:SetAttribute("ItemId", itemId)
+		part:SetAttribute("ActionKey", "INTERACT_PICKUP")
+		part:SetAttribute("ObjectKey", Config.Items[itemId].name)
+		part:SetAttribute("MaxDistance", 7)
+		part.Parent = folder
+		spot:SetAttribute("Occupied", true)
+		part.Destroying:Connect(function()
+			spot:SetAttribute("Occupied", nil)
+		end)
+		CollectionService:AddTag(part, "FZ_Interactable")
+	end
+end
+
+function InventoryService.Start()
+	InteractionService.Register("item", function(player, part)
+		local itemId = part:GetAttribute("ItemId")
+		if type(itemId) ~= "string" or not part.Parent then
+			return
+		end
+		if InventoryService.Give(player, itemId) then
+			Net.Event("Sfx"):FireAllClients("fuse_pickup", (part :: BasePart).Position)
+			part:Destroy()
+		else
+			Net.Event("Notify"):FireClient(player, "INV_FULL")
+		end
+	end)
+
+	local limiter = RateLimiter.new(3, 1)
+	Net.Event("UseItem").OnServerEvent:Connect(function(player: Player, slot: any)
+		local list = inventories[player]
+		if not list or not limiter:Allow(player) or using[player] or type(slot) ~= "number" or slot % 1 ~= 0 then
+			return
+		end
+		local itemId = list[slot]
+		local item = itemId and Config.Items[itemId]
+		if not item then
+			return
+		end
+		local downed = player:GetAttribute("FZ_Downed") == true
+		if downed and itemId ~= "syringe" then
+			return
+		end
+		using[player] = true
+		local character = player.Character
+		player:SetAttribute("FZ_UsingItem", itemId)
+		task.delay(item.useTime, function()
+			using[player] = nil
+			player:SetAttribute("FZ_UsingItem", nil)
+			if player.Character ~= character or inventories[player] ~= list or list[slot] ~= itemId then
+				return
+			end
+			table.remove(list, slot)
+			publish(player)
+			local bonus = if player:GetAttribute("FZ_Set") == "set_medic" then Config.Inventory.MedicHealBonus else 1
+			if player:GetAttribute("FZ_Downed") then
+				HealthService.Revive(player, 60 * bonus)
+			else
+				HealthService.Heal(player, item.heal * bonus)
+			end
+		end)
+	end)
+
+	Players.PlayerRemoving:Connect(function(player)
+		inventories[player] = nil
+		using[player] = nil
+	end)
+end
+
+return InventoryService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="45">
+          <Properties>
             <string name="Name">LeaderboardService</string>
             <string name="Source"><![CDATA[-- LeaderboardService: global best shifts per survival map (OrderedDataStore).
 -- Names are resolved and cached on the server. Reads are cached for 60 s.
@@ -7770,7 +8201,7 @@ return LeaderboardService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="46">
           <Properties>
             <string name="Name">MapService</string>
             <string name="Source"><![CDATA[-- MapService: exactly one map is loaded per server. Sources, in this order:
@@ -7848,7 +8279,7 @@ return MapService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">NoiseService</string>
             <string name="Source"><![CDATA[-- NoiseService: everything the creature can hear goes through here.
@@ -7902,7 +8333,7 @@ return NoiseService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">PlaceService</string>
             <string name="Source"><![CDATA[-- PlaceService: server-side teleports between places of this experience.
@@ -7980,7 +8411,7 @@ return PlaceService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">PowerService</string>
             <string name="Source"><![CDATA[-- PowerService: sector power. Switches tagged lights (FZ_SectorLight) and unlocks/locks
@@ -8055,7 +8486,7 @@ return PowerService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">SessionService</string>
             <string name="Source"><![CDATA[-- SessionService: what the team in this server is currently playing.
@@ -8087,6 +8518,7 @@ local CreatureService = require(script.Parent.CreatureService)
 local HealthService = require(script.Parent.HealthService)
 local PowerService = require(script.Parent.PowerService)
 local DoorService = require(script.Parent.DoorService)
+local InventoryService = require(script.Parent.InventoryService)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
 local SessionService = {}
@@ -8168,6 +8600,7 @@ local function cleanWorld()
 	PowerService.Reset()
 	DoorService.CloseAll()
 	HealthService.HealAll()
+	InventoryService.ClearWorld()
 end
 
 local function start(mode: string, contentId: string): boolean
@@ -8186,6 +8619,7 @@ local function start(mode: string, contentId: string): boolean
 	SessionState.Set("Mode", mode)
 	SessionState.Set("ContentId", contentId)
 	module.Begin(entry)
+	InventoryService.SpawnWorldItems(Config.Inventory.WorldItems)
 	return true
 end
 
@@ -8194,6 +8628,7 @@ local function leave(player: Player, respawn: boolean)
 		return
 	end
 	inGame[player] = nil
+	InventoryService.Clear(player)
 	player:SetAttribute("FZ_InGame", false)
 	player:SetAttribute("FZ_Downed", false)
 	if respawn and player.Parent and not player:GetAttribute("FZ_MonsterMode") then
@@ -8231,6 +8666,9 @@ local function join(player: Player)
 	placeAtCheckpoint(player)
 	local firstTime = not entered[player]
 	entered[player] = true
+	if firstTime then
+		InventoryService.Reset(player)
+	end
 	if current.module.OnPlayerEntered then
 		task.spawn(current.module.OnPlayerEntered, player, firstTime)
 	end
@@ -8357,7 +8795,7 @@ return SessionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">SettingsService</string>
             <string name="Source"><![CDATA[-- SettingsService: persists player settings (language, subtitles, accessibility, graphics).
@@ -8395,7 +8833,7 @@ return SettingsService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">ShopService</string>
             <string name="Source"><![CDATA[-- ShopService: unlock and equip items with earned Signal Marks (server-authoritative).
@@ -8560,7 +8998,7 @@ return ShopService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">StoryService</string>
             <string name="Source"><![CDATA[-- StoryService: sends story content (subtitles, documents, objectives) to clients.
@@ -8649,7 +9087,7 @@ return StoryService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">VoiceService</string>
             <string name="Source"><![CDATA[-- VoiceService: proximity voice + walkie-talkie radio on top of the Roblox Audio API.
@@ -8799,11 +9237,11 @@ return VoiceService
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="54">
+      <Item class="Folder" referent="55">
         <Properties>
           <string name="Name">Util</string>
         </Properties>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">RateLimiter</string>
             <string name="Source"><![CDATA[-- Token-bucket rate limiter per player. Every client->server remote uses one.
@@ -8856,15 +9294,15 @@ return RateLimiter
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="56">
+  <Item class="ServerStorage" referent="57">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="Folder" referent="57">
+    <Item class="Folder" referent="58">
       <Properties>
         <string name="Name">Secrets</string>
       </Properties>
-      <Item class="ModuleScript" referent="58">
+      <Item class="ModuleScript" referent="59">
         <Properties>
           <string name="Name">Codes</string>
           <string name="Source"><![CDATA[-- Redeemable codes. Lives in ServerStorage: never replicated to clients.
@@ -8883,18 +9321,18 @@ return {
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="59">
+  <Item class="StarterPlayer" referent="60">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <token name="CameraMode">1</token>
       <float name="CharacterWalkSpeed">10</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterCharacterScripts" referent="60">
+    <Item class="StarterCharacterScripts" referent="61">
       <Properties>
         <string name="Name">StarterCharacterScripts</string>
       </Properties>
-      <Item class="Script" referent="61">
+      <Item class="Script" referent="62">
         <Properties>
           <string name="Name">Health</string>
           <token name="RunContext">0</token>
@@ -8904,19 +9342,19 @@ return {
         </Properties>
       </Item>
     </Item>
-    <Item class="StarterPlayerScripts" referent="62">
+    <Item class="StarterPlayerScripts" referent="63">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="63">
+      <Item class="Folder" referent="64">
         <Properties>
           <string name="Name">Client</string>
         </Properties>
-        <Item class="Folder" referent="64">
+        <Item class="Folder" referent="65">
           <Properties>
             <string name="Name">Controllers</string>
           </Properties>
-          <Item class="ModuleScript" referent="65">
+          <Item class="ModuleScript" referent="66">
             <Properties>
               <string name="Name">AudioController</string>
               <string name="Source"><![CDATA[-- AudioController: every non-voice sound on the client.
@@ -8940,8 +9378,20 @@ local Net = require(Shared.Net)
 local AudioController = {}
 
 local groups: { [string]: SoundGroup } = {}
+local settings = nil
+local scareFactor = 0.85
+local duckFactor = 1
+local inMenu = true
+local tension: { [string]: Sound? } = {}
+local tensionLevel = { music_menu = 0, tension_low = 0, tension_high = 0 }
+local currentReverb: Enum.ReverbType? = nil
+
 local BUILDING_MIN = Vector3.new(-100, -5, -85)
 local BUILDING_MAX = Vector3.new(100, 20, 85)
+
+local function insideBuilding(position: Vector3): boolean
+	return position.X > BUILDING_MIN.X and position.X < BUILDING_MAX.X and position.Z > BUILDING_MIN.Z and position.Z < BUILDING_MAX.Z and position.Y < BUILDING_MAX.Y
+end
 
 local function group(name: string, volume: number): SoundGroup
 	local g = Instance.new("SoundGroup")
@@ -9015,15 +9465,99 @@ function AudioController.Loop(name: string, parent: Instance, volume: number, gr
 	return sound
 end
 
--- Lowers ambience while important voices/radio play (simple ducking).
-function AudioController.Duck(active: boolean)
-	local target = if active then 0.45 else 1
-	TweenService:Create(groups.Ambience, TweenInfo.new(0.4), { Volume = target }):Play()
+local function setting(key: string): number
+	local value = settings and settings.Get(key)
+	return (if type(value) == "number" then value else 10) / 10
 end
 
-local function insideBuilding(position: Vector3): boolean
-	return position.X > BUILDING_MIN.X and position.X < BUILDING_MAX.X and position.Z > BUILDING_MIN.Z and position.Z < BUILDING_MAX.Z and position.Y < BUILDING_MAX.Y
+-- Applies the volume sliders (Settings -> Audio) to the sound groups.
+function AudioController.ApplyVolumes()
+	if not groups.SFX then
+		return
+	end
+	local master = setting("volumeMaster")
+	groups.SFX.Volume = master * setting("volumeEffects")
+	groups.Creature.Volume = master * setting("volumeEffects") * scareFactor
+	groups.Ambience.Volume = master * setting("volumeAmbience") * duckFactor
+	groups.Music.Volume = master * setting("volumeMusic") * (0.6 + 0.4 * duckFactor)
+	groups.UI.Volume = master * setting("volumeUI")
 end
+
+-- Scare intensity / medic set dampen creature sounds.
+function AudioController.SetScareFactor(value: number)
+	scareFactor = value
+	AudioController.ApplyVolumes()
+end
+
+-- Lowers ambience and music while important voices/radio play.
+local duckToken = 0
+function AudioController.Duck(seconds: number)
+	duckToken += 1
+	local token = duckToken
+	duckFactor = 0.45
+	AudioController.ApplyVolumes()
+	task.delay(seconds, function()
+		if token == duckToken then
+			duckFactor = 1
+			AudioController.ApplyVolumes()
+		end
+	end)
+end
+
+function AudioController.SetMenu(value: boolean)
+	inMenu = value
+end
+
+local function updateMusic(position: Vector3, elapsed: number)
+	local targets = { music_menu = 0, tension_low = 0, tension_high = 0 }
+	if inMenu then
+		targets.music_menu = 0.6
+	else
+		local nearest, chasing = math.huge, false
+		for _, model in CollectionService:GetTagged("FZ_CreatureRig") do
+			local root = model:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") and model ~= Players.LocalPlayer.Character and not model:GetAttribute("Hidden") then
+				local d = (root.Position - position).Magnitude
+				if d < nearest then
+					nearest = d
+					chasing = model:GetAttribute("State") == "Chase" or model:GetAttribute("State") == "Attack"
+				end
+			end
+		end
+		if chasing and nearest < 90 then
+			targets.tension_high, targets.tension_low = 0.8, 0.3
+		elseif nearest < 45 then
+			targets.tension_low = 0.75
+		elseif nearest < math.huge then
+			targets.tension_low = 0.25
+		end
+	end
+	for name, target in targets do
+		local sound = tension[name]
+		if sound then
+			-- fade in slowly, fade out a bit faster (silence is a tool)
+			local speed = if target > tensionLevel[name] then 0.6 else 1.2
+			tensionLevel[name] += (target - tensionLevel[name]) * math.min(1, elapsed * speed)
+			sound.Volume = tensionLevel[name]
+		end
+	end
+end
+
+local function updateReverb(position: Vector3)
+	local reverb
+	if math.abs(position.X) < 22 and math.abs(position.Z) < 22 then
+		reverb = Enum.ReverbType.ConcertHall -- the round core
+	elseif insideBuilding(position) then
+		reverb = Enum.ReverbType.Hallway
+	else
+		reverb = Enum.ReverbType.Forest
+	end
+	if reverb ~= currentReverb then
+		currentReverb = reverb
+		SoundService.AmbientReverb = reverb
+	end
+end
+
 
 local function materialSound(material: Enum.Material): string
 	if material == Enum.Material.Metal or material == Enum.Material.DiamondPlate or material == Enum.Material.CorrodedMetal then
@@ -9034,11 +9568,22 @@ local function materialSound(material: Enum.Material): string
 	return "footstep_concrete_" .. math.random(1, 3)
 end
 
-function AudioController.Init()
+function AudioController.Init(settingsController)
+	settings = settingsController
 	group("Ambience", 1)
 	group("SFX", 1)
 	group("Creature", 1)
 	group("UI", 0.7)
+	group("Music", 0.6)
+	AudioController.ApplyVolumes()
+	settingsController.Changed:Connect(function(key)
+		if string.sub(key, 1, 6) == "volume" then
+			AudioController.ApplyVolumes()
+		end
+	end)
+	for name in tensionLevel do
+		tension[name] = AudioController.Loop(name, SoundService, 0, "Music")
+	end
 
 	-- Ambient beds (2D), crossfaded by position
 	local wind = AudioController.Loop("ambience_wind_loop", SoundService, 0)
@@ -9086,6 +9631,8 @@ function AudioController.Init()
 			return
 		end
 		local inside = insideBuilding(camera.CFrame.Position)
+		updateMusic(camera.CFrame.Position, elapsed)
+		updateReverb(camera.CFrame.Position)
 		if wind then
 			wind.Volume += ((if inside then 0.12 else 0.55) - wind.Volume) * math.min(1, elapsed * 2)
 		end
@@ -9125,7 +9672,7 @@ return AudioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="66">
+          <Item class="ModuleScript" referent="67">
             <Properties>
               <string name="Name">CreatureVisualsController</string>
               <string name="Source"><![CDATA[-- CreatureVisualsController: everything the player SEES and HEARS of the creature.
@@ -9311,7 +9858,7 @@ return CreatureVisualsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="67">
+          <Item class="ModuleScript" referent="68">
             <Properties>
               <string name="Name">DirectorController</string>
               <string name="Source"><![CDATA[-- DirectorController: performs the HorrorDirector's moments on THIS client only.
@@ -9447,8 +9994,8 @@ end
 
 local function flicker()
 	local camera = workspace.CurrentCamera
-	if not camera then
-		return
+	if not camera or (settings and settings.Get("reduceFlicker")) then
+		return -- accessibility: no light flicker at all
 	end
 	local lights = {}
 	for _, fixture in CollectionService:GetTagged("FZ_SectorLight") do
@@ -9660,7 +10207,7 @@ return DirectorController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="68">
+          <Item class="ModuleScript" referent="69">
             <Properties>
               <string name="Name">EquipmentController</string>
               <string name="Source"><![CDATA[-- EquipmentController: client side of shop equipment.
@@ -9778,7 +10325,7 @@ return EquipmentController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="69">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">FlashlightController</string>
               <string name="Source"><![CDATA[-- FlashlightController: precise camera-aligned light for the local player, plus the
@@ -9925,7 +10472,7 @@ return FlashlightController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="70">
+          <Item class="ModuleScript" referent="71">
             <Properties>
               <string name="Name">GraphicsController</string>
               <string name="Source"><![CDATA[-- GraphicsController: quality profiles for the parts an experience may control itself.
@@ -10060,7 +10607,7 @@ return GraphicsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="71">
+          <Item class="ModuleScript" referent="72">
             <Properties>
               <string name="Name">HealthController</string>
               <string name="Source"><![CDATA[-- HealthController: health HUD (only visible when hurt), damage vignette, downed overlay.
@@ -10127,11 +10674,17 @@ function HealthController.Init(hudGui: ScreenGui, settings)
 		end
 		local function update()
 			local ratio = math.clamp(humanoid.Health / math.max(1, humanoid.MaxHealth), 0, 1)
-			bar.Visible = ratio < 0.999 and player:GetAttribute("FZ_InGame") == true and not player:GetAttribute("FZ_MonsterMode")
+			bar.Visible = (ratio < 0.999 or settings.Get("alwaysShowHealth") == true) and player:GetAttribute("FZ_InGame") == true and not player:GetAttribute("FZ_MonsterMode")
 			fill.Size = UDim2.fromScale(ratio, 1)
 			fill.BackgroundColor3 = if ratio < 0.35 then Theme.Colors.Accent else Theme.Colors.TextBright
 		end
 		humanoid.HealthChanged:Connect(update)
+		settings.Changed:Connect(function(key)
+			if key == "alwaysShowHealth" then
+				update()
+			end
+		end)
+		player:GetAttributeChangedSignal("FZ_InGame"):Connect(update)
 		update()
 	end
 	player.CharacterAdded:Connect(bindHumanoid)
@@ -10161,7 +10714,7 @@ return HealthController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="72">
+          <Item class="ModuleScript" referent="73">
             <Properties>
               <string name="Name">InputController</string>
               <string name="Source"><![CDATA[-- InputController: one logical action layer for keyboard/mouse, gamepad and touch.
@@ -10210,6 +10763,13 @@ local ACTIONS = {
 	{ name = "NightVision", keys = { Enum.KeyCode.N, Enum.KeyCode.DPadUp }, touchKey = "TOUCH_NIGHT", hidden = true },
 	{ name = "Mic", keys = { Enum.KeyCode.M, Enum.KeyCode.DPadLeft }, touchKey = "TOUCH_MIC", small = true, slot = 1 },
 	{ name = "Pause", keys = { Enum.KeyCode.P, Enum.KeyCode.ButtonSelect }, touchText = "II", small = true, slot = 0 },
+	-- Hotbar (touch uses the slot buttons of the hotbar itself)
+	{ name = "Item1", keys = { Enum.KeyCode.One } },
+	{ name = "Item2", keys = { Enum.KeyCode.Two } },
+	{ name = "Item3", keys = { Enum.KeyCode.Three } },
+	{ name = "Item4", keys = { Enum.KeyCode.Four } },
+	{ name = "ItemNext", keys = { Enum.KeyCode.DPadRight } },
+	{ name = "ItemUse", keys = { Enum.KeyCode.ButtonY } },
 }
 
 local device: Device = "keyboard"
@@ -10313,6 +10873,9 @@ local function createTouchButtons(parent: ScreenGui)
 
 	local index = 0
 	for _, definition in ACTIONS do
+		if not definition.touchKey and not definition.touchText then
+			continue
+		end
 		local button = Instance.new("TextButton")
 		button.Name = definition.name
 		button.AutoButtonColor = false
@@ -10493,7 +11056,117 @@ return InputController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="73">
+          <Item class="ModuleScript" referent="74">
+            <Properties>
+              <string name="Name">InventoryController</string>
+              <string name="Source"><![CDATA[-- InventoryController: the hotbar. Only visible when you carry something.
+--   PC 1-4 = use slot directly · gamepad D-pad right = next slot, Y = use · touch: tap a slot
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local InputController = require(script.Parent.InputController)
+local Components = require(script.Parent.Parent.UI.Components)
+local Theme = require(script.Parent.Parent.UI.Theme)
+
+local InventoryController = {}
+
+local player = Players.LocalPlayer
+local bar: Frame
+local selected = 1
+local items: { string } = {}
+
+local function use(slot: number)
+	if items[slot] then
+		Net.Event("UseItem"):FireServer(slot)
+	end
+end
+
+local function render()
+	for _, child in bar:GetChildren() do
+		if child:IsA("GuiButton") then
+			child:Destroy()
+		end
+	end
+	local raw = player:GetAttribute("FZ_Items")
+	items = if type(raw) == "string" and raw ~= "" then string.split(raw, ",") else {}
+	local slots = tonumber(player:GetAttribute("FZ_ItemSlots")) or Config.Inventory.Slots
+	bar.Visible = #items > 0 and player:GetAttribute("FZ_InGame") == true
+	selected = math.clamp(selected, 1, math.max(1, #items))
+	local using = player:GetAttribute("FZ_UsingItem")
+	for slot = 1, slots do
+		local itemId = items[slot]
+		local button = Instance.new("TextButton")
+		button.Name = "Slot" .. slot
+		button.AutoButtonColor = false
+		button.AutoLocalize = false
+		button.Text = ""
+		button.Size = UDim2.fromOffset(64, 64)
+		button.LayoutOrder = slot
+		button.Selectable = false
+		button.BackgroundColor3 = Theme.Colors.Panel
+		button.BackgroundTransparency = if itemId then 0.15 else 0.6
+		local stroke = Instance.new("UIStroke")
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Color = if slot == selected and itemId then Theme.Colors.Relay else Theme.Colors.PanelLine
+		stroke.Thickness = if slot == selected and itemId then 2 else 1
+		stroke.Parent = button
+		Components.Text({ Text = tostring(slot), Font = Theme.Fonts.Mono, TextSize = 11, Color = Theme.Colors.TextFaint, Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(4, 2), Parent = button })
+		if itemId then
+			local name = Components.Text({ Key = Config.Items[itemId].name, Font = Theme.Fonts.Medium, TextSize = 12, Color = if using == itemId then Theme.Colors.Relay else Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, -6, 1, -16), Position = UDim2.fromOffset(3, 14), Parent = button })
+			name.TextWrapped = true
+		end
+		button.Activated:Connect(function()
+			use(slot)
+		end)
+		button.Parent = bar
+	end
+end
+
+function InventoryController.Init(hudGui: ScreenGui)
+	bar = Instance.new("Frame")
+	bar.Name = "Hotbar"
+	bar.BackgroundTransparency = 1
+	bar.AnchorPoint = Vector2.new(0.5, 1)
+	bar.Position = UDim2.new(0.5, 0, 1, -22)
+	bar.Size = UDim2.fromOffset(4 * 70, 64)
+	bar.Visible = false
+	bar.Parent = hudGui
+	local layout = Components.List(bar, 6, true)
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+	for _, attribute in { "FZ_Items", "FZ_ItemSlots", "FZ_UsingItem", "FZ_InGame" } do
+		player:GetAttributeChangedSignal(attribute):Connect(render)
+	end
+	Localization.Changed:Connect(render)
+	render()
+
+	InputController.Action:Connect(function(name, pressed)
+		if not pressed then
+			return
+		end
+		local direct = string.match(name, "^Item(%d)$")
+		if direct then
+			use(tonumber(direct) :: number)
+		elseif name == "ItemNext" and #items > 0 then
+			selected = (selected % #items) + 1
+			render()
+		elseif name == "ItemUse" then
+			use(selected)
+		end
+	end)
+end
+
+return InventoryController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="75">
             <Properties>
               <string name="Name">MovementController</string>
               <string name="Source"><![CDATA[-- MovementController: slow walk, short limited sprint with stamina.
@@ -10623,7 +11296,7 @@ return MovementController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="74">
+          <Item class="ModuleScript" referent="76">
             <Properties>
               <string name="Name">RadioController</string>
               <string name="Source"><![CDATA[-- RadioController: the walkie-talkie in your hand.
@@ -10870,7 +11543,7 @@ return RadioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="75">
+          <Item class="ModuleScript" referent="77">
             <Properties>
               <string name="Name">SettingsController</string>
               <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
@@ -10961,7 +11634,7 @@ return SettingsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="76">
+          <Item class="ModuleScript" referent="78">
             <Properties>
               <string name="Name">VoiceController</string>
               <string name="Source"><![CDATA[-- VoiceController: hearing voices on this client.
@@ -11014,10 +11687,12 @@ local function voiceFader(player: Player): Instance?
 	return head and head:FindFirstChild("FZ_VoiceFader")
 end
 
+local voiceVolume = 1
+
 local function applyLocalVolume(player: Player)
 	local fader = voiceFader(player)
 	if fader then
-		local volume = if player == localPlayer or locallyMuted[player.UserId] then 0 else 1
+		local volume = if player == localPlayer or locallyMuted[player.UserId] then 0 else voiceVolume
 		pcall(function()
 			(fader :: any).Volume = volume
 		end)
@@ -11140,6 +11815,14 @@ function VoiceController.IsMuted(player: Player): boolean
 	return locallyMuted[player.UserId] == true
 end
 
+-- Settings -> Audio -> "Voices and radio" (0..1)
+function VoiceController.SetVolume(value: number)
+	voiceVolume = value
+	for _, player in Players:GetPlayers() do
+		applyLocalVolume(player)
+	end
+end
+
 function VoiceController.Init()
 	local ok, enabled = pcall(function()
 		return VoiceChatService:IsVoiceEnabledForUserIdAsync(localPlayer.UserId)
@@ -11177,6 +11860,7 @@ function VoiceController.Init()
 		accumulator = 0
 		for player, chain in radioChains do
 			local voice, staticVolume = radioVolume(distanceTo(player))
+			voice *= voiceVolume
 			if chain.fader then
 				pcall(function()
 					(chain.fader :: any).Volume = voice
@@ -11193,7 +11877,7 @@ return VoiceController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="77">
+          <Item class="ModuleScript" referent="79">
             <Properties>
               <string name="Name">WorldTextController</string>
               <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
@@ -11278,7 +11962,7 @@ return WorldTextController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="78">
+        <Item class="LocalScript" referent="80">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- FREQUENCY ZERO - client bootstrap.
@@ -11290,7 +11974,6 @@ return WorldTextController
 
 local CollectionService = game:GetService("CollectionService")
 local HttpService = game:GetService("HttpService")
-local SoundService = game:GetService("SoundService")
 local LocalizationService = game:GetService("LocalizationService")
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -11325,6 +12008,7 @@ local CreatureVisualsController = require(Controllers.CreatureVisualsController)
 local HealthController = require(Controllers.HealthController)
 local EquipmentController = require(Controllers.EquipmentController)
 local DirectorController = require(Controllers.DirectorController)
+local InventoryController = require(Controllers.InventoryController)
 local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
@@ -11490,7 +12174,13 @@ DebugOverlay.Init(hudGui, {
 })
 MovementController.Init(SettingsController, Hud.SetStamina)
 FlashlightController.Init()
-AudioController.Init()
+AudioController.Init(SettingsController)
+VoiceController.SetVolume((SettingsController.Get("volumeVoice") or 10) / 10)
+SettingsController.Changed:Connect(function(key, value)
+	if key == "volumeVoice" then
+		VoiceController.SetVolume(value / 10)
+	end
+end)
 VoiceController.Init()
 RadioController.Init(hudGui, SettingsController)
 CreatureVisualsController.Init(Hud.ShowSubtitle)
@@ -11498,6 +12188,7 @@ HealthController.Init(hudGui, SettingsController)
 EquipmentController.Init()
 DirectorController.Init(SettingsController, Hud.ShowSubtitle)
 DecisionPanel.Init(hudGui, InputController)
+InventoryController.Init(hudGui)
 
 -- Forecast countdown (the prediction you can break)
 local function updateForecast()
@@ -11521,15 +12212,12 @@ end)
 
 -- Scare intensity: creature sounds are mixed down on "reduced" (medic set dampens too).
 local function applyScareMix()
-	local group = SoundService:FindFirstChild("FZ_Creature")
-	if group and group:IsA("SoundGroup") then
-		local level = SettingsController.Get("scareIntensity")
-		local volume = if level == "reduced" then 0.55 elseif level == "intense" then 1 else 0.85
-		if player:GetAttribute("FZ_ScareDampening") then
-			volume *= 0.8
-		end
-		group.Volume = volume
+	local level = SettingsController.Get("scareIntensity")
+	local volume = if level == "reduced" then 0.55 elseif level == "intense" then 1 else 0.85
+	if player:GetAttribute("FZ_ScareDampening") then
+		volume *= 0.8
 	end
+	AudioController.SetScareFactor(volume)
 end
 applyScareMix()
 SettingsController.Changed:Connect(applyScareMix)
@@ -11612,6 +12300,7 @@ function app.HasNewUpdate(): boolean
 end
 
 local function enterGame()
+	AudioController.SetMenu(false)
 	state = "playing"
 	router:Clear()
 	backdrop.Visible = false
@@ -11621,6 +12310,7 @@ local function enterGame()
 end
 
 local function showMainMenu()
+	AudioController.SetMenu(true)
 	state = "menu"
 	setGameplay(false)
 	backdrop.Visible = true
@@ -11663,6 +12353,7 @@ end
 
 -- Close the menu (pause) or, for owner tests, walk around without a session.
 function app.Resume()
+	AudioController.SetMenu(false)
 	if state == "paused" or state == "menu" then
 		state = "playing"
 		router:Clear()
@@ -11803,11 +12494,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="79">
+        <Item class="Folder" referent="81">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="80">
+          <Item class="ModuleScript" referent="82">
             <Properties>
               <string name="Name">Components</string>
               <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
@@ -11820,6 +12511,15 @@ local TweenService = game:GetService("TweenService")
 
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 local Theme = require(script.Parent.Theme)
+local AudioController = require(script.Parent.Parent.Controllers.AudioController)
+
+local lastFocusSound = 0
+local function focusSound()
+	if os.clock() - lastFocusSound > 0.06 then
+		lastFocusSound = os.clock()
+		AudioController.UI("ui_focus")
+	end
+end
 
 local Components = {}
 
@@ -12037,6 +12737,9 @@ function Components.Button(props: ButtonProps): Button
 
 	button.MouseEnter:Connect(function()
 		hovered = true
+		if not disabled then
+			focusSound()
+		end
 		render()
 	end)
 	button.MouseLeave:Connect(function()
@@ -12045,6 +12748,7 @@ function Components.Button(props: ButtonProps): Button
 	end)
 	button.SelectionGained:Connect(function()
 		focused = true
+		focusSound()
 		render()
 	end)
 	button.SelectionLost:Connect(function()
@@ -12055,6 +12759,7 @@ function Components.Button(props: ButtonProps): Button
 		if disabled or not props.OnActivated then
 			return
 		end
+		AudioController.UI("ui_select")
 		props.OnActivated()
 	end)
 
@@ -12142,7 +12847,7 @@ return Components
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="81">
+          <Item class="ModuleScript" referent="83">
             <Properties>
               <string name="Name">DebugOverlay</string>
               <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
@@ -12222,7 +12927,7 @@ return DebugOverlay
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="82">
+          <Item class="ModuleScript" referent="84">
             <Properties>
               <string name="Name">DecisionPanel</string>
               <string name="Source"><![CDATA[-- DecisionPanel: the team vote UI. Big buttons, live vote counts, a time bar.
@@ -12370,7 +13075,7 @@ return DecisionPanel
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="83">
+          <Item class="ModuleScript" referent="85">
             <Properties>
               <string name="Name">Hud</string>
               <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
@@ -12390,6 +13095,7 @@ local GuiService = game:GetService("GuiService")
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 
 local Components = require(script.Parent.Components)
+local AudioController = require(script.Parent.Parent.Controllers.AudioController)
 local Theme = require(script.Parent.Theme)
 
 local Hud = {}
@@ -12488,6 +13194,9 @@ function Hud.ShowSubtitle(line: { [string]: any })
 	TweenService:Create(label, Theme.Fast, { TextTransparency = 0, TextStrokeTransparency = 0.45 }):Play()
 
 	local duration = math.clamp(tonumber(line.duration) or 4, 1.5, 12)
+	if line.speaker then
+		AudioController.Duck(duration) -- voices sit on top of the mix
+	end
 	local entry: ActiveLine = { label = label, line = line, expires = os.clock() + duration }
 	table.insert(activeLines, entry)
 	task.delay(duration, function()
@@ -12670,7 +13379,7 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 	subtitleFrame.Name = "Subtitles"
 	subtitleFrame.BackgroundTransparency = 1
 	subtitleFrame.AnchorPoint = Vector2.new(0.5, 1)
-	subtitleFrame.Position = UDim2.new(0.5, 0, 1, -24)
+	subtitleFrame.Position = UDim2.new(0.5, 0, 1, -96) -- above the hotbar
 	subtitleFrame.Size = UDim2.new(0.62, 0, 0.4, 0)
 	subtitleFrame.Parent = gui
 	local subtitleLayout = Components.List(subtitleFrame, 6)
@@ -12744,7 +13453,7 @@ return Hud
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="84">
+          <Item class="ModuleScript" referent="86">
             <Properties>
               <string name="Name">Router</string>
               <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
@@ -12908,11 +13617,11 @@ return Router
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="85">
+          <Item class="Folder" referent="87">
             <Properties>
               <string name="Name">Screens</string>
             </Properties>
-            <Item class="ModuleScript" referent="86">
+            <Item class="ModuleScript" referent="88">
               <Properties>
                 <string name="Name">Admin</string>
                 <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
@@ -12991,7 +13700,7 @@ return Admin
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="87">
+            <Item class="ModuleScript" referent="89">
               <Properties>
                 <string name="Name">Extras</string>
                 <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
@@ -13137,7 +13846,7 @@ return Extras
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="88">
+            <Item class="ModuleScript" referent="90">
               <Properties>
                 <string name="Name">LanguageSelect</string>
                 <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
@@ -13239,7 +13948,7 @@ return LanguageSelect
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="89">
+            <Item class="ModuleScript" referent="91">
               <Properties>
                 <string name="Name">Leaderboard</string>
                 <string name="Source"><![CDATA[-- Global best shifts for one survival map (top 10) + your own best.
@@ -13308,7 +14017,7 @@ return Leaderboard
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="90">
+            <Item class="ModuleScript" referent="92">
               <Properties>
                 <string name="Name">Lobby</string>
                 <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
@@ -13423,7 +14132,7 @@ return Lobby
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="91">
+            <Item class="ModuleScript" referent="93">
               <Properties>
                 <string name="Name">MainMenu</string>
                 <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
@@ -13539,7 +14248,7 @@ return MainMenu
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="92">
+            <Item class="ModuleScript" referent="94">
               <Properties>
                 <string name="Name">Play</string>
                 <string name="Source"><![CDATA[-- Play: choose a story chapter or a survival map. Everything comes from Shared/Content,
@@ -13669,7 +14378,7 @@ return Play
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="93">
+            <Item class="ModuleScript" referent="95">
               <Properties>
                 <string name="Name">Settings</string>
                 <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
@@ -13716,8 +14425,17 @@ function Settings.new(router)
 	Components.List(column, Theme.Sizes.Gap)
 
 	Components.Heading(column, "SETTINGS_TITLE", 1)
-	local scroll = Components.ScrollColumn(column, UDim2.new(1, 0, 1, -110))
-	scroll.LayoutOrder = 2
+	local tabsRow = Instance.new("Frame")
+	tabsRow.BackgroundTransparency = 1
+	tabsRow.Size = UDim2.new(1, 0, 0, 36)
+	tabsRow.LayoutOrder = 2
+	tabsRow.Parent = column
+	Components.List(tabsRow, 4, true)
+	local scroll = Components.ScrollColumn(column, UDim2.new(1, 0, 1, -150))
+	scroll.LayoutOrder = 3
+	local currentCategory = "general"
+	local tabButtons = {}
+	local rebuild: () -> ()
 
 	local rows: { [GuiObject]: string } = {}
 	local valueLabels: { [string]: TextLabel } = {}
@@ -13742,7 +14460,51 @@ function Settings.new(router)
 		end
 	end
 
+	local CONTROLS = {
+		{ "CONTROL_INTERACT", "E", "X / Square", "TOUCH_TAP" },
+		{ "CONTROL_SPRINT", "Shift", "L3", "TOUCH_SPRINT" },
+		{ "CONTROL_LIGHT", "F", "R1 / RB", "TOUCH_LIGHT" },
+		{ "CONTROL_RADIO", "R", "L1 / LB", "TOUCH_RADIO" },
+		{ "CONTROL_MIC", "M", "PAD_LEFT", "TOUCH_MIC" },
+		{ "CONTROL_NIGHT", "N", "PAD_UP", "TOUCH_NIGHT" },
+		{ "CONTROL_ITEMS", "1 – 4", "PAD_RIGHT_Y", "TOUCH_TAP" },
+		{ "CONTROL_MENU", "P", "View / Share", "II" },
+		{ "CONTROL_BACK", "Backspace", "B / Circle", "MENU_BACK" },
+	}
+
+	local function controlsList(startOrder: number)
+		local device = app.Input.GetDevice()
+		local column = if device == "gamepad" then 3 elseif device == "touch" then 4 else 2
+		Components.Text({ Key = "CONTROL_DEVICE_" .. string.upper(device), Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = startOrder, Parent = scroll })
+		for index, row in CONTROLS do
+			local binding = row[column]
+			local line = Components.Text({ Key = row[1], TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.Text, LayoutOrder = startOrder + index, Parent = scroll })
+			Components.Text({
+				Text = if string.match(binding, "^[A-Z_]+$") and Localization.Has(binding) then Localization.T(binding) else binding,
+				Font = Theme.Fonts.Mono,
+				TextSize = Theme.Sizes.TextSmall + 1,
+				Color = Theme.Colors.TextBright,
+				XAlign = Enum.TextXAlignment.Right,
+				Size = UDim2.fromScale(0.5, 1),
+				Position = UDim2.fromScale(0.5, 0),
+				Parent = line,
+			})
+		end
+	end
+
+	rebuild = function()
+	for _, child in scroll:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+	table.clear(rows)
+	table.clear(valueLabels)
+	focus = nil
 	for index, entry in Config.SettingsOrder do
+		if entry.category ~= currentCategory then
+			continue
+		end
 		local key = entry.key
 		-- Row button and value area are siblings (value area on top), so a tap on an
 		-- arrow is handled only by the arrow, never also by the row.
@@ -13814,13 +14576,44 @@ function Settings.new(router)
 		end
 	end
 
-	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 3, Parent = column, OnActivated = function()
+	if currentCategory == "controls" then
+		controlsList(100)
+	end
+	-- D-pad left/right must change values instead of moving focus out of the row.
+	for row in rows do
+		row.NextSelectionLeft = row
+		row.NextSelectionRight = row
+	end
+	refreshValues()
+	end
+
+	for index, category in Config.SettingsCategories do
+		local tab = Components.Button({ Key = Config.SettingsCategoryLabels[category], Height = 36, LayoutOrder = index, Parent = tabsRow, OnActivated = function()
+			currentCategory = category
+			for c, b in tabButtons do
+				b.SetFocused(c == category)
+			end
+			rebuild()
+		end })
+		tab.Instance.Size = UDim2.new(1 / #Config.SettingsCategories, -4, 1, 0)
+		tab.Label.TextSize = Theme.Sizes.TextSmall
+		tab.Label.TextTruncate = Enum.TextTruncate.AtEnd
+		tabButtons[category] = tab
+	end
+	rebuild()
+	tabButtons.general.SetFocused(true)
+
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 4, Parent = column, OnActivated = function()
 		router:Pop()
 	end })
 	back.Instance.Size = UDim2.new(1, 0, 0, Theme.Sizes.Button)
 
-	refreshValues()
 	local connections = {
+		app.Input.DeviceChanged:Connect(function()
+			if currentCategory == "controls" then
+				rebuild()
+			end
+		end),
 		settings.Changed:Connect(refreshValues),
 		Localization.Changed:Connect(refreshValues),
 		UserInputService.InputBegan:Connect(function(input)
@@ -13837,15 +14630,9 @@ function Settings.new(router)
 		end),
 	}
 
-	-- D-pad left/right must change values instead of moving focus out of the row.
-	for row in rows do
-		row.NextSelectionLeft = row
-		row.NextSelectionRight = row
-	end
-
 	return {
 		Root = root,
-		Focus = focus,
+		Focus = tabButtons.general.Instance,
 		Destroy = function()
 			for _, connection in connections do
 				connection:Disconnect()
@@ -13858,7 +14645,7 @@ return Settings
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="94">
+            <Item class="ModuleScript" referent="96">
               <Properties>
                 <string name="Name">Shop</string>
                 <string name="Source"><![CDATA[-- Shop: tabs (Equipment / Upgrades / Cosmetics) with large cards, Signal Mark balance,
@@ -14107,7 +14894,7 @@ return Shop
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="95">
+            <Item class="ModuleScript" referent="97">
               <Properties>
                 <string name="Name">Updates</string>
                 <string name="Source"><![CDATA[-- "What's new": optional, opened by the player from the main menu. Never a pop-up.
@@ -14161,7 +14948,7 @@ return UpdatesScreen
               </Properties>
             </Item>
           </Item>
-          <Item class="ModuleScript" referent="96">
+          <Item class="ModuleScript" referent="98">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
@@ -14219,7 +15006,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="VoiceChatService" referent="97">
+  <Item class="VoiceChatService" referent="99">
     <Properties>
       <string name="Name">VoiceChatService</string>
       <bool name="EnableDefaultVoice">false</bool>

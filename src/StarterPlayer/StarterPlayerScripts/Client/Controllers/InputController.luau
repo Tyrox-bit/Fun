@@ -44,6 +44,13 @@ local ACTIONS = {
 	{ name = "NightVision", keys = { Enum.KeyCode.N, Enum.KeyCode.DPadUp }, touchKey = "TOUCH_NIGHT", hidden = true },
 	{ name = "Mic", keys = { Enum.KeyCode.M, Enum.KeyCode.DPadLeft }, touchKey = "TOUCH_MIC", small = true, slot = 1 },
 	{ name = "Pause", keys = { Enum.KeyCode.P, Enum.KeyCode.ButtonSelect }, touchText = "II", small = true, slot = 0 },
+	-- Hotbar (touch uses the slot buttons of the hotbar itself)
+	{ name = "Item1", keys = { Enum.KeyCode.One } },
+	{ name = "Item2", keys = { Enum.KeyCode.Two } },
+	{ name = "Item3", keys = { Enum.KeyCode.Three } },
+	{ name = "Item4", keys = { Enum.KeyCode.Four } },
+	{ name = "ItemNext", keys = { Enum.KeyCode.DPadRight } },
+	{ name = "ItemUse", keys = { Enum.KeyCode.ButtonY } },
 }
 
 local device: Device = "keyboard"
@@ -147,6 +154,9 @@ local function createTouchButtons(parent: ScreenGui)
 
 	local index = 0
 	for _, definition in ACTIONS do
+		if not definition.touchKey and not definition.touchText then
+			continue
+		end
 		local button = Instance.new("TextButton")
 		button.Name = definition.name
 		button.AutoButtonColor = false

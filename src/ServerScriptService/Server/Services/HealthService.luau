@@ -124,6 +124,13 @@ function HealthService.Revive(target: Player, healthValue: number)
 	lastDamage[target] = os.clock()
 end
 
+function HealthService.Heal(player: Player, amount: number)
+	local humanoid = humanoidOf(player)
+	if humanoid and not HealthService.IsDowned(player) and humanoid.Health > 0 then
+		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + amount)
+	end
+end
+
 function HealthService.HealAll()
 	for _, player in Players:GetPlayers() do
 		local humanoid = humanoidOf(player)

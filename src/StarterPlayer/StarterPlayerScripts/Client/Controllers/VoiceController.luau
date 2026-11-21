@@ -48,10 +48,12 @@ local function voiceFader(player: Player): Instance?
 	return head and head:FindFirstChild("FZ_VoiceFader")
 end
 
+local voiceVolume = 1
+
 local function applyLocalVolume(player: Player)
 	local fader = voiceFader(player)
 	if fader then
-		local volume = if player == localPlayer or locallyMuted[player.UserId] then 0 else 1
+		local volume = if player == localPlayer or locallyMuted[player.UserId] then 0 else voiceVolume
 		pcall(function()
 			(fader :: any).Volume = volume
 		end)
@@ -174,6 +176,14 @@ function VoiceController.IsMuted(player: Player): boolean
 	return locallyMuted[player.UserId] == true
 end
 
+-- Settings -> Audio -> "Voices and radio" (0..1)
+function VoiceController.SetVolume(value: number)
+	voiceVolume = value
+	for _, player in Players:GetPlayers() do
+		applyLocalVolume(player)
+	end
+end
+
 function VoiceController.Init()
 	local ok, enabled = pcall(function()
 		return VoiceChatService:IsVoiceEnabledForUserIdAsync(localPlayer.UserId)
@@ -211,6 +221,7 @@ function VoiceController.Init()
 		accumulator = 0
 		for player, chain in radioChains do
 			local voice, staticVolume = radioVolume(distanceTo(player))
+			voice *= voiceVolume
 			if chain.fader then
 				pcall(function()
 					(chain.fader :: any).Volume = voice

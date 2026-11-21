@@ -42,8 +42,17 @@ function Settings.new(router)
 	Components.List(column, Theme.Sizes.Gap)
 
 	Components.Heading(column, "SETTINGS_TITLE", 1)
-	local scroll = Components.ScrollColumn(column, UDim2.new(1, 0, 1, -110))
-	scroll.LayoutOrder = 2
+	local tabsRow = Instance.new("Frame")
+	tabsRow.BackgroundTransparency = 1
+	tabsRow.Size = UDim2.new(1, 0, 0, 36)
+	tabsRow.LayoutOrder = 2
+	tabsRow.Parent = column
+	Components.List(tabsRow, 4, true)
+	local scroll = Components.ScrollColumn(column, UDim2.new(1, 0, 1, -150))
+	scroll.LayoutOrder = 3
+	local currentCategory = "general"
+	local tabButtons = {}
+	local rebuild: () -> ()
 
 	local rows: { [GuiObject]: string } = {}
 	local valueLabels: { [string]: TextLabel } = {}
@@ -68,7 +77,51 @@ function Settings.new(router)
 		end
 	end
 
+	local CONTROLS = {
+		{ "CONTROL_INTERACT", "E", "X / Square", "TOUCH_TAP" },
+		{ "CONTROL_SPRINT", "Shift", "L3", "TOUCH_SPRINT" },
+		{ "CONTROL_LIGHT", "F", "R1 / RB", "TOUCH_LIGHT" },
+		{ "CONTROL_RADIO", "R", "L1 / LB", "TOUCH_RADIO" },
+		{ "CONTROL_MIC", "M", "PAD_LEFT", "TOUCH_MIC" },
+		{ "CONTROL_NIGHT", "N", "PAD_UP", "TOUCH_NIGHT" },
+		{ "CONTROL_ITEMS", "1 – 4", "PAD_RIGHT_Y", "TOUCH_TAP" },
+		{ "CONTROL_MENU", "P", "View / Share", "II" },
+		{ "CONTROL_BACK", "Backspace", "B / Circle", "MENU_BACK" },
+	}
+
+	local function controlsList(startOrder: number)
+		local device = app.Input.GetDevice()
+		local column = if device == "gamepad" then 3 elseif device == "touch" then 4 else 2
+		Components.Text({ Key = "CONTROL_DEVICE_" .. string.upper(device), Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Accent, LayoutOrder = startOrder, Parent = scroll })
+		for index, row in CONTROLS do
+			local binding = row[column]
+			local line = Components.Text({ Key = row[1], TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.Text, LayoutOrder = startOrder + index, Parent = scroll })
+			Components.Text({
+				Text = if string.match(binding, "^[A-Z_]+$") and Localization.Has(binding) then Localization.T(binding) else binding,
+				Font = Theme.Fonts.Mono,
+				TextSize = Theme.Sizes.TextSmall + 1,
+				Color = Theme.Colors.TextBright,
+				XAlign = Enum.TextXAlignment.Right,
+				Size = UDim2.fromScale(0.5, 1),
+				Position = UDim2.fromScale(0.5, 0),
+				Parent = line,
+			})
+		end
+	end
+
+	rebuild = function()
+	for _, child in scroll:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+	table.clear(rows)
+	table.clear(valueLabels)
+	focus = nil
 	for index, entry in Config.SettingsOrder do
+		if entry.category ~= currentCategory then
+			continue
+		end
 		local key = entry.key
 		-- Row button and value area are siblings (value area on top), so a tap on an
 		-- arrow is handled only by the arrow, never also by the row.
@@ -140,13 +193,44 @@ function Settings.new(router)
 		end
 	end
 
-	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 3, Parent = column, OnActivated = function()
+	if currentCategory == "controls" then
+		controlsList(100)
+	end
+	-- D-pad left/right must change values instead of moving focus out of the row.
+	for row in rows do
+		row.NextSelectionLeft = row
+		row.NextSelectionRight = row
+	end
+	refreshValues()
+	end
+
+	for index, category in Config.SettingsCategories do
+		local tab = Components.Button({ Key = Config.SettingsCategoryLabels[category], Height = 36, LayoutOrder = index, Parent = tabsRow, OnActivated = function()
+			currentCategory = category
+			for c, b in tabButtons do
+				b.SetFocused(c == category)
+			end
+			rebuild()
+		end })
+		tab.Instance.Size = UDim2.new(1 / #Config.SettingsCategories, -4, 1, 0)
+		tab.Label.TextSize = Theme.Sizes.TextSmall
+		tab.Label.TextTruncate = Enum.TextTruncate.AtEnd
+		tabButtons[category] = tab
+	end
+	rebuild()
+	tabButtons.general.SetFocused(true)
+
+	local back = Components.Button({ Key = "MENU_BACK", LayoutOrder = 4, Parent = column, OnActivated = function()
 		router:Pop()
 	end })
 	back.Instance.Size = UDim2.new(1, 0, 0, Theme.Sizes.Button)
 
-	refreshValues()
 	local connections = {
+		app.Input.DeviceChanged:Connect(function()
+			if currentCategory == "controls" then
+				rebuild()
+			end
+		end),
 		settings.Changed:Connect(refreshValues),
 		Localization.Changed:Connect(refreshValues),
 		UserInputService.InputBegan:Connect(function(input)
@@ -163,15 +247,9 @@ function Settings.new(router)
 		end),
 	}
 
-	-- D-pad left/right must change values instead of moving focus out of the row.
-	for row in rows do
-		row.NextSelectionLeft = row
-		row.NextSelectionRight = row
-	end
-
 	return {
 		Root = root,
-		Focus = focus,
+		Focus = tabButtons.general.Instance,
 		Destroy = function()
 			for _, connection in connections do
 				connection:Disconnect()

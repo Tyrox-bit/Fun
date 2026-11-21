@@ -24,6 +24,7 @@ local EVENTS = {
 	"Scare", -- S->C (beat, data) HorrorDirector moments (often for ONE player only)
 	"Decision", -- S->C (decision | nil) open / update / close a team decision
 	"DecisionVote", -- C->S (decisionId, optionIndex)
+	"UseItem", -- C->S (slot)
 }
 
 local FUNCTIONS = {

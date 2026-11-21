@@ -19,8 +19,20 @@ local Net = require(Shared.Net)
 local AudioController = {}
 
 local groups: { [string]: SoundGroup } = {}
+local settings = nil
+local scareFactor = 0.85
+local duckFactor = 1
+local inMenu = true
+local tension: { [string]: Sound? } = {}
+local tensionLevel = { music_menu = 0, tension_low = 0, tension_high = 0 }
+local currentReverb: Enum.ReverbType? = nil
+
 local BUILDING_MIN = Vector3.new(-100, -5, -85)
 local BUILDING_MAX = Vector3.new(100, 20, 85)
+
+local function insideBuilding(position: Vector3): boolean
+	return position.X > BUILDING_MIN.X and position.X < BUILDING_MAX.X and position.Z > BUILDING_MIN.Z and position.Z < BUILDING_MAX.Z and position.Y < BUILDING_MAX.Y
+end
 
 local function group(name: string, volume: number): SoundGroup
 	local g = Instance.new("SoundGroup")
@@ -94,15 +106,99 @@ function AudioController.Loop(name: string, parent: Instance, volume: number, gr
 	return sound
 end
 
--- Lowers ambience while important voices/radio play (simple ducking).
-function AudioController.Duck(active: boolean)
-	local target = if active then 0.45 else 1
-	TweenService:Create(groups.Ambience, TweenInfo.new(0.4), { Volume = target }):Play()
+local function setting(key: string): number
+	local value = settings and settings.Get(key)
+	return (if type(value) == "number" then value else 10) / 10
 end
 
-local function insideBuilding(position: Vector3): boolean
-	return position.X > BUILDING_MIN.X and position.X < BUILDING_MAX.X and position.Z > BUILDING_MIN.Z and position.Z < BUILDING_MAX.Z and position.Y < BUILDING_MAX.Y
+-- Applies the volume sliders (Settings -> Audio) to the sound groups.
+function AudioController.ApplyVolumes()
+	if not groups.SFX then
+		return
+	end
+	local master = setting("volumeMaster")
+	groups.SFX.Volume = master * setting("volumeEffects")
+	groups.Creature.Volume = master * setting("volumeEffects") * scareFactor
+	groups.Ambience.Volume = master * setting("volumeAmbience") * duckFactor
+	groups.Music.Volume = master * setting("volumeMusic") * (0.6 + 0.4 * duckFactor)
+	groups.UI.Volume = master * setting("volumeUI")
 end
+
+-- Scare intensity / medic set dampen creature sounds.
+function AudioController.SetScareFactor(value: number)
+	scareFactor = value
+	AudioController.ApplyVolumes()
+end
+
+-- Lowers ambience and music while important voices/radio play.
+local duckToken = 0
+function AudioController.Duck(seconds: number)
+	duckToken += 1
+	local token = duckToken
+	duckFactor = 0.45
+	AudioController.ApplyVolumes()
+	task.delay(seconds, function()
+		if token == duckToken then
+			duckFactor = 1
+			AudioController.ApplyVolumes()
+		end
+	end)
+end
+
+function AudioController.SetMenu(value: boolean)
+	inMenu = value
+end
+
+local function updateMusic(position: Vector3, elapsed: number)
+	local targets = { music_menu = 0, tension_low = 0, tension_high = 0 }
+	if inMenu then
+		targets.music_menu = 0.6
+	else
+		local nearest, chasing = math.huge, false
+		for _, model in CollectionService:GetTagged("FZ_CreatureRig") do
+			local root = model:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") and model ~= Players.LocalPlayer.Character and not model:GetAttribute("Hidden") then
+				local d = (root.Position - position).Magnitude
+				if d < nearest then
+					nearest = d
+					chasing = model:GetAttribute("State") == "Chase" or model:GetAttribute("State") == "Attack"
+				end
+			end
+		end
+		if chasing and nearest < 90 then
+			targets.tension_high, targets.tension_low = 0.8, 0.3
+		elseif nearest < 45 then
+			targets.tension_low = 0.75
+		elseif nearest < math.huge then
+			targets.tension_low = 0.25
+		end
+	end
+	for name, target in targets do
+		local sound = tension[name]
+		if sound then
+			-- fade in slowly, fade out a bit faster (silence is a tool)
+			local speed = if target > tensionLevel[name] then 0.6 else 1.2
+			tensionLevel[name] += (target - tensionLevel[name]) * math.min(1, elapsed * speed)
+			sound.Volume = tensionLevel[name]
+		end
+	end
+end
+
+local function updateReverb(position: Vector3)
+	local reverb
+	if math.abs(position.X) < 22 and math.abs(position.Z) < 22 then
+		reverb = Enum.ReverbType.ConcertHall -- the round core
+	elseif insideBuilding(position) then
+		reverb = Enum.ReverbType.Hallway
+	else
+		reverb = Enum.ReverbType.Forest
+	end
+	if reverb ~= currentReverb then
+		currentReverb = reverb
+		SoundService.AmbientReverb = reverb
+	end
+end
+
 
 local function materialSound(material: Enum.Material): string
 	if material == Enum.Material.Metal or material == Enum.Material.DiamondPlate or material == Enum.Material.CorrodedMetal then
@@ -113,11 +209,22 @@ local function materialSound(material: Enum.Material): string
 	return "footstep_concrete_" .. math.random(1, 3)
 end
 
-function AudioController.Init()
+function AudioController.Init(settingsController)
+	settings = settingsController
 	group("Ambience", 1)
 	group("SFX", 1)
 	group("Creature", 1)
 	group("UI", 0.7)
+	group("Music", 0.6)
+	AudioController.ApplyVolumes()
+	settingsController.Changed:Connect(function(key)
+		if string.sub(key, 1, 6) == "volume" then
+			AudioController.ApplyVolumes()
+		end
+	end)
+	for name in tensionLevel do
+		tension[name] = AudioController.Loop(name, SoundService, 0, "Music")
+	end
 
 	-- Ambient beds (2D), crossfaded by position
 	local wind = AudioController.Loop("ambience_wind_loop", SoundService, 0)
@@ -165,6 +272,8 @@ function AudioController.Init()
 			return
 		end
 		local inside = insideBuilding(camera.CFrame.Position)
+		updateMusic(camera.CFrame.Position, elapsed)
+		updateReverb(camera.CFrame.Position)
 		if wind then
 			wind.Volume += ((if inside then 0.12 else 0.55) - wind.Volume) * math.min(1, elapsed * 2)
 		end

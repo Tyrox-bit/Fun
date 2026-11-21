@@ -28,6 +28,7 @@ local DoorService = require(Services.DoorService)
 local LeaderboardService = require(Services.LeaderboardService)
 local ForecastService = require(Services.ForecastService)
 local DirectorService = require(Services.DirectorService)
+local InventoryService = require(Services.InventoryService)
 
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
@@ -318,6 +319,7 @@ completeTask = function(r: Run)
 		end
 	end
 	say("SV_SHIFT_DONE", { shift = r.shift })
+	InventoryService.SpawnWorldItems(Config.Inventory.SurvivalItemsPerBreak)
 	objective("SV_BREAK", { seconds = SC.BreakSeconds })
 	SessionState.Set("SvBreakEnds", workspace:GetServerTimeNow() + SC.BreakSeconds)
 	publish()

@@ -131,8 +131,8 @@ end
 
 local function flicker()
 	local camera = workspace.CurrentCamera
-	if not camera then
-		return
+	if not camera or (settings and settings.Get("reduceFlicker")) then
+		return -- accessibility: no light flicker at all
 	end
 	local lights = {}
 	for _, fixture in CollectionService:GetTagged("FZ_SectorLight") do

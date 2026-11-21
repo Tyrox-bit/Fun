@@ -652,6 +652,19 @@ local function furnish()
 		patrol(node[1], node[2])
 	end
 
+	-- Item spots (bandages / syringes are placed at random spots per session)
+	for _, cf in {
+		CFrame.new(69, 3.45, -10), CFrame.new(80, 3.45, 10), CFrame.new(57.2, 2.2, -52), CFrame.new(-60, 3.45, -40.8),
+		CFrame.new(-86, 3.4, 5), CFrame.new(-68, 3.4, -15), CFrame.new(-90, 0.4, 82), CFrame.new(62, 3.45, 45),
+		CFrame.new(-30, 0.4, -58), CFrame.new(30, 0.4, 58), CFrame.new(4, 0.4, -16), CFrame.new(90, 3.2, -30),
+	} do
+		local spot = block(props, "ItemSpot", Vector3.new(1, 1, 1), cf, C.Concrete)
+		spot.Transparency = 1
+		spot.CanCollide = false
+		spot.CanQuery = false
+		CollectionService:AddTag(spot, "FZ_ItemSpot")
+	end
+
 	local spawn = block(props, "CreatureSpawn", Vector3.new(2, 1, 2), CFrame.new(-80, 3, -78), C.Concrete)
 	spawn.Transparency = 1
 	spawn.CanCollide = false

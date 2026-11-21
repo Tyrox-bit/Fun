@@ -62,11 +62,17 @@ function HealthController.Init(hudGui: ScreenGui, settings)
 		end
 		local function update()
 			local ratio = math.clamp(humanoid.Health / math.max(1, humanoid.MaxHealth), 0, 1)
-			bar.Visible = ratio < 0.999 and player:GetAttribute("FZ_InGame") == true and not player:GetAttribute("FZ_MonsterMode")
+			bar.Visible = (ratio < 0.999 or settings.Get("alwaysShowHealth") == true) and player:GetAttribute("FZ_InGame") == true and not player:GetAttribute("FZ_MonsterMode")
 			fill.Size = UDim2.fromScale(ratio, 1)
 			fill.BackgroundColor3 = if ratio < 0.35 then Theme.Colors.Accent else Theme.Colors.TextBright
 		end
 		humanoid.HealthChanged:Connect(update)
+		settings.Changed:Connect(function(key)
+			if key == "alwaysShowHealth" then
+				update()
+			end
+		end)
+		player:GetAttributeChangedSignal("FZ_InGame"):Connect(update)
 		update()
 	end
 	player.CharacterAdded:Connect(bindHumanoid)

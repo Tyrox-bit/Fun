@@ -112,6 +112,44 @@ def check(path: Path) -> list:
     return problems
 
 
+LOCAL_FN = re.compile(r"^\s*local\s+function\s+([A-Za-z_][A-Za-z0-9_]*)", re.M)
+LOCAL_VAR = re.compile(r"^\s*local\s+([A-Za-z_][A-Za-z0-9_]*)\b", re.M)
+
+
+def strip_code(text: str) -> str:
+    """Removes comments and string contents (keeps line structure)."""
+    out = []
+    for match in TOKEN.finditer(text):
+        kind = match.lastgroup
+        value = match.group(0)
+        if kind in ("comment", "longcomment", "string", "longstring"):
+            out.append("\n" * value.count("\n") + (" " if "\n" not in value else ""))
+        else:
+            out.append(value)
+    return "".join(out)
+
+
+def check_use_before_declare(path: Path) -> list:
+    """Flags `foo(` used above `local function foo` (Luau resolves locals lexically,
+    so such a call reads a nil global at runtime)."""
+    code = strip_code(path.read_text(encoding="utf-8"))
+    lines = code.splitlines()
+    problems = []
+    for match in LOCAL_FN.finditer(code):
+        name = match.group(1)
+        decl_line = code.count("\n", 0, match.start())
+        first_decl = decl_line
+        for var in LOCAL_VAR.finditer(code):
+            if var.group(1) == name:
+                first_decl = min(first_decl, code.count("\n", 0, var.start()))
+        use = re.compile(r"(?<![.:\w])" + re.escape(name) + r"\b")
+        for number in range(first_decl):
+            if use.search(lines[number]):
+                problems.append(f"{path}:{number + 1}: '{name}' used before 'local function {name}' (line {decl_line + 1})")
+                break
+    return problems
+
+
 def main() -> int:
     targets = [Path(p) for p in sys.argv[1:]] or [ROOT / "src"]
     files = []
@@ -120,6 +158,7 @@ def main() -> int:
     problems = []
     for file in files:
         problems.extend(check(file))
+        problems.extend(check_use_before_declare(file))
     print(f"checked {len(files)} Luau files")
     if problems:
         print("\n".join(problems))

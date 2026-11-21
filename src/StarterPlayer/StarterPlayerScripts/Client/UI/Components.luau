@@ -8,6 +8,15 @@ local TweenService = game:GetService("TweenService")
 
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 local Theme = require(script.Parent.Theme)
+local AudioController = require(script.Parent.Parent.Controllers.AudioController)
+
+local lastFocusSound = 0
+local function focusSound()
+	if os.clock() - lastFocusSound > 0.06 then
+		lastFocusSound = os.clock()
+		AudioController.UI("ui_focus")
+	end
+end
 
 local Components = {}
 
@@ -225,6 +234,9 @@ function Components.Button(props: ButtonProps): Button
 
 	button.MouseEnter:Connect(function()
 		hovered = true
+		if not disabled then
+			focusSound()
+		end
 		render()
 	end)
 	button.MouseLeave:Connect(function()
@@ -233,6 +245,7 @@ function Components.Button(props: ButtonProps): Button
 	end)
 	button.SelectionGained:Connect(function()
 		focused = true
+		focusSound()
 		render()
 	end)
 	button.SelectionLost:Connect(function()
@@ -243,6 +256,7 @@ function Components.Button(props: ButtonProps): Button
 		if disabled or not props.OnActivated then
 			return
 		end
+		AudioController.UI("ui_select")
 		props.OnActivated()
 	end)
 

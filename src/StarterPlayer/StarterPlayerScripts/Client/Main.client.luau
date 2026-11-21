@@ -7,7 +7,6 @@
 
 local CollectionService = game:GetService("CollectionService")
 local HttpService = game:GetService("HttpService")
-local SoundService = game:GetService("SoundService")
 local LocalizationService = game:GetService("LocalizationService")
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -42,6 +41,7 @@ local CreatureVisualsController = require(Controllers.CreatureVisualsController)
 local HealthController = require(Controllers.HealthController)
 local EquipmentController = require(Controllers.EquipmentController)
 local DirectorController = require(Controllers.DirectorController)
+local InventoryController = require(Controllers.InventoryController)
 local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
@@ -207,7 +207,13 @@ DebugOverlay.Init(hudGui, {
 })
 MovementController.Init(SettingsController, Hud.SetStamina)
 FlashlightController.Init()
-AudioController.Init()
+AudioController.Init(SettingsController)
+VoiceController.SetVolume((SettingsController.Get("volumeVoice") or 10) / 10)
+SettingsController.Changed:Connect(function(key, value)
+	if key == "volumeVoice" then
+		VoiceController.SetVolume(value / 10)
+	end
+end)
 VoiceController.Init()
 RadioController.Init(hudGui, SettingsController)
 CreatureVisualsController.Init(Hud.ShowSubtitle)
@@ -215,6 +221,7 @@ HealthController.Init(hudGui, SettingsController)
 EquipmentController.Init()
 DirectorController.Init(SettingsController, Hud.ShowSubtitle)
 DecisionPanel.Init(hudGui, InputController)
+InventoryController.Init(hudGui)
 
 -- Forecast countdown (the prediction you can break)
 local function updateForecast()
@@ -238,15 +245,12 @@ end)
 
 -- Scare intensity: creature sounds are mixed down on "reduced" (medic set dampens too).
 local function applyScareMix()
-	local group = SoundService:FindFirstChild("FZ_Creature")
-	if group and group:IsA("SoundGroup") then
-		local level = SettingsController.Get("scareIntensity")
-		local volume = if level == "reduced" then 0.55 elseif level == "intense" then 1 else 0.85
-		if player:GetAttribute("FZ_ScareDampening") then
-			volume *= 0.8
-		end
-		group.Volume = volume
+	local level = SettingsController.Get("scareIntensity")
+	local volume = if level == "reduced" then 0.55 elseif level == "intense" then 1 else 0.85
+	if player:GetAttribute("FZ_ScareDampening") then
+		volume *= 0.8
 	end
+	AudioController.SetScareFactor(volume)
 end
 applyScareMix()
 SettingsController.Changed:Connect(applyScareMix)
@@ -329,6 +333,7 @@ function app.HasNewUpdate(): boolean
 end
 
 local function enterGame()
+	AudioController.SetMenu(false)
 	state = "playing"
 	router:Clear()
 	backdrop.Visible = false
@@ -338,6 +343,7 @@ local function enterGame()
 end
 
 local function showMainMenu()
+	AudioController.SetMenu(true)
 	state = "menu"
 	setGameplay(false)
 	backdrop.Visible = true
@@ -380,6 +386,7 @@ end
 
 -- Close the menu (pause) or, for owner tests, walk around without a session.
 function app.Resume()
+	AudioController.SetMenu(false)
 	if state == "paused" or state == "menu" then
 		state = "playing"
 		router:Clear()

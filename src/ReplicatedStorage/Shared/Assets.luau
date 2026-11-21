@@ -11,6 +11,9 @@
 
 return {
 	Sounds = {
+		music_menu = "",
+		tension_low = "",
+		tension_high = "",
 		radio_static_loop = "",
 		radio_squelch_on = "",
 		radio_squelch_off = "",

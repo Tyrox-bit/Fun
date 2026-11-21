@@ -300,6 +300,35 @@ def stinger_low():
     return normalize(s, -8)
 
 
+def music_menu():
+    seconds = 24
+    x = t(seconds)
+    s = np.zeros_like(x)
+    for f, phase in ((55, 0), (82.4, 1.3), (110, 2.1), (164.8, 0.4)):
+        s += np.sin(2 * np.pi * f * x + phase) * (0.6 + 0.4 * np.sin(2 * np.pi * 0.05 * x + phase))
+    s = lowpass(s, 900) + bandpass(noise(seconds), 300, 1200) * 0.05
+    return make_loop(normalize(s, -20), 2.0)
+
+
+def tension_low():
+    seconds = 16
+    x = t(seconds)
+    s = np.sin(2 * np.pi * 41.2 * x) + 0.5 * np.sin(2 * np.pi * 43.6 * x)  # slow beating
+    s += bandpass(noise(seconds), 60, 400) * 0.4 * (0.6 + 0.4 * np.sin(2 * np.pi * 0.09 * x))
+    return make_loop(normalize(s, -20), 1.5)
+
+
+def tension_high():
+    seconds = 8
+    x = t(seconds)
+    pulse = (np.sin(2 * np.pi * 1.6 * x) > 0.6).astype(float)
+    pulse = lowpass(pulse, 30)
+    s = np.sin(2 * np.pi * 55 * x) * pulse * 0.9
+    s += sum(np.sin(2 * np.pi * f * x) for f in (233.1, 246.9)) * 0.12  # dissonant minor second
+    s += bandpass(noise(seconds), 2000, 6000) * 0.05
+    return make_loop(normalize(s, -14), 0.5)
+
+
 SOUNDS = {
     "radio_static_loop": radio_static_loop,
     "radio_squelch_on": radio_squelch_on,
@@ -329,6 +358,10 @@ SOUNDS = {
     "ui_focus": ui_focus,
     "ui_select": ui_select,
     "stinger_low": stinger_low,
+    # 0.4 additions (appended at the end so earlier sounds stay identical)
+    "music_menu": music_menu,
+    "tension_low": tension_low,
+    "tension_high": tension_high,
 }
 
 

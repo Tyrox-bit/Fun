@@ -27,6 +27,7 @@ local CreatureService = require(script.Parent.CreatureService)
 local HealthService = require(script.Parent.HealthService)
 local PowerService = require(script.Parent.PowerService)
 local DoorService = require(script.Parent.DoorService)
+local InventoryService = require(script.Parent.InventoryService)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
 local SessionService = {}
@@ -108,6 +109,7 @@ local function cleanWorld()
 	PowerService.Reset()
 	DoorService.CloseAll()
 	HealthService.HealAll()
+	InventoryService.ClearWorld()
 end
 
 local function start(mode: string, contentId: string): boolean
@@ -126,6 +128,7 @@ local function start(mode: string, contentId: string): boolean
 	SessionState.Set("Mode", mode)
 	SessionState.Set("ContentId", contentId)
 	module.Begin(entry)
+	InventoryService.SpawnWorldItems(Config.Inventory.WorldItems)
 	return true
 end
 
@@ -134,6 +137,7 @@ local function leave(player: Player, respawn: boolean)
 		return
 	end
 	inGame[player] = nil
+	InventoryService.Clear(player)
 	player:SetAttribute("FZ_InGame", false)
 	player:SetAttribute("FZ_Downed", false)
 	if respawn and player.Parent and not player:GetAttribute("FZ_MonsterMode") then
@@ -171,6 +175,9 @@ local function join(player: Player)
 	placeAtCheckpoint(player)
 	local firstTime = not entered[player]
 	entered[player] = true
+	if firstTime then
+		InventoryService.Reset(player)
+	end
 	if current.module.OnPlayerEntered then
 		task.spawn(current.module.OnPlayerEntered, player, firstTime)
 	end

@@ -15,6 +15,7 @@ local GuiService = game:GetService("GuiService")
 local Localization = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Localization"))
 
 local Components = require(script.Parent.Components)
+local AudioController = require(script.Parent.Parent.Controllers.AudioController)
 local Theme = require(script.Parent.Theme)
 
 local Hud = {}
@@ -113,6 +114,9 @@ function Hud.ShowSubtitle(line: { [string]: any })
 	TweenService:Create(label, Theme.Fast, { TextTransparency = 0, TextStrokeTransparency = 0.45 }):Play()
 
 	local duration = math.clamp(tonumber(line.duration) or 4, 1.5, 12)
+	if line.speaker then
+		AudioController.Duck(duration) -- voices sit on top of the mix
+	end
 	local entry: ActiveLine = { label = label, line = line, expires = os.clock() + duration }
 	table.insert(activeLines, entry)
 	task.delay(duration, function()
@@ -295,7 +299,7 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 	subtitleFrame.Name = "Subtitles"
 	subtitleFrame.BackgroundTransparency = 1
 	subtitleFrame.AnchorPoint = Vector2.new(0.5, 1)
-	subtitleFrame.Position = UDim2.new(0.5, 0, 1, -24)
+	subtitleFrame.Position = UDim2.new(0.5, 0, 1, -96) -- above the hotbar
 	subtitleFrame.Size = UDim2.new(0.62, 0, 0.4, 0)
 	subtitleFrame.Parent = gui
 	local subtitleLayout = Components.List(subtitleFrame, 6)

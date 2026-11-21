@@ -52,6 +52,14 @@ Config.Settings = {
 		default = "auto",
 	},
 	brightness = { kind = "int", min = 0, max = 10, default = 5 },
+	volumeMaster = { kind = "int", min = 0, max = 10, default = 8 },
+	volumeEffects = { kind = "int", min = 0, max = 10, default = 10 },
+	volumeAmbience = { kind = "int", min = 0, max = 10, default = 8 },
+	volumeVoice = { kind = "int", min = 0, max = 10, default = 10 },
+	volumeMusic = { kind = "int", min = 0, max = 10, default = 6 },
+	volumeUI = { kind = "int", min = 0, max = 10, default = 6 },
+	reduceFlicker = { kind = "bool", default = false },
+	alwaysShowHealth = { kind = "bool", default = false },
 	radioMode = {
 		kind = "enum",
 		values = { "hold", "toggle" },
@@ -61,15 +69,33 @@ Config.Settings = {
 }
 
 -- Display order + localization keys for the settings screen.
+Config.SettingsCategories = { "general", "graphics", "audio", "controls", "accessibility" }
+Config.SettingsCategoryLabels = {
+	general = "SETTINGS_CAT_GENERAL",
+	graphics = "SETTINGS_CAT_GRAPHICS",
+	audio = "SETTINGS_CAT_AUDIO",
+	controls = "SETTINGS_CAT_CONTROLS",
+	accessibility = "SETTINGS_CAT_ACCESS",
+}
+
+-- Display order, category + localization keys for the settings screen.
 Config.SettingsOrder = {
-	{ key = "language", label = "SETTINGS_LANGUAGE" },
-	{ key = "subtitles", label = "SETTINGS_SUBTITLES" },
-	{ key = "subtitleSize", label = "SETTINGS_SUBTITLE_SIZE" },
-	{ key = "scareIntensity", label = "SETTINGS_SCARE", description = "SETTINGS_SCARE_DESC" },
-	{ key = "cameraEffects", label = "SETTINGS_CAMERA", description = "SETTINGS_CAMERA_DESC" },
-	{ key = "graphics", label = "SETTINGS_GRAPHICS", description = "SETTINGS_GRAPHICS_DESC" },
-	{ key = "brightness", label = "SETTINGS_BRIGHTNESS", description = "SETTINGS_BRIGHTNESS_DESC" },
-	{ key = "radioMode", label = "SETTINGS_RADIO_MODE", description = "SETTINGS_RADIO_MODE_DESC" },
+	{ key = "language", category = "general", label = "SETTINGS_LANGUAGE" },
+	{ key = "subtitles", category = "general", label = "SETTINGS_SUBTITLES" },
+	{ key = "subtitleSize", category = "general", label = "SETTINGS_SUBTITLE_SIZE" },
+	{ key = "graphics", category = "graphics", label = "SETTINGS_GRAPHICS", description = "SETTINGS_GRAPHICS_DESC" },
+	{ key = "brightness", category = "graphics", label = "SETTINGS_BRIGHTNESS", description = "SETTINGS_BRIGHTNESS_DESC" },
+	{ key = "cameraEffects", category = "graphics", label = "SETTINGS_CAMERA", description = "SETTINGS_CAMERA_DESC" },
+	{ key = "volumeMaster", category = "audio", label = "SETTINGS_VOL_MASTER" },
+	{ key = "volumeEffects", category = "audio", label = "SETTINGS_VOL_EFFECTS" },
+	{ key = "volumeAmbience", category = "audio", label = "SETTINGS_VOL_AMBIENCE" },
+	{ key = "volumeVoice", category = "audio", label = "SETTINGS_VOL_VOICE", description = "SETTINGS_VOL_VOICE_DESC" },
+	{ key = "volumeMusic", category = "audio", label = "SETTINGS_VOL_MUSIC" },
+	{ key = "volumeUI", category = "audio", label = "SETTINGS_VOL_UI" },
+	{ key = "radioMode", category = "controls", label = "SETTINGS_RADIO_MODE", description = "SETTINGS_RADIO_MODE_DESC" },
+	{ key = "scareIntensity", category = "accessibility", label = "SETTINGS_SCARE", description = "SETTINGS_SCARE_DESC" },
+	{ key = "reduceFlicker", category = "accessibility", label = "SETTINGS_FLICKER", description = "SETTINGS_FLICKER_DESC" },
+	{ key = "alwaysShowHealth", category = "accessibility", label = "SETTINGS_HEALTH", description = "SETTINGS_HEALTH_DESC" },
 }
 
 function Config.ValidateSetting(key: any, value: any): (boolean, any)
@@ -217,6 +243,22 @@ Config.Survival = {
 	MaxSpeedScale = 1.25,
 	MaxHearingScale = 1.6,
 	SessionIdleEnd = 20, -- seconds without players in game before a session ends
+}
+
+---------------------------------------------------------------------------
+-- Items (hotbar). Found in the world; medic set starts with some.
+---------------------------------------------------------------------------
+Config.Items = {
+	bandage = { name = "ITEM_BANDAGE", heal = 35, useTime = 1.5 },
+	syringe = { name = "ITEM_SYRINGE", heal = 100, useTime = 1 },
+}
+Config.Inventory = {
+	Slots = 3,
+	TechnicianSlots = 4,
+	MedicHealBonus = 1.5,
+	MedicStart = { "bandage", "bandage", "syringe" },
+	WorldItems = 4, -- placed at random FZ_ItemSpot spots when a session starts
+	SurvivalItemsPerBreak = 2,
 }
 
 Config.Rewards = {
