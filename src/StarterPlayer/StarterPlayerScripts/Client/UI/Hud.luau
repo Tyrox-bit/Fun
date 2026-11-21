@@ -272,6 +272,19 @@ function Hud.SetStatus(key: string?, params: { [string]: any }?, suffixKey: stri
 	label.Visible = true
 end
 
+-- Forecast line (top centre, under the status line): "FORECAST · Lights in Sector A · 0:24"
+local forecastLine: TextLabel? = nil
+function Hud.SetForecast(key: string?, seconds: number?)
+	local label = forecastLine :: TextLabel
+	if not key then
+		label.Visible = false
+		return
+	end
+	local s = math.max(0, math.floor(seconds or 0))
+	label.Text = Localization.T("FORECAST_LABEL", { text = Localization.T(key), time = string.format("%d:%02d", s // 60, s % 60) })
+	label.Visible = true
+end
+
 function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callbacks: { onOpen: () -> (), onClose: () -> () })
 	gui = hudGui
 	settings = settingsController
@@ -306,6 +319,10 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 	statusLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Radio, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.6, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 52), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
 	;(statusLine :: TextLabel).TextStrokeTransparency = 0.5
 	;(statusLine :: TextLabel).Visible = false
+
+	forecastLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Relay, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.7, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 74), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
+	;(forecastLine :: TextLabel).TextStrokeTransparency = 0.5
+	;(forecastLine :: TextLabel).Visible = false
 
 	staminaTrack = Instance.new("Frame")
 	staminaTrack.Name = "Stamina"

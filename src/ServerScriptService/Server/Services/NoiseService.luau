@@ -12,6 +12,13 @@ local Signal = require(Shared.Signal)
 local NoiseService = {}
 NoiseService.Heard = Signal.new() -- (position: Vector3, radius: number, source: Player?)
 
+local footstepScale = 1
+
+-- Story systems can mask footsteps (e.g. loud ventilation fans): 0.6 = 40 % quieter.
+function NoiseService.SetFootstepScale(value: number)
+	footstepScale = value
+end
+
 function NoiseService.Emit(position: Vector3, radius: number, source: Player?)
 	NoiseService.Heard:Fire(position, radius, source)
 end
@@ -28,9 +35,9 @@ function NoiseService.Start()
 					local velocity = root.AssemblyLinearVelocity
 					local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
 					if speed > Config.Movement.WalkSpeed + 2 then
-						NoiseService.Emit(root.Position, Config.Noise.Sprint, player)
+						NoiseService.Emit(root.Position, Config.Noise.Sprint * footstepScale, player)
 					elseif speed > 3 then
-						NoiseService.Emit(root.Position, Config.Noise.Walk, player)
+						NoiseService.Emit(root.Position, Config.Noise.Walk * footstepScale, player)
 					end
 				end
 			end

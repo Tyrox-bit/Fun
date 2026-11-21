@@ -56,7 +56,8 @@ type Creature = {
 
 local creatures: { Creature } = {}
 local aiEnabled = true
-local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance }
+local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance, sight = 1 }
+local ventsEnabled = true -- story: only when the ventilation has power
 
 local function alive(c: Creature): boolean
 	return table.find(creatures, c) ~= nil and c.model.Parent ~= nil
@@ -147,7 +148,7 @@ local function findVisiblePlayer(c: Creature): (Player?, number)
 		local target = (head :: BasePart).Position
 		local offset = target - eye
 		local distance = offset.Magnitude
-		if distance < CC.SightRange then
+		if distance < CC.SightRange * difficulty.sight then
 			local direction = flat(offset)
 			local angle = if direction.Magnitude > 0 then math.deg(math.acos(math.clamp(look:Dot(direction.Unit), -1, 1))) else 0
 			if (angle <= CC.SightAngle or distance < 9) and hasLineOfSight(c, eye, target, { character }) then
@@ -406,7 +407,7 @@ local function step(c: Creature)
 			c.searchCenter = c.lastSeenPosition
 			c.target = c.lastSeenPosition
 			-- Sometimes it takes the vents instead of following
-			if c.lastSeenPosition and math.random() < difficulty.ventChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
+			if ventsEnabled and c.lastSeenPosition and math.random() < difficulty.ventChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
 				task.spawn(travelVent, c, c.lastSeenPosition)
 				return
 			end
@@ -555,9 +556,30 @@ end
 
 -- speed / hearing multipliers and vent chance (survival difficulty curve)
 function CreatureService.SetDifficulty(values: { speed: number?, hearing: number?, ventChance: number? })
+	if next(values) == nil then
+		difficulty.sight = 1
+		ventsEnabled = true
+	end
 	difficulty.speed = values.speed or 1
 	difficulty.hearing = values.hearing or 1
 	difficulty.ventChance = values.ventChance or CC.VentChance
+end
+
+function CreatureService.SetVentsEnabled(value: boolean)
+	ventsEnabled = value
+end
+
+function CreatureService.SetSightScale(value: number)
+	difficulty.sight = value
+end
+
+function CreatureService.IsChasingNear(position: Vector3, radius: number): boolean
+	for _, c in creatures do
+		if (c.state == "Chase" or c.state == "Attack") and (c.root.Position - position).Magnitude < radius then
+			return true
+		end
+	end
+	return false
 end
 
 function CreatureService.Count(): number

@@ -1080,6 +1080,71 @@ return {
 	SV_NEW_BEST = "Neuer persönlicher Bestwert!",
 	INTERACT_RESTART = "Neu starten",
 	OBJECT_GENERATOR = "Generator",
+
+	-- 0.4: decisions, power, forecasts, director, hints
+	DECISION_C1_ANSWER = "Die Stimme bittet euch zu antworten. Tut ihr es?",
+	DECISION_ANSWER = "Antworten",
+	DECISION_SILENT = "Schweigen",
+	DECISION_VOTES = "{count}",
+	RADIO_C1_ASK = "Wenn das jemand hört … bitte antwortet. Bitte.",
+	RADIO_C1_ANSWERED = "Ihr hört uns? {name} … wir sind noch hier. Unten.",
+	RADIO_C1_RELAY_ANSWERED = "Ihr habt geantwortet. Genau wie wir damals.",
+	RADIO_C1_SILENT = "… Hallo? … Irgendwer?",
+	RADIO_C1_RELAY_SILENT = "Gut. Diesmal nicht.",
+	RADIO_C1_POWER = "Der Generator trägt nur zwei Systeme. Wählt am Schaltpult neben der Tür.",
+	RADIO_C1_POWER_NO_CAMERAS = "Keine Kameras. Ihr lauft blind. Es auch.",
+	RADIO_C1_POWER_NO_HALLS = "Dunkle Flure. Schwerer zu sehen – und schwerer, gesehen zu werden.",
+	RADIO_C1_POWER_NO_VENTS = "Keine Lüftung. Jetzt ist es still. Jeder Schritt zählt.",
+	OBJECTIVE_POWER = "Verteile den Notstrom ({count}/{total}).",
+	SYS_PANEL = "NOTSTROM · MAX. 2",
+	SYS_CAMERAS = "Kameras",
+	SYS_HALLS = "Flurlicht",
+	SYS_VENTS = "Lüftung",
+	SYS_FULL = "Nur zwei Systeme gleichzeitig. Schalte zuerst eins ab.",
+	INTERACT_SWITCH = "Umschalten",
+	RADIO_C1_FORECAST_GEN = "In vierzig Sekunden fällt der Generator in Sektor E aus. Startet ihn vorher neu.",
+	RADIO_C1_FORECAST_GEN_BROKEN = "Er läuft noch. Dann ist diese Nacht anders.",
+	FORECAST_LABEL = "PROGNOSE · {text} · {time}",
+	FORECAST_LIGHTS_A = "Licht aus in Sektor A",
+	FORECAST_GENERATOR_E = "Generator E fällt aus",
+	FORECAST_BLACKOUT_A = "Stromausfall in Sektor A",
+	SV_FORECAST_A = "In fünfunddreißig Sekunden wird Sektor A dunkel. Haltet seinen Schalter, wenn ihr das verhindern wollt.",
+	FORECAST_BLACKOUT_C = "Stromausfall in Sektor C",
+	SV_FORECAST_C = "In fünfunddreißig Sekunden wird Sektor C dunkel. Haltet seinen Schalter, wenn ihr das verhindern wollt.",
+	FORECAST_BLACKOUT_D = "Stromausfall in Sektor D",
+	SV_FORECAST_D = "In fünfunddreißig Sekunden wird Sektor D dunkel. Haltet seinen Schalter, wenn ihr das verhindern wollt.",
+	FORECAST_BLACKOUT_E = "Stromausfall in Sektor E",
+	SV_FORECAST_E = "In fünfunddreißig Sekunden wird Sektor E dunkel. Haltet seinen Schalter, wenn ihr das verhindern wollt.",
+	SV_EVN_FORECAST = "PROGNOSE",
+	RADIO_C1_CORE_ANSWERED = "{name}. Ihr habt wieder geantwortet. Diesmal nicht die linke Tür.",
+	RADIO_C1_ANTENNA_ANSWERED = "… ihr habt uns geantwortet. Warum geht ihr jetzt?",
+	RADIO_NAMECALL = "… {name}?",
+	RADIO_NAMECALL_ANSWERED = "{name}. Du hast geantwortet. Komm runter.",
+	CCTV_STAMP = "KAM 03 · FLUR · +00:{seconds}",
+	CCTV_AREA = "BEWEGUNG: {area}",
+	CCTV_OFFLINE = "KAMERAS OFFLINE",
+	CCTV_NONE = "KEINE BEWEGUNG",
+	AREA_A = "SEKTOR A",
+	AREA_B = "SEKTOR B",
+	AREA_C = "SEKTOR C",
+	AREA_D = "SEKTOR D",
+	AREA_E = "SEKTOR E",
+	AREA_CONTROL = "KONTROLLRAUM",
+	AREA_HALL = "FLURE",
+	AREA_UNKNOWN = "UNBEKANNT",
+	OBJECT_CALENDAR = "Kalender",
+	CAL_TITLE = "KALENDER · NOVEMBER 2009",
+	CAL_BODY = "Der Samstag, 14., ist zweimal eingekreist.\n\n„June – Nachtschicht. Kanal 0214 nicht beantworten, egal wer ruft. Auch nicht, wenn wir es sind.“\n\nDer Kaffee daneben ist noch warm.",
+	OBJECT_BREAKER_C = "Schalter Sektor C",
+	OBJECT_BREAKER_D = "Schalter Sektor D",
+	OBJECT_BREAKER_E = "Schalter Sektor E",
+	HINT_GATEHOUSE = "Die Pförtnerloge. Direkt hinter dem Tor, rechts. Das rote Licht.",
+	HINT_CONTROL = "Folgt der Straße zum Haupteingang. Der Kontrollraum liegt direkt dahinter.",
+	HINT_POWER = "Die Hebel sind an der Wand neben der Tür. Zwei von drei.",
+	HINT_FUSES = "Die Sicherungen leuchten. Sucht auf Tischen, Betten, Regalen und am Boden der Sektoren.",
+	HINT_RELAY = "Relais B ist an der hinteren Wand der Labore, westlich vom Kern.",
+	HINT_CORE = "Die Kerntüren sind jetzt offen. Die Konsole steht in der Mitte.",
+	HINT_ANTENNA = "Raus durch den Haupteingang, dann links über den Hof zum roten Turm.",
 }
 ]]></string>
             </Properties>
@@ -1383,6 +1448,71 @@ return {
 	SV_NEW_BEST = "New personal best!",
 	INTERACT_RESTART = "Restart",
 	OBJECT_GENERATOR = "Generator",
+
+	-- 0.4: decisions, power, forecasts, director, hints
+	DECISION_C1_ANSWER = "The voice is asking you to answer. Do you?",
+	DECISION_ANSWER = "Answer",
+	DECISION_SILENT = "Stay silent",
+	DECISION_VOTES = "{count}",
+	RADIO_C1_ASK = "If anyone hears this... please answer. Please.",
+	RADIO_C1_ANSWERED = "You hear us? {name}... we are still here. Down below.",
+	RADIO_C1_RELAY_ANSWERED = "You answered. Just like we did back then.",
+	RADIO_C1_SILENT = "...hello? ...Anyone?",
+	RADIO_C1_RELAY_SILENT = "Good. Not this time.",
+	RADIO_C1_POWER = "The generator only carries two systems. Choose at the panel by the door.",
+	RADIO_C1_POWER_NO_CAMERAS = "No cameras. You'll be walking blind. So will it.",
+	RADIO_C1_POWER_NO_HALLS = "Dark hallways. Harder to see – and harder to be seen.",
+	RADIO_C1_POWER_NO_VENTS = "No ventilation. It's quiet now. Every step counts.",
+	OBJECTIVE_POWER = "Distribute the emergency power ({count}/{total}).",
+	SYS_PANEL = "EMERGENCY POWER · MAX. 2",
+	SYS_CAMERAS = "Cameras",
+	SYS_HALLS = "Hall lights",
+	SYS_VENTS = "Ventilation",
+	SYS_FULL = "Only two systems at once. Switch one off first.",
+	INTERACT_SWITCH = "Switch",
+	RADIO_C1_FORECAST_GEN = "In forty seconds the generator in Sector E fails. Restart it before it does.",
+	RADIO_C1_FORECAST_GEN_BROKEN = "It's still running. Then this night is different.",
+	FORECAST_LABEL = "FORECAST · {text} · {time}",
+	FORECAST_LIGHTS_A = "Lights out in Sector A",
+	FORECAST_GENERATOR_E = "Generator E fails",
+	FORECAST_BLACKOUT_A = "Blackout in Sector A",
+	SV_FORECAST_A = "In thirty-five seconds Sector A goes dark. Hold its breaker if you want to stop it.",
+	FORECAST_BLACKOUT_C = "Blackout in Sector C",
+	SV_FORECAST_C = "In thirty-five seconds Sector C goes dark. Hold its breaker if you want to stop it.",
+	FORECAST_BLACKOUT_D = "Blackout in Sector D",
+	SV_FORECAST_D = "In thirty-five seconds Sector D goes dark. Hold its breaker if you want to stop it.",
+	FORECAST_BLACKOUT_E = "Blackout in Sector E",
+	SV_FORECAST_E = "In thirty-five seconds Sector E goes dark. Hold its breaker if you want to stop it.",
+	SV_EVN_FORECAST = "FORECAST",
+	RADIO_C1_CORE_ANSWERED = "{name}. You answered again. This time, not the left door.",
+	RADIO_C1_ANTENNA_ANSWERED = "...you answered us. Why are you leaving now?",
+	RADIO_NAMECALL = "...{name}?",
+	RADIO_NAMECALL_ANSWERED = "{name}. You answered. Come down.",
+	CCTV_STAMP = "CAM 03 · HALL · +00:{seconds}",
+	CCTV_AREA = "MOTION: {area}",
+	CCTV_OFFLINE = "CAMERAS OFFLINE",
+	CCTV_NONE = "NO MOTION",
+	AREA_A = "SECTOR A",
+	AREA_B = "SECTOR B",
+	AREA_C = "SECTOR C",
+	AREA_D = "SECTOR D",
+	AREA_E = "SECTOR E",
+	AREA_CONTROL = "CONTROL ROOM",
+	AREA_HALL = "HALLWAYS",
+	AREA_UNKNOWN = "UNKNOWN",
+	OBJECT_CALENDAR = "Calendar",
+	CAL_TITLE = "CALENDAR · NOVEMBER 2009",
+	CAL_BODY = "Sat 14 is circled twice.\n\n\"June – night shift. Don't answer the 0214 channel, no matter who is calling. Not even if it's us.\"\n\nThe coffee next to it is still warm.",
+	OBJECT_BREAKER_C = "Breaker Sector C",
+	OBJECT_BREAKER_D = "Breaker Sector D",
+	OBJECT_BREAKER_E = "Breaker Sector E",
+	HINT_GATEHOUSE = "The gatehouse. Right behind the gate, on the right. The red light.",
+	HINT_CONTROL = "Follow the road to the main entrance. The control room is right inside.",
+	HINT_POWER = "The levers are on the wall next to the door. Two of three.",
+	HINT_FUSES = "The fuses glow. Check desks, bunks, shelves and the floor of each sector.",
+	HINT_RELAY = "Relay B is on the far wall of the laboratories, west of the core.",
+	HINT_CORE = "The core doors are open now. The console is in the middle.",
+	HINT_ANTENNA = "Out through the main entrance, then left across the yard to the red tower.",
 }
 ]]></string>
             </Properties>
@@ -1686,6 +1816,71 @@ return {
 	SV_NEW_BEST = "¡Nuevo récord personal!",
 	INTERACT_RESTART = "Reiniciar",
 	OBJECT_GENERATOR = "Generador",
+
+	-- 0.4: decisions, power, forecasts, director, hints
+	DECISION_C1_ANSWER = "La voz les pide que respondan. ¿Lo hacen?",
+	DECISION_ANSWER = "Responder",
+	DECISION_SILENT = "Guardar silencio",
+	DECISION_VOTES = "{count}",
+	RADIO_C1_ASK = "Si alguien oye esto... por favor, respondan. Por favor.",
+	RADIO_C1_ANSWERED = "¿Nos oyen? {name}... seguimos aquí. Abajo.",
+	RADIO_C1_RELAY_ANSWERED = "Respondieron. Igual que nosotros entonces.",
+	RADIO_C1_SILENT = "...¿Hola? ...¿Alguien?",
+	RADIO_C1_RELAY_SILENT = "Bien. Esta vez no.",
+	RADIO_C1_POWER = "El generador solo aguanta dos sistemas. Elijan en el panel junto a la puerta.",
+	RADIO_C1_POWER_NO_CAMERAS = "Sin cámaras. Caminarán a ciegas. Él también.",
+	RADIO_C1_POWER_NO_HALLS = "Pasillos oscuros. Más difícil ver... y ser visto.",
+	RADIO_C1_POWER_NO_VENTS = "Sin ventilación. Ahora hay silencio. Cada paso cuenta.",
+	OBJECTIVE_POWER = "Distribuye la energía de emergencia ({count}/{total}).",
+	SYS_PANEL = "ENERGÍA DE EMERGENCIA · MÁX. 2",
+	SYS_CAMERAS = "Cámaras",
+	SYS_HALLS = "Luz de pasillos",
+	SYS_VENTS = "Ventilación",
+	SYS_FULL = "Solo dos sistemas a la vez. Apaga uno primero.",
+	INTERACT_SWITCH = "Conmutar",
+	RADIO_C1_FORECAST_GEN = "En cuarenta segundos falla el generador del sector E. Reinícienlo antes.",
+	RADIO_C1_FORECAST_GEN_BROKEN = "Sigue funcionando. Entonces esta noche es distinta.",
+	FORECAST_LABEL = "PRONÓSTICO · {text} · {time}",
+	FORECAST_LIGHTS_A = "Apagón en el sector A",
+	FORECAST_GENERATOR_E = "Falla el generador E",
+	FORECAST_BLACKOUT_A = "Apagón en el sector A",
+	SV_FORECAST_A = "En treinta y cinco segundos el sector A se queda a oscuras. Sujeten su interruptor si quieren evitarlo.",
+	FORECAST_BLACKOUT_C = "Apagón en el sector C",
+	SV_FORECAST_C = "En treinta y cinco segundos el sector C se queda a oscuras. Sujeten su interruptor si quieren evitarlo.",
+	FORECAST_BLACKOUT_D = "Apagón en el sector D",
+	SV_FORECAST_D = "En treinta y cinco segundos el sector D se queda a oscuras. Sujeten su interruptor si quieren evitarlo.",
+	FORECAST_BLACKOUT_E = "Apagón en el sector E",
+	SV_FORECAST_E = "En treinta y cinco segundos el sector E se queda a oscuras. Sujeten su interruptor si quieren evitarlo.",
+	SV_EVN_FORECAST = "PRONÓSTICO",
+	RADIO_C1_CORE_ANSWERED = "{name}. Volvieron a responder. Esta vez, no la puerta de la izquierda.",
+	RADIO_C1_ANTENNA_ANSWERED = "...nos respondieron. ¿Por qué se van ahora?",
+	RADIO_NAMECALL = "...¿{name}?",
+	RADIO_NAMECALL_ANSWERED = "{name}. Respondiste. Baja.",
+	CCTV_STAMP = "CÁM 03 · PASILLO · +00:{seconds}",
+	CCTV_AREA = "MOVIMIENTO: {area}",
+	CCTV_OFFLINE = "CÁMARAS DESCONECTADAS",
+	CCTV_NONE = "SIN MOVIMIENTO",
+	AREA_A = "SECTOR A",
+	AREA_B = "SECTOR B",
+	AREA_C = "SECTOR C",
+	AREA_D = "SECTOR D",
+	AREA_E = "SECTOR E",
+	AREA_CONTROL = "SALA DE CONTROL",
+	AREA_HALL = "PASILLOS",
+	AREA_UNKNOWN = "DESCONOCIDO",
+	OBJECT_CALENDAR = "Calendario",
+	CAL_TITLE = "CALENDARIO · NOVIEMBRE 2009",
+	CAL_BODY = "El sábado 14 está marcado dos veces.\n\n«June: turno de noche. No respondas al canal 0214, llame quien llame. Ni aunque seamos nosotros.»\n\nEl café de al lado sigue caliente.",
+	OBJECT_BREAKER_C = "Interruptor del sector C",
+	OBJECT_BREAKER_D = "Interruptor del sector D",
+	OBJECT_BREAKER_E = "Interruptor del sector E",
+	HINT_GATEHOUSE = "La caseta. Justo detrás del portón, a la derecha. La luz roja.",
+	HINT_CONTROL = "Sigan la carretera hasta la entrada principal. La sala de control está justo detrás.",
+	HINT_POWER = "Las palancas están en la pared junto a la puerta. Dos de tres.",
+	HINT_FUSES = "Los fusibles brillan. Busquen en mesas, camas, estantes y el suelo de cada sector.",
+	HINT_RELAY = "El relé B está en la pared del fondo de los laboratorios, al oeste del núcleo.",
+	HINT_CORE = "Las puertas del núcleo ya están abiertas. La consola está en el centro.",
+	HINT_ANTENNA = "Salgan por la entrada principal y luego a la izquierda por el patio hasta la torre roja.",
 }
 ]]></string>
             </Properties>
@@ -1989,6 +2184,71 @@ return {
 	SV_NEW_BEST = "Nouveau record personnel !",
 	INTERACT_RESTART = "Redémarrer",
 	OBJECT_GENERATOR = "Générateur",
+
+	-- 0.4: decisions, power, forecasts, director, hints
+	DECISION_C1_ANSWER = "La voix vous demande de répondre. Le faites-vous ?",
+	DECISION_ANSWER = "Répondre",
+	DECISION_SILENT = "Se taire",
+	DECISION_VOTES = "{count}",
+	RADIO_C1_ASK = "Si quelqu'un entend ça... répondez, je vous en prie.",
+	RADIO_C1_ANSWERED = "Vous nous entendez ? {name}... nous sommes encore là. En bas.",
+	RADIO_C1_RELAY_ANSWERED = "Vous avez répondu. Exactement comme nous, à l'époque.",
+	RADIO_C1_SILENT = "...Allô ? ...Quelqu'un ?",
+	RADIO_C1_RELAY_SILENT = "Bien. Pas cette fois.",
+	RADIO_C1_POWER = "Le générateur ne supporte que deux systèmes. Choisissez au tableau près de la porte.",
+	RADIO_C1_POWER_NO_CAMERAS = "Pas de caméras. Vous marcherez à l'aveugle. Lui aussi.",
+	RADIO_C1_POWER_NO_HALLS = "Couloirs sombres. Plus dur de voir – et d'être vu.",
+	RADIO_C1_POWER_NO_VENTS = "Pas de ventilation. C'est silencieux maintenant. Chaque pas compte.",
+	OBJECTIVE_POWER = "Répartis le courant de secours ({count}/{total}).",
+	SYS_PANEL = "COURANT DE SECOURS · MAX. 2",
+	SYS_CAMERAS = "Caméras",
+	SYS_HALLS = "Éclairage des couloirs",
+	SYS_VENTS = "Ventilation",
+	SYS_FULL = "Seulement deux systèmes à la fois. Coupe d'abord l'un d'eux.",
+	INTERACT_SWITCH = "Basculer",
+	RADIO_C1_FORECAST_GEN = "Dans quarante secondes, le générateur du secteur E lâche. Redémarrez-le avant.",
+	RADIO_C1_FORECAST_GEN_BROKEN = "Il tourne encore. Alors cette nuit est différente.",
+	FORECAST_LABEL = "PRÉVISION · {text} · {time}",
+	FORECAST_LIGHTS_A = "Plus de lumière au secteur A",
+	FORECAST_GENERATOR_E = "Le générateur E lâche",
+	FORECAST_BLACKOUT_A = "Coupure au secteur A",
+	SV_FORECAST_A = "Dans trente-cinq secondes, le secteur A plonge dans le noir. Tenez son disjoncteur pour l'empêcher.",
+	FORECAST_BLACKOUT_C = "Coupure au secteur C",
+	SV_FORECAST_C = "Dans trente-cinq secondes, le secteur C plonge dans le noir. Tenez son disjoncteur pour l'empêcher.",
+	FORECAST_BLACKOUT_D = "Coupure au secteur D",
+	SV_FORECAST_D = "Dans trente-cinq secondes, le secteur D plonge dans le noir. Tenez son disjoncteur pour l'empêcher.",
+	FORECAST_BLACKOUT_E = "Coupure au secteur E",
+	SV_FORECAST_E = "Dans trente-cinq secondes, le secteur E plonge dans le noir. Tenez son disjoncteur pour l'empêcher.",
+	SV_EVN_FORECAST = "PRÉVISION",
+	RADIO_C1_CORE_ANSWERED = "{name}. Vous avez encore répondu. Cette fois, pas la porte de gauche.",
+	RADIO_C1_ANTENNA_ANSWERED = "...vous nous avez répondu. Pourquoi partez-vous maintenant ?",
+	RADIO_NAMECALL = "...{name} ?",
+	RADIO_NAMECALL_ANSWERED = "{name}. Tu as répondu. Descends.",
+	CCTV_STAMP = "CAM 03 · COULOIR · +00:{seconds}",
+	CCTV_AREA = "MOUVEMENT : {area}",
+	CCTV_OFFLINE = "CAMÉRAS HORS LIGNE",
+	CCTV_NONE = "AUCUN MOUVEMENT",
+	AREA_A = "SECTEUR A",
+	AREA_B = "SECTEUR B",
+	AREA_C = "SECTEUR C",
+	AREA_D = "SECTEUR D",
+	AREA_E = "SECTEUR E",
+	AREA_CONTROL = "SALLE DE CONTRÔLE",
+	AREA_HALL = "COULOIRS",
+	AREA_UNKNOWN = "INCONNU",
+	OBJECT_CALENDAR = "Calendrier",
+	CAL_TITLE = "CALENDRIER · NOVEMBRE 2009",
+	CAL_BODY = "Le samedi 14 est entouré deux fois.\n\n« June – nuit. Ne réponds pas au canal 0214, peu importe qui appelle. Même si c'est nous. »\n\nLe café à côté est encore chaud.",
+	OBJECT_BREAKER_C = "Disjoncteur du secteur C",
+	OBJECT_BREAKER_D = "Disjoncteur du secteur D",
+	OBJECT_BREAKER_E = "Disjoncteur du secteur E",
+	HINT_GATEHOUSE = "La loge. Juste derrière le portail, à droite. La lumière rouge.",
+	HINT_CONTROL = "Suivez la route jusqu'à l'entrée principale. La salle de contrôle est juste derrière.",
+	HINT_POWER = "Les leviers sont sur le mur près de la porte. Deux sur trois.",
+	HINT_FUSES = "Les fusibles brillent. Cherchez sur les bureaux, les lits, les étagères et au sol de chaque secteur.",
+	HINT_RELAY = "Le relais B est sur le mur du fond des laboratoires, à l'ouest du noyau.",
+	HINT_CORE = "Les portes du noyau sont ouvertes. La console est au centre.",
+	HINT_ANTENNA = "Sortez par l'entrée principale, puis à gauche à travers la cour jusqu'à la tour rouge.",
 }
 ]]></string>
             </Properties>
@@ -2292,6 +2552,71 @@ return {
 	SV_NEW_BEST = "Novo recorde pessoal!",
 	INTERACT_RESTART = "Reiniciar",
 	OBJECT_GENERATOR = "Gerador",
+
+	-- 0.4: decisions, power, forecasts, director, hints
+	DECISION_C1_ANSWER = "A voz pede que vocês respondam. Vocês respondem?",
+	DECISION_ANSWER = "Responder",
+	DECISION_SILENT = "Ficar em silêncio",
+	DECISION_VOTES = "{count}",
+	RADIO_C1_ASK = "Se alguém estiver ouvindo... por favor, respondam. Por favor.",
+	RADIO_C1_ANSWERED = "Vocês nos ouvem? {name}... ainda estamos aqui. Lá embaixo.",
+	RADIO_C1_RELAY_ANSWERED = "Vocês responderam. Igual a nós, naquela vez.",
+	RADIO_C1_SILENT = "...Alô? ...Alguém?",
+	RADIO_C1_RELAY_SILENT = "Bom. Desta vez não.",
+	RADIO_C1_POWER = "O gerador só aguenta dois sistemas. Escolham no painel perto da porta.",
+	RADIO_C1_POWER_NO_CAMERAS = "Sem câmeras. Vocês vão andar às cegas. Ele também.",
+	RADIO_C1_POWER_NO_HALLS = "Corredores escuros. Mais difícil enxergar – e ser visto.",
+	RADIO_C1_POWER_NO_VENTS = "Sem ventilação. Agora está silencioso. Cada passo conta.",
+	OBJECTIVE_POWER = "Distribua a energia de emergência ({count}/{total}).",
+	SYS_PANEL = "ENERGIA DE EMERGÊNCIA · MÁX. 2",
+	SYS_CAMERAS = "Câmeras",
+	SYS_HALLS = "Luz dos corredores",
+	SYS_VENTS = "Ventilação",
+	SYS_FULL = "Só dois sistemas ao mesmo tempo. Desligue um antes.",
+	INTERACT_SWITCH = "Alternar",
+	RADIO_C1_FORECAST_GEN = "Em quarenta segundos o gerador do setor E falha. Reiniciem antes.",
+	RADIO_C1_FORECAST_GEN_BROKEN = "Ainda está funcionando. Então esta noite é diferente.",
+	FORECAST_LABEL = "PREVISÃO · {text} · {time}",
+	FORECAST_LIGHTS_A = "Luz apaga no setor A",
+	FORECAST_GENERATOR_E = "Gerador E falha",
+	FORECAST_BLACKOUT_A = "Apagão no setor A",
+	SV_FORECAST_A = "Em trinta e cinco segundos o setor A fica no escuro. Segurem o disjuntor dele se quiserem impedir.",
+	FORECAST_BLACKOUT_C = "Apagão no setor C",
+	SV_FORECAST_C = "Em trinta e cinco segundos o setor C fica no escuro. Segurem o disjuntor dele se quiserem impedir.",
+	FORECAST_BLACKOUT_D = "Apagão no setor D",
+	SV_FORECAST_D = "Em trinta e cinco segundos o setor D fica no escuro. Segurem o disjuntor dele se quiserem impedir.",
+	FORECAST_BLACKOUT_E = "Apagão no setor E",
+	SV_FORECAST_E = "Em trinta e cinco segundos o setor E fica no escuro. Segurem o disjuntor dele se quiserem impedir.",
+	SV_EVN_FORECAST = "PREVISÃO",
+	RADIO_C1_CORE_ANSWERED = "{name}. Vocês responderam de novo. Desta vez, não a porta da esquerda.",
+	RADIO_C1_ANTENNA_ANSWERED = "...vocês nos responderam. Por que estão indo embora agora?",
+	RADIO_NAMECALL = "...{name}?",
+	RADIO_NAMECALL_ANSWERED = "{name}. Você respondeu. Desça.",
+	CCTV_STAMP = "CÂM 03 · CORREDOR · +00:{seconds}",
+	CCTV_AREA = "MOVIMENTO: {area}",
+	CCTV_OFFLINE = "CÂMERAS DESLIGADAS",
+	CCTV_NONE = "SEM MOVIMENTO",
+	AREA_A = "SETOR A",
+	AREA_B = "SETOR B",
+	AREA_C = "SETOR C",
+	AREA_D = "SETOR D",
+	AREA_E = "SETOR E",
+	AREA_CONTROL = "SALA DE CONTROLE",
+	AREA_HALL = "CORREDORES",
+	AREA_UNKNOWN = "DESCONHECIDO",
+	OBJECT_CALENDAR = "Calendário",
+	CAL_TITLE = "CALENDÁRIO · NOVEMBRO 2009",
+	CAL_BODY = "O sábado, dia 14, está circulado duas vezes.\n\n“June – turno da noite. Não responda ao canal 0214, não importa quem chame. Nem se formos nós.”\n\nO café ao lado ainda está quente.",
+	OBJECT_BREAKER_C = "Disjuntor do setor C",
+	OBJECT_BREAKER_D = "Disjuntor do setor D",
+	OBJECT_BREAKER_E = "Disjuntor do setor E",
+	HINT_GATEHOUSE = "A guarita. Logo depois do portão, à direita. A luz vermelha.",
+	HINT_CONTROL = "Sigam a estrada até a entrada principal. A sala de controle fica logo atrás.",
+	HINT_POWER = "As alavancas estão na parede ao lado da porta. Duas de três.",
+	HINT_FUSES = "Os fusíveis brilham. Procurem em mesas, camas, estantes e no chão de cada setor.",
+	HINT_RELAY = "O relé B fica na parede do fundo dos laboratórios, a oeste do núcleo.",
+	HINT_CORE = "As portas do núcleo estão abertas. O console fica no meio.",
+	HINT_ANTENNA = "Saiam pela entrada principal e depois à esquerda pelo pátio até a torre vermelha.",
 }
 ]]></string>
             </Properties>
@@ -2324,6 +2649,9 @@ local EVENTS = {
 	"Footprint", -- S->C (position) observer set only
 	"Hurt", -- S->C (amount)
 	"MarkSeen", -- C->S (contentId | "update:<id>") NEW badges
+	"Scare", -- S->C (beat, data) HorrorDirector moments (often for ONE player only)
+	"Decision", -- S->C (decision | nil) open / update / close a team decision
+	"DecisionVote", -- C->S (decisionId, optionIndex)
 }
 
 local FUNCTIONS = {
@@ -2578,15 +2906,22 @@ return {
         <Item class="ModuleScript" referent="24">
           <Properties>
             <string name="Name">Chapter1</string>
-            <string name="Source"><![CDATA[-- Chapter 1 "The Reception" - playable flow on Relay Station 07.
+            <string name="Source"><![CDATA[-- Chapter 1 "The Reception" on Relay Station 07.
+-- The gameplay loop of the design: Explore -> Discover -> Understand -> Decide -> Act ->
+-- Consequences -> new secrets. Built only from the generic systems:
+--   DecisionService (team votes), ForecastService (predictions you can break),
+--   DirectorService (scares + hints), PowerService (systems), StoryService (lines).
 --
---  Gate: arrival transmission -> gatehouse fax (dated tomorrow, 02:14)
---  Control room terminal -> 3 fuses appear in 3 of 4 sectors (random each session)
---  1st fuse: the creature wakes up            2nd fuse: FORECAST "lights in A go out"
---     -> hold the breaker in Sector A in time = forecast broken (reward, new line)
---     -> otherwise Sector A goes dark and the creature comes to look
---  3 fuses -> Relay Sector B -> core doors unlock -> central core
---  Core activation -> the Relay says a player's name -> antenna outside = end of slice
+--  1  Gate: arrival transmission (per player) -> gatehouse fax "sent tomorrow, 02:14"
+--  2  DECISION: the unknown voice asks you to answer. Answer or stay silent? (saved)
+--  3  Control room: emergency power carries only 2 of 3 systems (levers, changeable):
+--       cameras (see where it is) / hall lights (see better - and be seen) /
+--       ventilation (fans mask your steps - but it can use the vents)
+--  4  3 fuses in 3 random sectors. 1st fuse wakes the creature (earlier if you answered)
+--  5  FORECAST 1 at the 2nd fuse: "lights in Sector A go out" - hold breaker A to break it
+--  6  Relay B -> core doors open. FORECAST 2: "the generator in E fails" - restart it
+--  7  Core -> the Relay says a player's name ("this time, not the left door")
+--  8  Antenna -> ending line -> back to the menu, chapter saved as completed
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -2595,6 +2930,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
 
 local Services = script.Parent.Parent.Services
 local StoryService = require(Services.StoryService)
@@ -2603,23 +2939,29 @@ local PowerService = require(Services.PowerService)
 local CreatureService = require(Services.CreatureService)
 local DataService = require(Services.DataService)
 local NoiseService = require(Services.NoiseService)
+local DecisionService = require(Services.DecisionService)
+local ForecastService = require(Services.ForecastService)
+local DirectorService = require(Services.DirectorService)
+local DoorService = require(Services.DoorService)
 
 local Chapter1 = {}
 Chapter1.StartCheckpoint = "C1_START"
 
-local active = false
-
 local TOTAL_FUSES = 3
-local FORECAST_SECONDS = 30
+local SYSTEMS = { "cameras", "halls", "vents" }
+
+local active = false
+local ctx = nil -- { setCheckpoint, finish, playersInGame }
+local fuseFolder: Folder? = nil
 
 local state = {
-	stage = "arrival", -- arrival | control | fuses | relay | core | antenna | done
+	stage = "arrival", -- arrival | decision | control | power | fuses | relay | core | antenna | done
 	fuses = 0,
-	forecast = "none", -- none | armed | broken | kept
+	answered = false,
+	systems = {} :: { [string]: boolean },
+	powerChosenOnce = false,
 	completedBy = {} :: { [Player]: boolean },
 }
-local fuseFolder: Folder? = nil
-local ctx = nil -- { setCheckpoint, finish, playersInGame }
 
 local ARRIVAL = {
 	{ delay = 1.5, text = "SFX_STATIC", channel = "sfx", duration = 2 },
@@ -2628,11 +2970,22 @@ local ARRIVAL = {
 	{ delay = 5.0, text = "SFX_FAX", channel = "world", duration = 3 },
 }
 
+local HINTS = {
+	OBJECTIVE_CHECK_GATEHOUSE = "HINT_GATEHOUSE",
+	OBJECTIVE_REACH_CONTROL = "HINT_CONTROL",
+	OBJECTIVE_POWER = "HINT_POWER",
+	OBJECTIVE_FIND_FUSES = "HINT_FUSES",
+	OBJECTIVE_RELAY_B = "HINT_RELAY",
+	OBJECTIVE_CORE = "HINT_CORE",
+	OBJECTIVE_ANTENNA = "HINT_ANTENNA",
+}
+
+---------------------------------------------------------------------------
+-- Helpers
+---------------------------------------------------------------------------
 local function rewardAll(amount: number)
-	for _, player in Players:GetPlayers() do
-		if player:GetAttribute("FZ_InGame") then
-			DataService.Grant(player, amount)
-		end
+	for _, player in ctx.playersInGame() do
+		DataService.Grant(player, amount)
 	end
 end
 
@@ -2640,18 +2993,68 @@ local function sfxAt(name: string, position: Vector3)
 	Net.Event("Sfx"):FireAllClients(name, position)
 end
 
-local function centerOf(tagName: string, attribute: string, value: string): Vector3?
-	for _, instance in CollectionService:GetTagged(tagName) do
-		if instance:IsA("BasePart") and instance:GetAttribute(attribute) == value then
-			return instance.Position
+local function relay(text: string, params: { [string]: any }?, delay: number?)
+	StoryService.Sequence("all", { { delay = delay or 0.5, speaker = "SPEAKER_RELAY", text = text, params = params, channel = "radio", duration = 4.5 } })
+end
+
+local function unknown(text: string, params: { [string]: any }?, delay: number?)
+	StoryService.Sequence("all", { { delay = delay or 0.5, speaker = "SPEAKER_UNKNOWN", text = text, params = params, channel = "radio", duration = 5 } })
+end
+
+local function patrolCenter(area: string): Vector3?
+	for _, node in CollectionService:GetTagged("FZ_CreaturePatrol") do
+		if node:IsA("BasePart") and node:GetAttribute("Area") == area then
+			return node.Position
 		end
 	end
 	return nil
 end
 
+local function randomName(): string
+	local team = ctx.playersInGame()
+	local named = team[math.random(1, math.max(1, #team))]
+	return if named then named.DisplayName else ""
+end
+
+local function wakeCreature()
+	if CreatureService.Get() then
+		return
+	end
+	CreatureService.Spawn()
+	relay("RADIO_C1_WAKE", nil, 1.5)
+end
+
 ---------------------------------------------------------------------------
--- Fuses
+-- Power distribution (decision in the world, can be changed any time)
 ---------------------------------------------------------------------------
+local function applySystems()
+	local s = state.systems
+	SessionState.Set("Cameras", s.cameras == true)
+	if not s.cameras then
+		SessionState.Set("CctvArea", nil)
+	end
+	PowerService.Set("HALLS", s.halls == true)
+	CreatureService.SetSightScale(if s.halls then 1.3 else 1)
+	CreatureService.SetVentsEnabled(s.vents == true)
+	NoiseService.SetFootstepScale(if s.vents then 0.6 else 1)
+	for _, lamp in CollectionService:GetTagged("FZ_LeverLamp") do
+		if lamp:IsA("BasePart") then
+			local on = s[lamp:GetAttribute("LeverLamp")] == true
+			lamp.Color = if on then Color3.fromRGB(90, 220, 140) else Color3.fromRGB(40, 40, 38)
+		end
+	end
+end
+
+local function systemsOn(): number
+	local count = 0
+	for _, name in SYSTEMS do
+		if state.systems[name] then
+			count += 1
+		end
+	end
+	return count
+end
+
 local function spawnFuses()
 	if fuseFolder then
 		fuseFolder:Destroy()
@@ -2660,8 +3063,6 @@ local function spawnFuses()
 	folder.Name = "FZ_Fuses"
 	folder.Parent = workspace
 	fuseFolder = folder
-
-	-- Pick one random spot in 3 of the available sectors.
 	local bySector: { [string]: { BasePart } } = {}
 	for _, spot in CollectionService:GetTagged("FZ_FuseSpot") do
 		if spot:IsA("BasePart") then
@@ -2703,67 +3104,256 @@ local function spawnFuses()
 	end
 end
 
-local function updateFuseObjective()
-	StoryService.SetObjective("OBJECTIVE_FIND_FUSES", { count = state.fuses, total = TOTAL_FUSES })
+local function startFuses()
+	state.stage = "fuses"
+	relay("RADIO_C1_TERMINAL", nil, 3)
+	spawnFuses()
+	StoryService.SetObjective("OBJECTIVE_FIND_FUSES", { count = 0, total = TOTAL_FUSES })
+	if state.answered then
+		-- Consequence of answering: the station knows you are here. It wakes up now.
+		task.delay(8, function()
+			if active then
+				wakeCreature()
+			end
+		end)
+	end
 end
 
 ---------------------------------------------------------------------------
--- Forecast (prediction you can break)
+-- Decision: answer the voice?
 ---------------------------------------------------------------------------
-local function startForecast()
-	state.forecast = "armed"
-	StoryService.Sequence("all", {
-		{ delay = 1, speaker = "SPEAKER_RELAY", text = "RADIO_C1_FORECAST", channel = "radio", duration = 5 },
-	})
-	task.delay(FORECAST_SECONDS + 1, function()
-		if state.forecast ~= "armed" then
+local function askAnswer()
+	state.stage = "decision"
+	unknown("RADIO_C1_ASK", nil, 2)
+	task.delay(6, function()
+		if not active then
 			return
 		end
-		state.forecast = "kept"
-		PowerService.Set("A", false)
-		local center = centerOf("FZ_CreaturePatrol", "Area", "A")
-		if center then
-			sfxAt("power_down", center)
-			NoiseService.Emit(center, 400, nil)
-			CreatureService.Alert(center)
-		end
-		StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
-		StoryService.Sequence("all", {
-			{ delay = 2.5, speaker = "SPEAKER_RELAY", text = "RADIO_C1_FORECAST_KEPT", channel = "radio", duration = 3 },
-		})
+		DecisionService.Ask({
+			id = "c1_answer",
+			prompt = "DECISION_C1_ANSWER",
+			options = { "DECISION_ANSWER", "DECISION_SILENT" },
+			seconds = 20,
+			default = 2,
+			onDecided = function(index)
+				if not active then
+					return
+				end
+				state.answered = index == 1
+				if state.answered then
+					unknown("RADIO_C1_ANSWERED", { name = randomName() }, 1)
+					relay("RADIO_C1_RELAY_ANSWERED", nil, 7)
+				else
+					unknown("RADIO_C1_SILENT", nil, 1)
+					relay("RADIO_C1_RELAY_SILENT", nil, 6)
+				end
+				task.delay(10, function()
+					if active and state.stage == "decision" then
+						state.stage = "control"
+						StoryService.SetObjective("OBJECTIVE_REACH_CONTROL")
+					end
+				end)
+			end,
+		}, ctx.playersInGame)
 	end)
 end
 
 ---------------------------------------------------------------------------
--- Flow
+-- Forecasts
+---------------------------------------------------------------------------
+local function forecastLightsA()
+	ForecastService.Start({
+		id = "c1_lights_a",
+		text = "RADIO_C1_FORECAST",
+		hud = "FORECAST_LIGHTS_A",
+		seconds = 30,
+		breakWith = "c1_breaker_a",
+		onKept = function()
+			PowerService.Set("A", false)
+			local center = patrolCenter("A")
+			if center then
+				sfxAt("power_down", center)
+				CreatureService.Alert(center)
+			end
+			StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
+		end,
+		onBroken = function() end,
+		keptLine = "RADIO_C1_FORECAST_KEPT",
+		brokenLine = "RADIO_C1_FORECAST_BROKEN",
+	})
+end
+
+local function forecastGenerator()
+	ForecastService.Start({
+		id = "c1_generator_e",
+		text = "RADIO_C1_FORECAST_GEN",
+		hud = "FORECAST_GENERATOR_E",
+		seconds = 40,
+		breakWith = "generator",
+		onKept = function()
+			PowerService.Set("E", false)
+			local center = patrolCenter("E")
+			if center then
+				sfxAt("power_down", center)
+				CreatureService.Alert(center)
+			end
+			StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
+		end,
+		onBroken = function(player)
+			sfxAt("relay_activate", (player.Character :: Model):GetPivot().Position)
+		end,
+		keptLine = "RADIO_C1_FORECAST_KEPT",
+		brokenLine = "RADIO_C1_FORECAST_GEN_BROKEN",
+	})
+end
+
+---------------------------------------------------------------------------
+-- Scares (HorrorDirector beats) - the moments of the first ten minutes
+---------------------------------------------------------------------------
+local function inBuilding(position: Vector3): boolean
+	return math.abs(position.X) < 100 and position.Z > -85 and position.Z < 70
+end
+
+local function screenNear(position: Vector3, radius: number): boolean
+	for _, screen in CollectionService:GetTagged("FZ_CctvScreen") do
+		if screen:IsA("BasePart") and (screen.Position - position).Magnitude < radius then
+			return true
+		end
+	end
+	return false
+end
+
+local function beats()
+	local function after(stage: string): boolean
+		local order = { "arrival", "decision", "control", "power", "fuses", "relay", "core", "antenna", "done" }
+		return (table.find(order, state.stage) or 0) >= (table.find(order, stage) or 0)
+	end
+	return {
+		{
+			-- The monitor shows the team in a hallway 20 s in the future - and something
+			-- behind the last person. Only ONE player sees the figure; the others see the
+			-- same feed without it.
+			id = "cctv_future",
+			kind = "cctv",
+			once = true,
+			others = true,
+			condition = function(_player, info)
+				return state.systems.cameras == true and after("power") and screenNear(info.position, 12)
+			end,
+			data = function()
+				return { withFigure = true, offset = 20 }
+			end,
+		},
+		{
+			id = "name_call",
+			kind = "namecall",
+			once = true,
+			condition = function(_player, info)
+				return info.alone and after("fuses") and inBuilding(info.position)
+			end,
+			data = function(player)
+				return { name = player.DisplayName, answered = state.answered }
+			end,
+		},
+		{
+			-- A figure at the end of a hallway that is gone a moment later.
+			id = "apparition_hall",
+			kind = "apparition",
+			once = true,
+			condition = function(_player, info)
+				return info.area == "HALL" and after("control")
+			end,
+		},
+		{
+			id = "apparition_late",
+			kind = "apparition",
+			once = true,
+			condition = function(_player, info)
+				return info.area ~= nil and info.area ~= "HALL" and after("relay")
+			end,
+		},
+		{
+			id = "footsteps",
+			kind = "footsteps",
+			condition = function(_player, info)
+				return info.alone and inBuilding(info.position) and after("control")
+			end,
+		},
+		{
+			id = "flicker",
+			kind = "flicker",
+			condition = function(_player, info)
+				return info.area ~= nil and info.area ~= "HALL" and after("control")
+			end,
+		},
+		{
+			-- A familiar room changes: a door behind you closes by itself.
+			id = "door_slam",
+			kind = "doorslam",
+			once = true,
+			condition = function(_player, info)
+				return after("fuses") and inBuilding(info.position)
+			end,
+			data = function(player)
+				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					for _, panel in CollectionService:GetTagged("FZ_Door") do
+						if panel:IsA("BasePart") and panel:GetAttribute("Open") and (panel.Position - root.Position).Magnitude < 25 then
+							DoorService.Close(panel)
+							break
+						end
+					end
+				end
+				return {}
+			end,
+		},
+	}
+end
+
+---------------------------------------------------------------------------
+-- Lifecycle
 ---------------------------------------------------------------------------
 local function reset()
 	state.stage = "arrival"
 	state.fuses = 0
-	state.forecast = "none"
+	state.answered = false
+	state.powerChosenOnce = false
+	table.clear(state.systems)
 	table.clear(state.completedBy)
 	if fuseFolder then
 		fuseFolder:Destroy()
 		fuseFolder = nil
 	end
+	ForecastService.Cancel()
+	DecisionService.Cancel()
+	DirectorService.Stop()
 	StoryService.ResetFlags()
 	StoryService.SetObjective(nil)
+	SessionState.Set("Cameras", nil)
+	SessionState.Set("CctvArea", nil)
 end
 
 function Chapter1.Begin()
 	reset()
 	active = true
+	applySystems()
+	DirectorService.Configure(beats(), HINTS, ctx.playersInGame)
 end
 
 function Chapter1.Stop()
 	active = false
 	reset()
+	NoiseService.SetFootstepScale(1)
+	CreatureService.SetVentsEnabled(true)
+	CreatureService.SetSightScale(1)
 end
 
 -- Registers interaction handlers once. Every handler ignores input unless chapter 1 is
 -- the running session (the same objects are used by the survival mode).
 function Chapter1.Init(context)
 	ctx = context
+	ForecastService.Breakable("c1_breaker_a")
+	ForecastService.Breakable("generator")
 
 	InteractionService.Register("c1_fax", function(player)
 		if not active then
@@ -2774,36 +3364,74 @@ function Chapter1.Init(context)
 			return
 		end
 		StoryService.SetFlag("C1_FaxRead", true)
-		StoryService.Sequence("all", {
-			{ delay = 3, speaker = "SPEAKER_RELAY", text = "RADIO_C1_003", channel = "radio", duration = 3.5 },
-		})
-		task.delay(6, function()
-			if state.stage == "arrival" then
-				state.stage = "control"
-				StoryService.SetObjective("OBJECTIVE_REACH_CONTROL")
-			end
+		relay("RADIO_C1_003", nil, 3)
+		askAnswer()
+	end)
+
+	InteractionService.Register("c1_calendar", function(player)
+		if not active then
+			return
+		end
+		StoryService.ShowDocument(player, { title = "CAL_TITLE", body = "CAL_BODY" })
+		DataService.Mutate(player, function(data)
+			data.secrets.logs.calendar_2009 = data.secrets.logs.calendar_2009 or os.time()
 		end)
 	end)
 
 	InteractionService.Register("c1_terminal", function()
-		if not active then
+		if not active or (state.stage ~= "control" and state.stage ~= "arrival" and state.stage ~= "decision") then
 			return
 		end
-		if state.stage ~= "control" and state.stage ~= "arrival" then
-			return
-		end
-		state.stage = "fuses"
+		DecisionService.Cancel()
+		state.stage = "power"
 		ctx.setCheckpoint("C1_CONTROL")
-		StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = "RADIO_C1_TERMINAL", channel = "radio", duration = 5 })
-		spawnFuses()
-		updateFuseObjective()
+		relay("RADIO_C1_POWER")
+		StoryService.SetObjective("OBJECTIVE_POWER", { count = systemsOn(), total = 2 })
+	end)
+
+	InteractionService.Register("c1_power", function(player, lever)
+		if not active or state.stage == "arrival" or state.stage == "decision" or state.stage == "control" then
+			return
+		end
+		local system = lever:GetAttribute("System")
+		if type(system) ~= "string" or not table.find(SYSTEMS, system) then
+			return
+		end
+		if state.systems[system] then
+			state.systems[system] = nil
+		elseif systemsOn() < 2 then
+			state.systems[system] = true
+		else
+			Net.Event("Notify"):FireClient(player, "SYS_FULL")
+			Net.Event("Sfx"):FireAllClients("door_locked", (lever :: BasePart).Position)
+			return
+		end
+		Net.Event("Sfx"):FireAllClients("relay_activate", (lever :: BasePart).Position)
+		NoiseService.Emit((lever :: BasePart).Position, Config.Noise.Door, player)
+		applySystems()
+		if state.stage == "power" then
+			StoryService.SetObjective("OBJECTIVE_POWER", { count = systemsOn(), total = 2 })
+			if systemsOn() == 2 and not state.powerChosenOnce then
+				state.powerChosenOnce = true
+				-- The Relay reacts to WHAT you chose (consequence you can hear).
+				local leftOut = "cameras"
+				for _, name in SYSTEMS do
+					if not state.systems[name] then
+						leftOut = name
+					end
+				end
+				relay("RADIO_C1_POWER_NO_" .. string.upper(leftOut), nil, 1)
+				task.delay(6, function()
+					if active and state.stage == "power" then
+						startFuses()
+					end
+				end)
+			end
+		end
 	end)
 
 	InteractionService.Register("c1_fuse", function(player, fuse)
-		if not active then
-			return
-		end
-		if state.stage ~= "fuses" or not fuse.Parent then
+		if not active or state.stage ~= "fuses" or not fuse.Parent then
 			return
 		end
 		sfxAt("fuse_pickup", (fuse :: BasePart).Position)
@@ -2811,41 +3439,22 @@ function Chapter1.Init(context)
 		state.fuses += 1
 		rewardAll(Config.Rewards.Fuse)
 		NoiseService.Emit((player.Character :: Model):GetPivot().Position, Config.Noise.Interact, player)
-		if state.fuses >= Config.Creature.ActivateAfterFuses and not CreatureService.Get() then
-			CreatureService.Spawn()
-			StoryService.Sequence("all", {
-				{ delay = 1.5, speaker = "SPEAKER_RELAY", text = "RADIO_C1_WAKE", channel = "radio", duration = 4 },
-			})
+		if state.fuses >= Config.Creature.ActivateAfterFuses then
+			wakeCreature()
 		end
-		if state.fuses == 2 and state.forecast == "none" then
-			startForecast()
+		if state.fuses == 2 then
+			forecastLightsA()
 		end
 		if state.fuses >= TOTAL_FUSES then
 			state.stage = "relay"
 			StoryService.SetObjective("OBJECTIVE_RELAY_B")
 		else
-			updateFuseObjective()
+			StoryService.SetObjective("OBJECTIVE_FIND_FUSES", { count = state.fuses, total = TOTAL_FUSES })
 		end
-	end)
-
-	InteractionService.Register("c1_breaker_a", function()
-		if not active then
-			return
-		end
-		if state.forecast ~= "armed" then
-			return
-		end
-		state.forecast = "broken"
-		rewardAll(Config.Rewards.ForecastBroken)
-		StoryService.SetFlag("C1_ForecastBroken", true)
-		StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = "RADIO_C1_FORECAST_BROKEN", channel = "radio", duration = 4 })
 	end)
 
 	InteractionService.Register("c1_relay_b", function(_player, panel)
-		if not active then
-			return
-		end
-		if state.stage ~= "relay" then
+		if not active or state.stage ~= "relay" then
 			return
 		end
 		state.stage = "core"
@@ -2856,57 +3465,56 @@ function Chapter1.Init(context)
 		rewardAll(Config.Rewards.Relay)
 		ctx.setCheckpoint("C1_CORE")
 		StoryService.SetObjective("OBJECTIVE_CORE")
+		task.delay(12, function()
+			if active and state.stage == "core" and not ForecastService.IsActive() then
+				forecastGenerator()
+			end
+		end)
 	end)
 
 	InteractionService.Register("c1_core", function(_player, console)
-		if not active then
-			return
-		end
-		if state.stage ~= "core" then
+		if not active or state.stage ~= "core" then
 			return
 		end
 		state.stage = "antenna"
 		PowerService.Set("CORE", true)
 		sfxAt("relay_activate", (console :: BasePart).Position)
 		CreatureService.Alert((console :: BasePart).Position)
-		local team = {}
-		for _, p in Players:GetPlayers() do
-			if p:GetAttribute("FZ_InGame") then
-				table.insert(team, p)
-			end
-		end
-		local named = team[math.random(1, math.max(1, #team))]
 		StoryService.Sequence("all", {
 			{ delay = 2, text = "SFX_STATIC", channel = "sfx", duration = 2 },
-			{ delay = 1.5, speaker = "SPEAKER_RELAY", text = "RADIO_C1_CORE", params = { name = if named then named.DisplayName else "" }, channel = "radio", duration = 4.5 },
+			{
+				delay = 1.5,
+				speaker = "SPEAKER_RELAY",
+				text = if state.answered then "RADIO_C1_CORE_ANSWERED" else "RADIO_C1_CORE",
+				params = { name = randomName() },
+				channel = "radio",
+				duration = 5,
+			},
 		})
-		task.delay(7, function()
-			StoryService.SetObjective("OBJECTIVE_ANTENNA")
+		task.delay(8, function()
+			if active then
+				StoryService.SetObjective("OBJECTIVE_ANTENNA")
+			end
 		end)
 	end)
 
 	InteractionService.Register("c1_antenna", function()
-		if not active then
-			return
-		end
-		if state.stage ~= "antenna" and state.stage ~= "done" then
+		if not active or (state.stage ~= "antenna" and state.stage ~= "done") then
 			return
 		end
 		if state.stage == "antenna" then
 			state.stage = "done"
-			StoryService.Sequence("all", {
-				{ delay = 1, speaker = "SPEAKER_UNKNOWN", text = "RADIO_C1_ANTENNA", channel = "radio", duration = 6 },
-			})
+			ForecastService.Cancel()
+			unknown(if state.answered then "RADIO_C1_ANTENNA_ANSWERED" else "RADIO_C1_ANTENNA", nil, 1)
 			CreatureService.SetAIEnabled(false)
-			-- Everyone returns to the menu after the ending line; the chapter stays replayable.
 			task.delay(14, function()
 				if active and state.stage == "done" then
 					ctx.finish()
 				end
 			end)
 		end
-		for _, p in Players:GetPlayers() do
-			if p:GetAttribute("FZ_InGame") and not state.completedBy[p] then
+		for _, p in ctx.playersInGame() do
+			if not state.completedBy[p] then
 				state.completedBy[p] = true
 				DataService.Grant(p, Config.Rewards.ChapterComplete)
 				DataService.Mutate(p, function(data)
@@ -2933,7 +3541,7 @@ function Chapter1.OnPlayerEntered(player: Player, firstTime: boolean)
 		StoryService.Sequence(player, ARRIVAL)
 		if StoryService.GetObjective() == nil then
 			task.delay(14, function()
-				if StoryService.GetObjective() == nil then
+				if active and StoryService.GetObjective() == nil then
 					StoryService.SetObjective("OBJECTIVE_CHECK_GATEHOUSE")
 				end
 			end)
@@ -3122,6 +3730,8 @@ local SERVICES = {
 	"CreatureService",
 	"FlashlightService",
 	"LeaderboardService",
+	"DecisionService",
+	"DirectorService",
 	"PlaceService",
 	"SessionService",
 }
@@ -3412,13 +4022,17 @@ end
 local function console(cf: CFrame)
 	block(props, "Console", Vector3.new(7, 3.4, 2.4), cf * CFrame.new(0, 1.7, 0), C.SteelDark, Enum.Material.Metal)
 	block(props, "ConsoleTop", Vector3.new(7, 0.3, 2.6), cf * CFrame.new(0, 3.5, 0) * CFrame.Angles(math.rad(-12), 0, 0), C.Steel, Enum.Material.Metal)
+	local screens = {}
 	for i = -1, 1 do
 		local screen = block(props, "Monitor", Vector3.new(1.9, 1.5, 1.2), cf * CFrame.new(i * 2.2, 4.6, 0.4), C.ConcreteDark, Enum.Material.SmoothPlastic)
 		local glass = block(props, "Screen", Vector3.new(1.6, 1.1, 0.05), screen.CFrame * CFrame.new(0, 0, -0.62), C.Screen, Enum.Material.Neon)
 		glass.Transparency = 0.25
 		glass.CanCollide = false
+		table.insert(screens, glass)
 	end
+	return screens
 end
+
 
 local function cabinet(cf: CFrame)
 	block(props, "Cabinet", Vector3.new(3, 7, 2), cf * CFrame.new(0, 3.5, 0), C.Steel, Enum.Material.Metal)
@@ -3513,6 +4127,13 @@ local function interactable(part: BasePart, id: string, action: string, object: 
 		attributes[key] = value
 	end
 	tag(part, "FZ_Interactable", attributes)
+end
+
+-- Breaker cabinet on a wall (forecasts are broken by holding the right breaker).
+local function breakerBox(cf: CFrame, sector: string, interactId: string)
+	local box = block(props, "Breaker" .. sector, Vector3.new(3, 4, 0.8), cf, C.Steel:Lerp(C.Emergency, 0.25), Enum.Material.Metal)
+	interactable(box, interactId, "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER_" .. sector, { MaxDistance = 8, Sector = sector })
+	return box
 end
 
 ---------------------------------------------------------------------------
@@ -3642,7 +4263,24 @@ end
 
 local function furnish()
 	-- Control room (start area, x 50..100, z 25..70)
-	console(CFrame.new(62, 0, 66) * CFrame.Angles(0, math.rad(180), 0))
+	local cctv = console(CFrame.new(62, 0, 66) * CFrame.Angles(0, math.rad(180), 0))
+	CollectionService:AddTag(cctv[2], "FZ_CctvScreen") -- the "future" camera feed
+	CollectionService:AddTag(cctv[3], "FZ_CctvText") -- live creature location (cameras powered)
+
+	-- Emergency power panel: the generator only carries two of three systems.
+	block(props, "PowerPanel", Vector3.new(0.6, 6, 12), CFrame.new(50.8, 4.5, 38), C.SteelDark, Enum.Material.Metal)
+	worldText(block(props, "PowerTitle", Vector3.new(10, 1, 0.1), CFrame.new(51.15, 8.1, 38) * CFrame.Angles(0, math.rad(90), 0), C.Plastic, Enum.Material.SmoothPlastic), Enum.NormalId.Back, "SYS_PANEL")
+	for index, system in { "cameras", "halls", "vents" } do
+		local z = 34 + (index - 1) * 4
+		local lever = block(props, "Lever_" .. system, Vector3.new(0.8, 2.2, 0.8), CFrame.new(51.5, 4.4, z), C.Plastic, Enum.Material.Metal)
+		interactable(lever, "c1_power", "INTERACT_SWITCH", "SYS_" .. string.upper(system), { System = system, MaxDistance = 8 })
+		local lamp = block(props, "LeverLamp_" .. system, Vector3.new(0.3, 0.5, 0.5), CFrame.new(51.25, 6.4, z), C.ConcreteDark, Enum.Material.Neon)
+		lamp:SetAttribute("LeverLamp", system)
+		CollectionService:AddTag(lamp, "FZ_LeverLamp")
+		local label = block(props, "LeverLabel_" .. system, Vector3.new(0.1, 0.8, 3.4), CFrame.new(51.2, 2.6, z) * CFrame.Angles(0, math.rad(90), 0), C.Plastic, Enum.Material.SmoothPlastic)
+		label.Size = Vector3.new(3.4, 0.8, 0.1)
+		worldText(label, Enum.NormalId.Back, "SYS_" .. string.upper(system))
+	end
 	console(CFrame.new(88, 0, 66) * CFrame.Angles(0, math.rad(180), 0))
 	console(CFrame.new(96, 0, 40) * CFrame.Angles(0, math.rad(90), 0))
 	local terminal = block(props, "ControlTerminal", Vector3.new(4, 3.6, 2.4), CFrame.new(75, 1.8, 38), C.SteelDark, Enum.Material.Metal)
@@ -3666,7 +4304,7 @@ local function furnish()
 	shelf(CFrame.new(99, 0, -14) * CFrame.Angles(0, math.rad(90), 0))
 	cabinet(CFrame.new(98, 0, 18))
 	local breaker = block(props, "BreakerA", Vector3.new(3, 4, 0.8), CFrame.new(99.2, 5, 4) * CFrame.Angles(0, math.rad(-90), 0), C.Steel:Lerp(C.Emergency, 0.25), Enum.Material.Metal)
-	interactable(breaker, "c1_breaker_a", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { MaxDistance = 8 })
+	interactable(breaker, "c1_breaker_a", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { MaxDistance = 8, Sector = "A" })
 	breaker:SetAttribute("Armed", false)
 	for x = 60, 90, 15 do
 		ceilingLight(Vector3.new(x, 0, -12), "A")
@@ -3686,6 +4324,15 @@ local function furnish()
 	end
 	ceilingLight(Vector3.new(66, 0, -70), "D", Color3.fromRGB(255, 214, 170))
 	ceilingLight(Vector3.new(84, 0, -45), "D", Color3.fromRGB(255, 214, 170))
+	breakerBox(CFrame.new(99.2, 5, -30) * CFrame.Angles(0, math.rad(-90), 0), "D", "breaker")
+	-- Break room corner: coffee still warm, calendar on November 2009 (document)
+	local table_ = block(props, "CoffeeTable", Vector3.new(4, 3, 3), CFrame.new(90, 1.5, -30), C.Wood, Enum.Material.Wood)
+	local mug = block(props, "Mug", Vector3.new(0.5, 0.6, 0.5), table_.CFrame * CFrame.new(0.8, 1.8, 0), C.Plastic, Enum.Material.SmoothPlastic)
+	mug.Shape = Enum.PartType.Cylinder
+	mug.CFrame = table_.CFrame * CFrame.new(0.8, 1.8, 0) * CFrame.Angles(0, 0, math.rad(90))
+	local calendar = block(props, "Calendar", Vector3.new(2, 2.6, 0.1), CFrame.new(99.4, 6, -36) * CFrame.Angles(0, math.rad(-90), 0), C.Paper, Enum.Material.SmoothPlastic)
+	worldText(calendar, Enum.NormalId.Front, nil, "NOV 2009\n14", nil, Color3.fromRGB(140, 30, 24))
+	interactable(calendar, "c1_calendar", "INTERACT_READ", "OBJECT_CALENDAR", { MaxDistance = 7 })
 	fuseSpot(CFrame.new(93, 5.8, -65), "D")
 	fuseSpot(CFrame.new(60, 2.2, -39), "D")
 
@@ -3697,6 +4344,7 @@ local function furnish()
 	desk(CFrame.new(-60, 0, -40))
 	ceilingLight(Vector3.new(-82, 0, -70), "C", nil, true)
 	ceilingLight(Vector3.new(-62, 0, -45), "C")
+	breakerBox(CFrame.new(-99.2, 5, -45) * CFrame.Angles(0, math.rad(90), 0), "C", "breaker")
 	fuseSpot(CFrame.new(-60, 3.45, -40), "C")
 	fuseSpot(CFrame.new(-82, 0.4, -82), "C")
 
@@ -3728,6 +4376,7 @@ local function furnish()
 	pipeRun(Vector3.new(-60, 12.5, 30), Vector3.new(-60, 12.5, 84), 0.9)
 	ceilingLight(Vector3.new(-70, 0, 40), "E", C.Sodium)
 	ceilingLight(Vector3.new(-70, 0, 72), "E", C.Sodium)
+	breakerBox(CFrame.new(-99.2, 5, 35) * CFrame.Angles(0, math.rad(90), 0), "E", "breaker")
 	fuseSpot(CFrame.new(-66, 0.4, 82), "E")
 	fuseSpot(CFrame.new(-95, 0.4, 56), "E")
 
@@ -3735,6 +4384,10 @@ local function furnish()
 	for x = -40, 40, 20 do
 		emergencyLight(Vector3.new(x, 12, -59), "HALL")
 		emergencyLight(Vector3.new(x, 12, 59), "HALL")
+	end
+	for x = -35, 35, 35 do
+		ceilingLight(Vector3.new(x, 0, -55), "HALLS", nil, false, true)
+		ceilingLight(Vector3.new(x, 0, 55), "HALLS", nil, false, true)
 	end
 	pipeRun(Vector3.new(-50, 13, -51), Vector3.new(50, 13, -51))
 	pipeRun(Vector3.new(-50, 13, 51), Vector3.new(50, 13, 51))
@@ -4028,14 +4681,23 @@ local NoiseService = require(Services.NoiseService)
 local HealthService = require(Services.HealthService)
 local DoorService = require(Services.DoorService)
 local LeaderboardService = require(Services.LeaderboardService)
+local ForecastService = require(Services.ForecastService)
+local DirectorService = require(Services.DirectorService)
 
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
 
 local SC = Config.Survival
 local TASKS = { "fuses", "uplink", "generators", "stations" }
-local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm" }
-local EVENT_NAMES = { blackout = "SV_EVN_BLACKOUT", static = "SV_EVN_STATIC", hunt = "SV_EVN_HUNT", lockdown = "SV_EVN_LOCKDOWN", calm = "SV_EVN_CALM" }
+local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm", "forecast" }
+local EVENT_NAMES = { blackout = "SV_EVN_BLACKOUT", static = "SV_EVN_STATIC", hunt = "SV_EVN_HUNT", lockdown = "SV_EVN_LOCKDOWN", calm = "SV_EVN_CALM", forecast = "SV_EVN_FORECAST" }
+
+-- Light, repeatable scares for survival (the director keeps the gaps).
+local SURVIVAL_BEATS = {
+	{ id = "sv_flicker", kind = "flicker", condition = function(_p, info) return info.area ~= nil end },
+	{ id = "sv_footsteps", kind = "footsteps", condition = function(_p, info) return info.alone end },
+	{ id = "sv_apparition", kind = "apparition", condition = function(_p, info) return info.area == "HALL" end },
+}
 local STATIONS = { "c1_terminal", "c1_breaker_a", "c1_core" }
 local UPLINK_SECONDS = 40
 local UPLINK_RADIUS = 17
@@ -4115,6 +4777,7 @@ end
 -- Events
 ---------------------------------------------------------------------------
 local function clearEvent(r: Run)
+	ForecastService.Cancel()
 	if r.blackoutSector then
 		PowerService.Set(r.blackoutSector, true)
 		r.blackoutSector = nil
@@ -4141,6 +4804,32 @@ local function startEvent(r: Run)
 		StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
 	elseif event == "static" then
 		SessionState.Set("SvStatic", true)
+	elseif event == "forecast" then
+		-- A prediction you can break: hold the right breaker before the deadline.
+		local sector = pick({ "A", "C", "D", "E" }, nil)
+		ForecastService.Start({
+			id = "sv_blackout_" .. string.lower(sector),
+			text = "SV_FORECAST_" .. sector,
+			hud = "FORECAST_BLACKOUT_" .. sector,
+			seconds = 35,
+			breakWith = if sector == "A" then "c1_breaker_a" else "breaker",
+			breakFilter = function(instance)
+				return instance:GetAttribute("Sector") == sector
+			end,
+			onKept = function()
+				if run == r and r.phase == "task" then
+					r.blackoutSector = sector
+					PowerService.Set(sector, false)
+					StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
+				end
+			end,
+			onBroken = function()
+				r.banked += SC.ShiftReward -- breaking a forecast is worth an extra shift reward
+			end,
+			keptLine = "RADIO_C1_FORECAST_KEPT",
+			brokenLine = "RADIO_C1_FORECAST_BROKEN",
+		})
+		return -- the forecast line replaces the event announcement
 	elseif event == "lockdown" then
 		local candidates = {}
 		for _, panel in CollectionService:GetTagged("FZ_Door") do
@@ -4371,6 +5060,9 @@ function Survival.Begin(entry)
 	}
 	local r = run :: Run
 	PowerService.Set("B", true) -- the core is reachable in survival
+	PowerService.Set("HALLS", true)
+	SessionState.Set("Cameras", true)
+	DirectorService.Configure(SURVIVAL_BEATS, {}, ctx.playersInGame)
 	HealthService.TeamWipeHandler = function()
 		if run == r and active then
 			endRun(r, false)
@@ -4459,6 +5151,10 @@ function Survival.Stop()
 	end
 	run = nil
 	HealthService.TeamWipeHandler = nil
+	DirectorService.Stop()
+	ForecastService.Cancel()
+	SessionState.Set("Cameras", nil)
+	SessionState.Set("CctvArea", nil)
 	SessionState.Set("SvShift", nil)
 	SessionState.Set("SvEvent", nil)
 	SessionState.Set("SvPhase", nil)
@@ -4475,6 +5171,8 @@ end
 
 function Survival.Init(context)
 	ctx = context
+	ForecastService.Breakable("c1_breaker_a")
+	ForecastService.Breakable("breaker")
 
 	InteractionService.Register("sv_fuse", function(_player, fuse)
 		local r = run
@@ -4971,7 +5669,8 @@ type Creature = {
 
 local creatures: { Creature } = {}
 local aiEnabled = true
-local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance }
+local difficulty = { speed = 1, hearing = 1, ventChance = CC.VentChance, sight = 1 }
+local ventsEnabled = true -- story: only when the ventilation has power
 
 local function alive(c: Creature): boolean
 	return table.find(creatures, c) ~= nil and c.model.Parent ~= nil
@@ -5062,7 +5761,7 @@ local function findVisiblePlayer(c: Creature): (Player?, number)
 		local target = (head :: BasePart).Position
 		local offset = target - eye
 		local distance = offset.Magnitude
-		if distance < CC.SightRange then
+		if distance < CC.SightRange * difficulty.sight then
 			local direction = flat(offset)
 			local angle = if direction.Magnitude > 0 then math.deg(math.acos(math.clamp(look:Dot(direction.Unit), -1, 1))) else 0
 			if (angle <= CC.SightAngle or distance < 9) and hasLineOfSight(c, eye, target, { character }) then
@@ -5321,7 +6020,7 @@ local function step(c: Creature)
 			c.searchCenter = c.lastSeenPosition
 			c.target = c.lastSeenPosition
 			-- Sometimes it takes the vents instead of following
-			if c.lastSeenPosition and math.random() < difficulty.ventChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
+			if ventsEnabled and c.lastSeenPosition and math.random() < difficulty.ventChance and (c.lastSeenPosition - c.root.Position).Magnitude > 40 then
 				task.spawn(travelVent, c, c.lastSeenPosition)
 				return
 			end
@@ -5470,9 +6169,30 @@ end
 
 -- speed / hearing multipliers and vent chance (survival difficulty curve)
 function CreatureService.SetDifficulty(values: { speed: number?, hearing: number?, ventChance: number? })
+	if next(values) == nil then
+		difficulty.sight = 1
+		ventsEnabled = true
+	end
 	difficulty.speed = values.speed or 1
 	difficulty.hearing = values.hearing or 1
 	difficulty.ventChance = values.ventChance or CC.VentChance
+end
+
+function CreatureService.SetVentsEnabled(value: boolean)
+	ventsEnabled = value
+end
+
+function CreatureService.SetSightScale(value: number)
+	difficulty.sight = value
+end
+
+function CreatureService.IsChasingNear(position: Vector3, radius: number): boolean
+	for _, c in creatures do
+		if (c.state == "Chase" or c.state == "Attack") and (c.root.Position - position).Magnitude < radius then
+			return true
+		end
+	end
+	return false
 end
 
 function CreatureService.Count(): number
@@ -5648,6 +6368,11 @@ local function defaultData(): { [string]: any }
 			survival = {}, -- [survivalMapId] = { best = shifts, runs = n }
 		},
 		seenContent = {}, -- [contentId] = true (NEW badges)
+		storyChoices = {}, -- [decisionId] = option index chosen by the team
+		secrets = {
+			forecastsBroken = {}, -- [forecastId] = true
+			logs = {}, -- [logId] = unix time (archive entries)
+		},
 		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
 		inventory = {}, -- [itemId] = true
@@ -6036,6 +6761,328 @@ return DataService
         </Item>
         <Item class="ModuleScript" referent="37">
           <Properties>
+            <string name="Name">DecisionService</string>
+            <string name="Source"><![CDATA[-- DecisionService: team decisions with consequences ("Entscheiden -> Konsequenzen").
+--   * Every player in the session votes (big buttons, works with touch/gamepad/mouse).
+--   * Majority wins; a tie goes to the option that got its first vote earliest;
+--     nobody votes -> the default option. Solo: your vote decides immediately.
+--   * The result is stored in the session (StoryService flag "Choice_<id>") AND in every
+--     participant's save (data.storyChoices[id]) so later chapters and endings react.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+
+local DataService = require(script.Parent.DataService)
+local StoryService = require(script.Parent.StoryService)
+local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
+
+local DecisionService = {}
+
+export type Decision = {
+	id: string,
+	prompt: string, -- localization key
+	options: { string }, -- localization keys
+	seconds: number,
+	default: number,
+	onDecided: (index: number) -> (),
+}
+
+type Running = {
+	decision: Decision,
+	votes: { [Player]: number },
+	firstVoteAt: { [number]: number },
+	ends: number,
+	token: number,
+	voters: () -> { Player },
+}
+
+local running: Running? = nil
+local token = 0
+
+local function payload(r: Running)
+	local counts = {}
+	for index in r.decision.options do
+		counts[index] = 0
+	end
+	for _, index in r.votes do
+		counts[index] += 1
+	end
+	return {
+		id = r.decision.id,
+		prompt = r.decision.prompt,
+		options = r.decision.options,
+		ends = r.ends,
+		counts = counts,
+		voters = #r.voters(),
+	}
+end
+
+local function finish(r: Running)
+	if running ~= r then
+		return
+	end
+	running = nil
+	Net.Event("Decision"):FireAllClients(nil)
+	local counts = payload(r).counts
+	local best, bestCount, bestTime = r.decision.default, 0, math.huge
+	for index, count in counts do
+		local first = r.firstVoteAt[index] or math.huge
+		if count > bestCount or (count == bestCount and count > 0 and first < bestTime) then
+			best, bestCount, bestTime = index, count, first
+		end
+	end
+	StoryService.SetFlag("Choice_" .. r.decision.id, best)
+	for _, player in r.voters() do
+		DataService.Mutate(player, function(data)
+			data.storyChoices[r.decision.id] = best
+		end)
+	end
+	r.decision.onDecided(best)
+end
+
+function DecisionService.IsOpen(): boolean
+	return running ~= nil
+end
+
+function DecisionService.Cancel()
+	token += 1
+	if running then
+		running = nil
+		Net.Event("Decision"):FireAllClients(nil)
+	end
+end
+
+-- voters: function returning the players allowed to vote (players in the session)
+function DecisionService.Ask(decision: Decision, voters: () -> { Player })
+	DecisionService.Cancel()
+	token += 1
+	local r: Running = {
+		decision = decision,
+		votes = {},
+		firstVoteAt = {},
+		ends = workspace:GetServerTimeNow() + decision.seconds,
+		token = token,
+		voters = voters,
+	}
+	running = r
+	Net.Event("Decision"):FireAllClients(payload(r))
+	task.delay(decision.seconds, function()
+		if running == r then
+			finish(r)
+		end
+	end)
+end
+
+function DecisionService.Start()
+	local limiter = RateLimiter.new(4, 1)
+	Net.Event("DecisionVote").OnServerEvent:Connect(function(player: Player, id: any, index: any)
+		local r = running
+		if not r or not limiter:Allow(player) or id ~= r.decision.id or type(index) ~= "number" then
+			return
+		end
+		if index % 1 ~= 0 or index < 1 or index > #r.decision.options then
+			return
+		end
+		if not table.find(r.voters(), player) then
+			return
+		end
+		r.votes[player] = index
+		r.firstVoteAt[index] = r.firstVoteAt[index] or os.clock()
+		local everyone = true
+		for _, voter in r.voters() do
+			if r.votes[voter] == nil then
+				everyone = false
+			end
+		end
+		if everyone then
+			finish(r)
+		else
+			Net.Event("Decision"):FireAllClients(payload(r))
+		end
+	end)
+end
+
+return DecisionService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="38">
+          <Properties>
+            <string name="Name">DirectorService</string>
+            <string name="Source"><![CDATA[-- DirectorService ("HorrorDirector"): decides WHEN a scare happens, so scares stay earned.
+--   * Global gap between scares (70 s) and per-player gap (60 s) against habituation
+--   * Never the same scare type twice in a row; nothing while a creature is chasing
+--   * Many beats target ONE player only ("Did you see that too?")
+--   * Optional hints when the team is stuck on an objective for a long time
+-- The visual/audio side runs on the clients (DirectorController), scaled by each
+-- player's own "Scare intensity" setting.
+
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local StoryService = require(script.Parent.StoryService)
+local CreatureService = require(script.Parent.CreatureService)
+
+local DirectorService = {}
+
+local GLOBAL_GAP = 70
+local PLAYER_GAP = 60
+local HINT_AFTER = 150
+
+export type Beat = {
+	id: string,
+	kind: string, -- apparition | footsteps | flicker | cctv | namecall | doorslam
+	once: boolean?,
+	condition: (player: Player, info: { [string]: any }) -> boolean,
+	data: ((player: Player) -> { [string]: any })?,
+	others: boolean?, -- also notify the other players (for "cctv": they see it WITHOUT the figure)
+}
+
+local beats: { Beat } = {}
+local used: { [string]: boolean } = {}
+local lastGlobal = 0
+local lastKind: string? = nil
+local lastForPlayer: { [Player]: number } = {}
+local hints: { [string]: string } = {}
+local objectiveSince = os.clock()
+local lastObjective: any = nil
+local lastHint = 0
+local enabled = false
+local playersInGame: (() -> { Player })? = nil
+
+function DirectorService.AreaOf(position: Vector3): string?
+	local best, bestDistance = nil, 45
+	for _, node in CollectionService:GetTagged("FZ_CreaturePatrol") do
+		if node:IsA("BasePart") then
+			local d = (node.Position - position).Magnitude
+			if d < bestDistance then
+				best, bestDistance = node:GetAttribute("Area"), d
+			end
+		end
+	end
+	return best
+end
+
+-- Called by a mode when it begins / stops.
+function DirectorService.Configure(newBeats: { Beat }, newHints: { [string]: string }, voters: () -> { Player })
+	beats = newBeats
+	hints = newHints
+	playersInGame = voters
+	table.clear(used)
+	table.clear(lastForPlayer)
+	lastGlobal = os.clock() - GLOBAL_GAP + 45 -- first scare no earlier than ~45 s in
+	lastKind = nil
+	objectiveSince = os.clock()
+	lastHint = 0
+	enabled = true
+end
+
+function DirectorService.Stop()
+	enabled = false
+	beats = {}
+	hints = {}
+end
+
+local function fire(beat: Beat, player: Player)
+	used[beat.id] = true
+	lastGlobal = os.clock()
+	lastKind = beat.kind
+	lastForPlayer[player] = os.clock()
+	local data = if beat.data then beat.data(player) else {}
+	Net.Event("Scare"):FireClient(player, beat.kind, data)
+	if beat.others and playersInGame then
+		local quiet = table.clone(data)
+		quiet.withFigure = false
+		for _, other in playersInGame() do
+			if other ~= player then
+				Net.Event("Scare"):FireClient(other, beat.kind, quiet)
+			end
+		end
+	end
+end
+
+local function nearestTeammate(player: Player, players: { Player }): number
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local best = math.huge
+	if not root then
+		return best
+	end
+	for _, other in players do
+		local otherRoot = other ~= player and other.Character and other.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if otherRoot then
+			best = math.min(best, (otherRoot.Position - root.Position).Magnitude)
+		end
+	end
+	return best
+end
+
+function DirectorService.Start()
+	task.spawn(function()
+		while true do
+			task.wait(0.5)
+			if not enabled or not playersInGame then
+				continue
+			end
+			local now = os.clock()
+			local players = playersInGame()
+
+			-- Hints when stuck
+			local objective = SessionState.Get("Objective")
+			if objective ~= lastObjective then
+				lastObjective = objective
+				objectiveSince = now
+			elseif type(objective) == "string" and hints[objective] and now - objectiveSince > HINT_AFTER and now - lastHint > HINT_AFTER then
+				lastHint = now
+				StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = hints[objective], channel = "radio", duration = 5 })
+			end
+
+			-- Security cameras: where is the creature?
+			if SessionState.Get("Cameras") then
+				local creature = CreatureService.Get()
+				local root = creature and creature:FindFirstChild("HumanoidRootPart") :: BasePart?
+				SessionState.Set("CctvArea", if root then DirectorService.AreaOf(root.Position) or "?" else "-")
+			end
+
+			if now - lastGlobal < GLOBAL_GAP then
+				continue
+			end
+			for _, player in players do
+				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root and not player:GetAttribute("FZ_Downed") and now - (lastForPlayer[player] or 0) > PLAYER_GAP and not CreatureService.IsChasingNear(root.Position, 60) then
+					local info = {
+						position = root.Position,
+						area = DirectorService.AreaOf(root.Position),
+						alone = nearestTeammate(player, players) > 25,
+					}
+					local fired = false
+					for _, beat in beats do
+						if not (beat.once and used[beat.id]) and beat.kind ~= lastKind and beat.condition(player, info) then
+							fire(beat, player)
+							fired = true
+							break
+						end
+					end
+					if fired then
+						break
+					end
+				end
+			end
+		end
+	end)
+end
+
+return DirectorService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="39">
+          <Properties>
             <string name="Name">DoorService</string>
             <string name="Source"><![CDATA[-- DoorService: sliding doors (tag FZ_Door). Opening makes noise; locked doors buzz.
 -- The creature opens unlocked doors in its way (CreatureService calls Open).
@@ -6076,6 +7123,10 @@ function DoorService.Open(panel: BasePart)
 	if not panel:GetAttribute("Locked") then
 		setOpen(panel, true)
 	end
+end
+
+function DoorService.Close(panel: BasePart)
+	setOpen(panel, false)
 end
 
 function DoorService.SetLocked(panel: BasePart, locked: boolean)
@@ -6119,7 +7170,7 @@ return DoorService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">FlashlightService</string>
             <string name="Source"><![CDATA[-- FlashlightService: replicated flashlight so teammates see each other's light.
@@ -6182,7 +7233,116 @@ return FlashlightService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="41">
+          <Properties>
+            <string name="Name">ForecastService</string>
+            <string name="Source"><![CDATA[-- ForecastService: the core mechanic "the radio tells you the future - you decide whether
+-- it comes true". A forecast has a deadline, a way to break it (an interaction id that
+-- must be used in time) and two outcomes. Used by story chapters and survival.
+--
+-- Replicated for the HUD: SessionState "Forecast" (text key) and "ForecastEnds" (server time).
+-- Broken forecasts are remembered per player (secrets / endings), see DataService.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local SessionState = require(Shared.SessionState)
+
+local StoryService = require(script.Parent.StoryService)
+local InteractionService = require(script.Parent.InteractionService)
+local DataService = require(script.Parent.DataService)
+
+local ForecastService = {}
+
+export type Forecast = {
+	id: string, -- permanent id (saved when broken)
+	text: string, -- Relay line announcing it
+	hud: string, -- short HUD label
+	seconds: number,
+	breakWith: string, -- InteractId that breaks it
+	breakFilter: ((instance: Instance) -> boolean)?, -- e.g. only the breaker of sector C
+	onKept: () -> (),
+	onBroken: (player: Player) -> (),
+	keptLine: string?,
+	brokenLine: string?,
+}
+
+local active: Forecast? = nil
+local token = 0
+
+function ForecastService.IsActive(): boolean
+	return active ~= nil
+end
+
+function ForecastService.Cancel()
+	token += 1
+	active = nil
+	SessionState.Set("Forecast", nil)
+	SessionState.Set("ForecastEnds", nil)
+end
+
+function ForecastService.Start(forecast: Forecast)
+	ForecastService.Cancel()
+	active = forecast
+	local current = token
+	StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = forecast.text, channel = "radio", duration = 5, critical = true })
+	SessionState.Set("Forecast", forecast.hud)
+	SessionState.Set("ForecastEnds", workspace:GetServerTimeNow() + forecast.seconds)
+	task.delay(forecast.seconds, function()
+		if token ~= current or active ~= forecast then
+			return
+		end
+		ForecastService.Cancel()
+		forecast.onKept()
+		if forecast.keptLine then
+			StoryService.Sequence("all", { { delay = 2, speaker = "SPEAKER_RELAY", text = forecast.keptLine, channel = "radio", duration = 3.5 } })
+		end
+	end)
+end
+
+-- Interactions are routed here by InteractionService (see Start).
+local function tryBreak(player: Player, instance: Instance, interactId: string)
+	local forecast = active
+	if not forecast or forecast.breakWith ~= interactId then
+		return
+	end
+	if forecast.breakFilter and not forecast.breakFilter(instance) then
+		return
+	end
+	ForecastService.Cancel()
+	forecast.onBroken(player)
+	for _, p in Players:GetPlayers() do
+		if p:GetAttribute("FZ_InGame") then
+			DataService.Grant(p, Config.Rewards.ForecastBroken)
+			DataService.Mutate(p, function(data)
+				data.secrets.forecastsBroken[forecast.id] = true
+			end)
+		end
+	end
+	if forecast.brokenLine then
+		StoryService.Say("all", { speaker = "SPEAKER_RELAY", text = forecast.brokenLine, channel = "radio", duration = 4 })
+	end
+end
+
+local registered: { [string]: boolean } = {}
+-- Make an interaction id able to break forecasts. Safe to call many times.
+function ForecastService.Breakable(interactId: string)
+	if registered[interactId] then
+		return
+	end
+	registered[interactId] = true
+	InteractionService.Register(interactId, function(player, instance)
+		tryBreak(player, instance, interactId)
+	end)
+end
+
+return ForecastService
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="42">
           <Properties>
             <string name="Name">HealthService</string>
             <string name="Source"><![CDATA[-- HealthService: damage, downed state and revive. Nobody dies instantly:
@@ -6398,7 +7558,7 @@ return HealthService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="43">
           <Properties>
             <string name="Name">InteractionService</string>
             <string name="Source"><![CDATA[-- InteractionService: one interaction system for every platform.
@@ -6514,7 +7674,7 @@ return InteractionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="44">
           <Properties>
             <string name="Name">LeaderboardService</string>
             <string name="Source"><![CDATA[-- LeaderboardService: global best shifts per survival map (OrderedDataStore).
@@ -6610,7 +7770,7 @@ return LeaderboardService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">MapService</string>
             <string name="Source"><![CDATA[-- MapService: exactly one map is loaded per server. Sources, in this order:
@@ -6688,7 +7848,7 @@ return MapService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="46">
           <Properties>
             <string name="Name">NoiseService</string>
             <string name="Source"><![CDATA[-- NoiseService: everything the creature can hear goes through here.
@@ -6704,6 +7864,13 @@ local Signal = require(Shared.Signal)
 
 local NoiseService = {}
 NoiseService.Heard = Signal.new() -- (position: Vector3, radius: number, source: Player?)
+
+local footstepScale = 1
+
+-- Story systems can mask footsteps (e.g. loud ventilation fans): 0.6 = 40 % quieter.
+function NoiseService.SetFootstepScale(value: number)
+	footstepScale = value
+end
 
 function NoiseService.Emit(position: Vector3, radius: number, source: Player?)
 	NoiseService.Heard:Fire(position, radius, source)
@@ -6721,9 +7888,9 @@ function NoiseService.Start()
 					local velocity = root.AssemblyLinearVelocity
 					local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
 					if speed > Config.Movement.WalkSpeed + 2 then
-						NoiseService.Emit(root.Position, Config.Noise.Sprint, player)
+						NoiseService.Emit(root.Position, Config.Noise.Sprint * footstepScale, player)
 					elseif speed > 3 then
-						NoiseService.Emit(root.Position, Config.Noise.Walk, player)
+						NoiseService.Emit(root.Position, Config.Noise.Walk * footstepScale, player)
 					end
 				end
 			end
@@ -6735,7 +7902,7 @@ return NoiseService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">PlaceService</string>
             <string name="Source"><![CDATA[-- PlaceService: server-side teleports between places of this experience.
@@ -6813,7 +7980,7 @@ return PlaceService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">PowerService</string>
             <string name="Source"><![CDATA[-- PowerService: sector power. Switches tagged lights (FZ_SectorLight) and unlocks/locks
@@ -6826,7 +7993,7 @@ local SessionState = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChi
 
 local PowerService = {}
 
-local DEFAULT = { A = true, B = false, C = true, D = true, E = true, CONTROL = true, CORE = false, HALL = true }
+local DEFAULT = { A = true, B = false, C = true, D = true, E = true, CONTROL = true, CORE = false, HALL = true, HALLS = false }
 local powered: { [string]: boolean } = {}
 local OFF_COLOR = Color3.fromRGB(40, 40, 38)
 
@@ -6888,7 +8055,7 @@ return PowerService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">SessionService</string>
             <string name="Source"><![CDATA[-- SessionService: what the team in this server is currently playing.
@@ -7190,7 +8357,7 @@ return SessionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">SettingsService</string>
             <string name="Source"><![CDATA[-- SettingsService: persists player settings (language, subtitles, accessibility, graphics).
@@ -7228,7 +8395,7 @@ return SettingsService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">ShopService</string>
             <string name="Source"><![CDATA[-- ShopService: unlock and equip items with earned Signal Marks (server-authoritative).
@@ -7393,7 +8560,7 @@ return ShopService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">StoryService</string>
             <string name="Source"><![CDATA[-- StoryService: sends story content (subtitles, documents, objectives) to clients.
@@ -7482,7 +8649,7 @@ return StoryService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">VoiceService</string>
             <string name="Source"><![CDATA[-- VoiceService: proximity voice + walkie-talkie radio on top of the Roblox Audio API.
@@ -7632,11 +8799,11 @@ return VoiceService
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="51">
+      <Item class="Folder" referent="54">
         <Properties>
           <string name="Name">Util</string>
         </Properties>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">RateLimiter</string>
             <string name="Source"><![CDATA[-- Token-bucket rate limiter per player. Every client->server remote uses one.
@@ -7689,15 +8856,15 @@ return RateLimiter
       </Item>
     </Item>
   </Item>
-  <Item class="ServerStorage" referent="53">
+  <Item class="ServerStorage" referent="56">
     <Properties>
       <string name="Name">ServerStorage</string>
     </Properties>
-    <Item class="Folder" referent="54">
+    <Item class="Folder" referent="57">
       <Properties>
         <string name="Name">Secrets</string>
       </Properties>
-      <Item class="ModuleScript" referent="55">
+      <Item class="ModuleScript" referent="58">
         <Properties>
           <string name="Name">Codes</string>
           <string name="Source"><![CDATA[-- Redeemable codes. Lives in ServerStorage: never replicated to clients.
@@ -7716,18 +8883,18 @@ return {
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="56">
+  <Item class="StarterPlayer" referent="59">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <token name="CameraMode">1</token>
       <float name="CharacterWalkSpeed">10</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterCharacterScripts" referent="57">
+    <Item class="StarterCharacterScripts" referent="60">
       <Properties>
         <string name="Name">StarterCharacterScripts</string>
       </Properties>
-      <Item class="Script" referent="58">
+      <Item class="Script" referent="61">
         <Properties>
           <string name="Name">Health</string>
           <token name="RunContext">0</token>
@@ -7737,19 +8904,19 @@ return {
         </Properties>
       </Item>
     </Item>
-    <Item class="StarterPlayerScripts" referent="59">
+    <Item class="StarterPlayerScripts" referent="62">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="60">
+      <Item class="Folder" referent="63">
         <Properties>
           <string name="Name">Client</string>
         </Properties>
-        <Item class="Folder" referent="61">
+        <Item class="Folder" referent="64">
           <Properties>
             <string name="Name">Controllers</string>
           </Properties>
-          <Item class="ModuleScript" referent="62">
+          <Item class="ModuleScript" referent="65">
             <Properties>
               <string name="Name">AudioController</string>
               <string name="Source"><![CDATA[-- AudioController: every non-voice sound on the client.
@@ -7958,7 +9125,7 @@ return AudioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="63">
+          <Item class="ModuleScript" referent="66">
             <Properties>
               <string name="Name">CreatureVisualsController</string>
               <string name="Source"><![CDATA[-- CreatureVisualsController: everything the player SEES and HEARS of the creature.
@@ -8144,7 +9311,356 @@ return CreatureVisualsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="64">
+          <Item class="ModuleScript" referent="67">
+            <Properties>
+              <string name="Name">DirectorController</string>
+              <string name="Source"><![CDATA[-- DirectorController: performs the HorrorDirector's moments on THIS client only.
+-- Respects the player's "Scare intensity": reduced = farther away, shorter, no stinger;
+-- intense = closer, stinger sound. Nothing here flashes the screen or spikes volume.
+--
+--   apparition : a tall figure at the end of the hallway you look down - gone a moment later
+--   footsteps  : steps right behind you (turn around: nothing)
+--   flicker    : the lights in your room stutter for a second
+--   cctv       : the security monitor shows your team 20 s in the future (+ a figure)
+--   namecall   : a voice on the radio says your name - only you hear it
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+local SessionState = require(Shared.SessionState)
+
+local AudioController = require(script.Parent.AudioController)
+
+local DirectorController = {}
+
+local player = Players.LocalPlayer
+local settings = nil
+local showSubtitle: ((line: { [string]: any }) -> ())? = nil
+
+local function intensity(): string
+	return settings and settings.Get("scareIntensity") or "standard"
+end
+
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+---------------------------------------------------------------------------
+-- Figure (local only, never collides, never hurts)
+---------------------------------------------------------------------------
+local function buildFigure(): Model
+	local model = Instance.new("Model")
+	model.Name = "FZ_Apparition"
+	local color = Color3.fromRGB(14, 12, 12)
+	local function part(name: string, size: Vector3, cf: CFrame)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = size
+		p.CFrame = cf
+		p.Color = color
+		p.Material = Enum.Material.SmoothPlastic
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = true
+		p.Parent = model
+		return p
+	end
+	local root = part("Torso", Vector3.new(1.3, 3.4, 0.7), CFrame.new(0, 6.3, 0))
+	model.PrimaryPart = root
+	part("Head", Vector3.new(1.2, 1.3, 1.5), CFrame.new(0, 8.6, -0.2))
+	local horn = part("Horn", Vector3.new(0.4, 2, 2), CFrame.new(0, 8.6, -1.1) * CFrame.Angles(0, math.rad(90), 0))
+	horn.Shape = Enum.PartType.Cylinder
+	for _, s in { -1, 1 } do
+		part("Arm", Vector3.new(0.3, 6.4, 0.3), CFrame.new(s * 0.9, 4.6, 0) * CFrame.Angles(0, 0, s * 0.06))
+		part("Leg", Vector3.new(0.4, 4.8, 0.4), CFrame.new(s * 0.4, 2.4, 0))
+	end
+	return model
+end
+
+local function apparition()
+	local camera = workspace.CurrentCamera
+	local character = player.Character
+	if not camera or not character then
+		return
+	end
+	local level = intensity()
+	local look = camera.CFrame.LookVector
+	local flatLook = Vector3.new(look.X, 0, look.Z)
+	if flatLook.Magnitude < 0.1 then
+		return
+	end
+	flatLook = flatLook.Unit
+	rayParams.FilterDescendantsInstances = { character, camera }
+	local origin = camera.CFrame.Position
+	local hit = workspace:Raycast(origin, flatLook * 90, rayParams)
+	local distance = if hit then hit.Distance - 3 else 70
+	local minimum = if level == "reduced" then 45 elseif level == "intense" then 22 else 30
+	if distance < minimum then
+		return -- not a long enough sightline right now: skip rather than force it
+	end
+	local floor = workspace:Raycast(origin + flatLook * distance, Vector3.new(0, -30, 0), rayParams)
+	local base = if floor then floor.Position else (origin + flatLook * distance - Vector3.new(0, 4.5, 0))
+	local figure = buildFigure()
+	figure:PivotTo(CFrame.lookAt(base, base - flatLook))
+	figure.Parent = camera
+	if level == "intense" then
+		AudioController.Play("stinger_low", nil, 0.5, "Creature")
+	end
+	AudioController.Play("creature_click", base + Vector3.new(0, 6, 0), 0.6, "Creature")
+	local lifetime = if level == "reduced" then 1.2 elseif level == "intense" then 2.4 else 1.8
+	local started = os.clock()
+	local connection
+	connection = RunService.Heartbeat:Connect(function()
+		local cam = workspace.CurrentCamera
+		local tooClose = cam and (cam.CFrame.Position - base).Magnitude < 18
+		if os.clock() - started > lifetime or tooClose then
+			connection:Disconnect()
+			-- gone in a single frame, like a signal dropout
+			figure:Destroy()
+		end
+	end)
+end
+
+local function footsteps()
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	local count = if intensity() == "reduced" then 2 elseif intensity() == "intense" then 6 else 4
+	for i = 1, count do
+		task.delay(i * 0.42, function()
+			local cam = workspace.CurrentCamera
+			if cam then
+				local behind = cam.CFrame.Position - Vector3.new(cam.CFrame.LookVector.X, 0, cam.CFrame.LookVector.Z).Unit * 7 - Vector3.new(0, 4, 0)
+				AudioController.Play("footstep_concrete_" .. ((i % 3) + 1), behind, 0.7)
+			end
+		end)
+	end
+end
+
+local function flicker()
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	local lights = {}
+	for _, fixture in CollectionService:GetTagged("FZ_SectorLight") do
+		if fixture:IsA("BasePart") and (fixture.Position - camera.CFrame.Position).Magnitude < 35 then
+			for _, child in fixture:GetChildren() do
+				if child:IsA("Light") and child.Enabled then
+					table.insert(lights, child)
+				end
+			end
+		end
+	end
+	if #lights == 0 then
+		return
+	end
+	AudioController.Play("creature_static_burst", camera.CFrame.Position + camera.CFrame.LookVector * 6, 0.3, "Creature")
+	local pattern = if intensity() == "reduced" then { 0.08, 0.25 } else { 0.06, 0.12, 0.05, 0.3, 0.08 }
+	task.spawn(function()
+		local on = false
+		for _, wait in pattern do
+			for _, light in lights do
+				light.Enabled = on
+			end
+			on = not on
+			task.wait(wait)
+		end
+		for _, light in lights do
+			-- restore only if the light is still supposed to have power
+			local fixture = light.Parent
+			light.Enabled = fixture == nil or fixture:GetAttribute("Powered") ~= false
+		end
+	end)
+end
+
+-- Security monitor: a little scene of the team in a hallway, time-stamped 20 s ahead.
+local function cctv(data: { [string]: any })
+	local screen = CollectionService:GetTagged("FZ_CctvScreen")[1]
+	if not screen or not screen:IsA("BasePart") then
+		return
+	end
+	local old = screen:FindFirstChild("FZ_Feed")
+	if old then
+		old:Destroy()
+	end
+	local gui = Instance.new("SurfaceGui")
+	gui.Name = "FZ_Feed"
+	gui.Face = Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 120
+	gui.AutoLocalize = false
+	gui.LightInfluence = 0
+	gui.Parent = screen
+	local viewport = Instance.new("ViewportFrame")
+	viewport.Size = UDim2.fromScale(1, 1)
+	viewport.BackgroundColor3 = Color3.fromRGB(6, 12, 8)
+	viewport.Ambient = Color3.fromRGB(110, 140, 120)
+	viewport.LightColor = Color3.fromRGB(170, 220, 180)
+	viewport.Parent = gui
+	local world = Instance.new("WorldModel")
+	world.Parent = viewport
+	-- corridor
+	local function slab(size: Vector3, cf: CFrame, color: Color3)
+		local p = Instance.new("Part")
+		p.Anchored = true
+		p.Size = size
+		p.CFrame = cf
+		p.Color = color
+		p.Material = Enum.Material.Concrete
+		p.Parent = world
+	end
+	slab(Vector3.new(14, 1, 60), CFrame.new(0, -0.5, -20), Color3.fromRGB(60, 62, 58))
+	slab(Vector3.new(1, 14, 60), CFrame.new(-7, 7, -20), Color3.fromRGB(80, 82, 78))
+	slab(Vector3.new(1, 14, 60), CFrame.new(7, 7, -20), Color3.fromRGB(80, 82, 78))
+	-- the team (copies of the real characters, walking away from the camera)
+	local index = 0
+	for _, member in Players:GetPlayers() do
+		local character = member.Character
+		if character and member:GetAttribute("FZ_InGame") then
+			local archivable = character.Archivable
+			character.Archivable = true
+			local copy = character:Clone()
+			character.Archivable = archivable
+			if copy then
+				for _, d in copy:GetDescendants() do
+					if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("Sound") or d:IsA("Light") then
+						d:Destroy()
+					elseif d:IsA("BasePart") then
+						d.Anchored = true
+					end
+				end
+				copy:PivotTo(CFrame.new((index % 2) * 3 - 1.5, 3, -18 - index * 4) * CFrame.Angles(0, math.rad(180), 0))
+				copy.Parent = world
+				index += 1
+			end
+		end
+	end
+	if data.withFigure then
+		local figure = buildFigure()
+		figure:PivotTo(CFrame.new(0, 0, -18 - index * 4 - 6))
+		figure.Parent = world
+	end
+	local camera = Instance.new("Camera")
+	camera.FieldOfView = 60
+	camera.CFrame = CFrame.lookAt(Vector3.new(4.5, 11, 8), Vector3.new(0, 3, -22))
+	camera.Parent = viewport
+	viewport.CurrentCamera = camera
+	local stamp = Instance.new("TextLabel")
+	stamp.BackgroundTransparency = 1
+	stamp.Size = UDim2.new(1, -8, 0, 16)
+	stamp.Position = UDim2.fromOffset(4, 2)
+	stamp.Font = Enum.Font.RobotoMono
+	stamp.TextScaled = true
+	stamp.TextXAlignment = Enum.TextXAlignment.Left
+	stamp.TextColor3 = Color3.fromRGB(230, 236, 230)
+	stamp.AutoLocalize = false
+	stamp.Text = Localization.T("CCTV_STAMP", { seconds = data.offset or 20 })
+	stamp.Parent = viewport
+	-- static fade-out after a few seconds
+	task.delay(if intensity() == "reduced" then 6 else 9, function()
+		if gui.Parent then
+			TweenService:Create(viewport, TweenInfo.new(0.6), { ImageTransparency = 1, BackgroundTransparency = 1 }):Play()
+			task.wait(0.7)
+			gui:Destroy()
+		end
+	end)
+end
+
+local function namecall(data: { [string]: any })
+	if showSubtitle then
+		showSubtitle({
+			speaker = "SPEAKER_UNKNOWN",
+			text = if data.answered then "RADIO_NAMECALL_ANSWERED" else "RADIO_NAMECALL",
+			params = { name = tostring(data.name or player.DisplayName) },
+			channel = "radio",
+			duration = 3.5,
+		})
+	end
+	AudioController.Play("radio_squelch_on", nil, 0.5)
+end
+
+-- Live creature location on the second monitor while the cameras have power.
+local function bindCctvText()
+	local function refresh()
+		for _, screen in CollectionService:GetTagged("FZ_CctvText") do
+			if screen:IsA("BasePart") then
+				local gui = screen:FindFirstChild("FZ_CctvGui") :: SurfaceGui?
+				if not gui then
+					local g = Instance.new("SurfaceGui")
+					g.Name = "FZ_CctvGui"
+					g.Face = Enum.NormalId.Front
+					g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+					g.PixelsPerStud = 120
+					g.AutoLocalize = false
+					g.LightInfluence = 0
+					local label = Instance.new("TextLabel")
+					label.Name = "Text"
+					label.BackgroundTransparency = 1
+					label.Size = UDim2.fromScale(1, 1)
+					label.Font = Enum.Font.RobotoMono
+					label.TextScaled = true
+					label.TextColor3 = Color3.fromRGB(10, 40, 20)
+					label.AutoLocalize = false
+					label.Parent = g
+					g.Parent = screen
+					gui = g
+				end
+				local label = (gui :: SurfaceGui):FindFirstChild("Text") :: TextLabel
+				local area = SessionState.Get("CctvArea")
+				if SessionState.Get("Cameras") and area == "-" then
+					label.Text = Localization.T("CCTV_NONE")
+				elseif SessionState.Get("Cameras") and type(area) == "string" then
+					local areaKey = if area == "?" then "AREA_UNKNOWN" else "AREA_" .. area
+					label.Text = Localization.T("CCTV_AREA", { area = Localization.T(areaKey) })
+				else
+					label.Text = Localization.T("CCTV_OFFLINE")
+				end
+			end
+		end
+	end
+	SessionState.Observe("Cameras", refresh)
+	SessionState.Observe("CctvArea", refresh)
+	Localization.Changed:Connect(refresh)
+	CollectionService:GetInstanceAddedSignal("FZ_CctvText"):Connect(refresh)
+end
+
+function DirectorController.Init(settingsController, captionCallback: (line: { [string]: any }) -> ())
+	settings = settingsController
+	showSubtitle = captionCallback
+	Net.Event("Scare").OnClientEvent:Connect(function(kind: any, data: any)
+		if type(kind) ~= "string" then
+			return
+		end
+		data = if type(data) == "table" then data else {}
+		if kind == "apparition" then
+			apparition()
+		elseif kind == "footsteps" then
+			footsteps()
+		elseif kind == "flicker" then
+			flicker()
+		elseif kind == "cctv" then
+			cctv(data)
+		elseif kind == "namecall" then
+			namecall(data)
+		end
+	end)
+	bindCctvText()
+end
+
+return DirectorController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="68">
             <Properties>
               <string name="Name">EquipmentController</string>
               <string name="Source"><![CDATA[-- EquipmentController: client side of shop equipment.
@@ -8262,7 +9778,7 @@ return EquipmentController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="65">
+          <Item class="ModuleScript" referent="69">
             <Properties>
               <string name="Name">FlashlightController</string>
               <string name="Source"><![CDATA[-- FlashlightController: precise camera-aligned light for the local player, plus the
@@ -8409,7 +9925,7 @@ return FlashlightController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="66">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">GraphicsController</string>
               <string name="Source"><![CDATA[-- GraphicsController: quality profiles for the parts an experience may control itself.
@@ -8544,7 +10060,7 @@ return GraphicsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="67">
+          <Item class="ModuleScript" referent="71">
             <Properties>
               <string name="Name">HealthController</string>
               <string name="Source"><![CDATA[-- HealthController: health HUD (only visible when hurt), damage vignette, downed overlay.
@@ -8645,7 +10161,7 @@ return HealthController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="68">
+          <Item class="ModuleScript" referent="72">
             <Properties>
               <string name="Name">InputController</string>
               <string name="Source"><![CDATA[-- InputController: one logical action layer for keyboard/mouse, gamepad and touch.
@@ -8977,7 +10493,7 @@ return InputController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="69">
+          <Item class="ModuleScript" referent="73">
             <Properties>
               <string name="Name">MovementController</string>
               <string name="Source"><![CDATA[-- MovementController: slow walk, short limited sprint with stamina.
@@ -9107,7 +10623,7 @@ return MovementController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="70">
+          <Item class="ModuleScript" referent="74">
             <Properties>
               <string name="Name">RadioController</string>
               <string name="Source"><![CDATA[-- RadioController: the walkie-talkie in your hand.
@@ -9354,7 +10870,7 @@ return RadioController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="71">
+          <Item class="ModuleScript" referent="75">
             <Properties>
               <string name="Name">SettingsController</string>
               <string name="Source"><![CDATA[-- SettingsController: local source of truth for player settings.
@@ -9445,7 +10961,7 @@ return SettingsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="72">
+          <Item class="ModuleScript" referent="76">
             <Properties>
               <string name="Name">VoiceController</string>
               <string name="Source"><![CDATA[-- VoiceController: hearing voices on this client.
@@ -9677,7 +11193,7 @@ return VoiceController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="73">
+          <Item class="ModuleScript" referent="77">
             <Properties>
               <string name="Name">WorldTextController</string>
               <string name="Source"><![CDATA[-- WorldTextController: per-player localization of text that lives in the 3D world.
@@ -9762,7 +11278,7 @@ return WorldTextController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="74">
+        <Item class="LocalScript" referent="78">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- FREQUENCY ZERO - client bootstrap.
@@ -9808,6 +11324,8 @@ local RadioController = require(Controllers.RadioController)
 local CreatureVisualsController = require(Controllers.CreatureVisualsController)
 local HealthController = require(Controllers.HealthController)
 local EquipmentController = require(Controllers.EquipmentController)
+local DirectorController = require(Controllers.DirectorController)
+local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
 local Theme = require(UI.Theme)
@@ -9978,6 +11496,28 @@ RadioController.Init(hudGui, SettingsController)
 CreatureVisualsController.Init(Hud.ShowSubtitle)
 HealthController.Init(hudGui, SettingsController)
 EquipmentController.Init()
+DirectorController.Init(SettingsController, Hud.ShowSubtitle)
+DecisionPanel.Init(hudGui, InputController)
+
+-- Forecast countdown (the prediction you can break)
+local function updateForecast()
+	local key = SessionState.Get("Forecast")
+	local ends = SessionState.Get("ForecastEnds")
+	if type(key) == "string" and type(ends) == "number" then
+		Hud.SetForecast(key, ends - workspace:GetServerTimeNow())
+	else
+		Hud.SetForecast(nil)
+	end
+end
+SessionState.Observe("Forecast", updateForecast)
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		if SessionState.Get("Forecast") then
+			updateForecast()
+		end
+	end
+end)
 
 -- Scare intensity: creature sounds are mixed down on "reduced" (medic set dampens too).
 local function applyScareMix()
@@ -10263,11 +11803,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="75">
+        <Item class="Folder" referent="79">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="76">
+          <Item class="ModuleScript" referent="80">
             <Properties>
               <string name="Name">Components</string>
               <string name="Source"><![CDATA[-- Components: small set of UI building blocks shared by every screen.
@@ -10602,7 +12142,7 @@ return Components
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="77">
+          <Item class="ModuleScript" referent="81">
             <Properties>
               <string name="Name">DebugOverlay</string>
               <string name="Source"><![CDATA[-- DebugOverlay: real measured performance numbers (admin only, toggled from Maintenance).
@@ -10682,7 +12222,155 @@ return DebugOverlay
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="78">
+          <Item class="ModuleScript" referent="82">
+            <Properties>
+              <string name="Name">DecisionPanel</string>
+              <string name="Source"><![CDATA[-- DecisionPanel: the team vote UI. Big buttons, live vote counts, a time bar.
+-- Mouse is freed while it is open (first person), gamepad focus jumps to the first option,
+-- touch just taps. Movement keeps working - the world does not pause for a vote.
+
+local GuiService = game:GetService("GuiService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Localization = require(Shared.Localization)
+local Net = require(Shared.Net)
+
+local Components = require(script.Parent.Components)
+local Theme = require(script.Parent.Theme)
+
+local DecisionPanel = {}
+
+local root: Frame
+local promptLabel: TextLabel
+local optionsRow: Frame
+local timeBar: Frame
+local current: { [string]: any }? = nil
+local myVote: number? = nil
+local buttons: { any } = {}
+local timer: RBXScriptConnection? = nil
+local input = nil
+
+local function close()
+	current = nil
+	myVote = nil
+	root.Visible = false
+	if timer then
+		timer:Disconnect()
+		timer = nil
+	end
+	if GuiService.SelectedObject and GuiService.SelectedObject:IsDescendantOf(root) then
+		GuiService.SelectedObject = nil
+	end
+end
+
+local function render(decision)
+	local changed = not current or current.id ~= decision.id
+	current = decision
+	root.Visible = true
+	Localization.Bind(promptLabel, decision.prompt)
+	if changed then
+		myVote = nil
+		for _, b in buttons do
+			b.Instance:Destroy()
+		end
+		table.clear(buttons)
+		for index, key in decision.options do
+			local button = Components.Button({
+				Key = key,
+				TagKey = "DECISION_VOTES",
+				TagParams = { count = 0 },
+				LayoutOrder = index,
+				Parent = optionsRow,
+				OnActivated = function()
+					if current and current.id == decision.id then
+						myVote = index
+						Net.Event("DecisionVote"):FireServer(decision.id, index)
+						for i, b in buttons do
+							b.SetFocused(i == index)
+						end
+					end
+				end,
+			})
+			button.Instance.Size = UDim2.new(1 / #decision.options, -6, 1, 0)
+			table.insert(buttons, button)
+		end
+		if input.GetDevice() == "gamepad" and buttons[1] then
+			GuiService.SelectedObject = buttons[1].Instance
+		end
+	end
+	for index, button in buttons do
+		Localization.Bind(button.Tag, "DECISION_VOTES", { count = decision.counts[index] or 0 })
+		button.Tag.Visible = true
+	end
+	if not timer then
+		timer = RunService.Heartbeat:Connect(function()
+			local d = current
+			if not d then
+				return
+			end
+			local remaining = math.max(0, d.ends - workspace:GetServerTimeNow())
+			timeBar.Size = UDim2.new(math.clamp(remaining / 20, 0, 1), 0, 0, 2)
+		end)
+	end
+end
+
+function DecisionPanel.Init(hudGui: ScreenGui, inputController)
+	input = inputController
+	root = Instance.new("Frame")
+	root.Name = "Decision"
+	root.AnchorPoint = Vector2.new(0.5, 1)
+	root.Position = UDim2.new(0.5, 0, 1, -150)
+	root.Size = UDim2.fromOffset(560, 120)
+	root.BackgroundColor3 = Theme.Colors.Panel
+	root.BackgroundTransparency = 0.1
+	root.BorderSizePixel = 0
+	root.Visible = false
+	root.ZIndex = 15
+	root.Parent = hudGui
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Theme.Colors.Relay
+	stroke.Transparency = 0.4
+	stroke.Parent = root
+	Components.Padding(root, 14, 10)
+	local unlock = Instance.new("TextButton")
+	unlock.Modal = true
+	unlock.Text = ""
+	unlock.BackgroundTransparency = 1
+	unlock.Size = UDim2.fromOffset(0, 0)
+	unlock.Selectable = false
+	unlock.Parent = root
+
+	promptLabel = Components.Text({ Text = "", Font = Theme.Fonts.Medium, TextSize = Theme.Sizes.TextBody, Color = Theme.Colors.TextBright, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, 0, 0, 28), Parent = root })
+	optionsRow = Instance.new("Frame")
+	optionsRow.BackgroundTransparency = 1
+	optionsRow.Position = UDim2.fromOffset(0, 36)
+	optionsRow.Size = UDim2.new(1, 0, 0, Theme.Sizes.Button)
+	optionsRow.Parent = root
+	Components.List(optionsRow, 8, true)
+	timeBar = Instance.new("Frame")
+	timeBar.BackgroundColor3 = Theme.Colors.Relay
+	timeBar.BorderSizePixel = 0
+	timeBar.AnchorPoint = Vector2.new(0, 1)
+	timeBar.Position = UDim2.fromScale(0, 1)
+	timeBar.Size = UDim2.new(1, 0, 0, 2)
+	timeBar.Parent = root
+
+	Net.Event("Decision").OnClientEvent:Connect(function(decision)
+		if type(decision) ~= "table" then
+			close()
+		else
+			render(decision)
+		end
+	end)
+end
+
+return DecisionPanel
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="83">
             <Properties>
               <string name="Name">Hud</string>
               <string name="Source"><![CDATA[-- HUD: deliberately minimal. Nothing is permanently on screen; every element appears in
@@ -10959,6 +12647,19 @@ function Hud.SetStatus(key: string?, params: { [string]: any }?, suffixKey: stri
 	label.Visible = true
 end
 
+-- Forecast line (top centre, under the status line): "FORECAST · Lights in Sector A · 0:24"
+local forecastLine: TextLabel? = nil
+function Hud.SetForecast(key: string?, seconds: number?)
+	local label = forecastLine :: TextLabel
+	if not key then
+		label.Visible = false
+		return
+	end
+	local s = math.max(0, math.floor(seconds or 0))
+	label.Text = Localization.T("FORECAST_LABEL", { text = Localization.T(key), time = string.format("%d:%02d", s // 60, s % 60) })
+	label.Visible = true
+end
+
 function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callbacks: { onOpen: () -> (), onClose: () -> () })
 	gui = hudGui
 	settings = settingsController
@@ -10993,6 +12694,10 @@ function Hud.Init(hudGui: ScreenGui, settingsController, inputController, callba
 	statusLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Radio, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.6, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 52), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
 	;(statusLine :: TextLabel).TextStrokeTransparency = 0.5
 	;(statusLine :: TextLabel).Visible = false
+
+	forecastLine = Components.Text({ Text = "", Font = Theme.Fonts.Mono, TextSize = Theme.Sizes.TextSmall, Color = Theme.Colors.Relay, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(0.7, 0, 0, 20), Position = UDim2.new(0.5, 0, 0, 74), AnchorPoint = Vector2.new(0.5, 0), Parent = gui })
+	;(forecastLine :: TextLabel).TextStrokeTransparency = 0.5
+	;(forecastLine :: TextLabel).Visible = false
 
 	staminaTrack = Instance.new("Frame")
 	staminaTrack.Name = "Stamina"
@@ -11039,7 +12744,7 @@ return Hud
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="79">
+          <Item class="ModuleScript" referent="84">
             <Properties>
               <string name="Name">Router</string>
               <string name="Source"><![CDATA[-- Router: screen stack for menus with fades, gamepad focus and universal "back".
@@ -11203,11 +12908,11 @@ return Router
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="80">
+          <Item class="Folder" referent="85">
             <Properties>
               <string name="Name">Screens</string>
             </Properties>
-            <Item class="ModuleScript" referent="81">
+            <Item class="ModuleScript" referent="86">
               <Properties>
                 <string name="Name">Admin</string>
                 <string name="Source"><![CDATA[-- Maintenance (owner/developer tools). The server re-checks authorization on every
@@ -11286,7 +12991,7 @@ return Admin
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="82">
+            <Item class="ModuleScript" referent="87">
               <Properties>
                 <string name="Name">Extras</string>
                 <string name="Source"><![CDATA[-- Extras: transmission codes found in the world. The hidden maintenance entry appears
@@ -11432,7 +13137,7 @@ return Extras
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="83">
+            <Item class="ModuleScript" referent="88">
               <Properties>
                 <string name="Name">LanguageSelect</string>
                 <string name="Source"><![CDATA[-- Language selection. Used on the very first start (before the main menu, cannot be
@@ -11534,7 +13239,7 @@ return LanguageSelect
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="84">
+            <Item class="ModuleScript" referent="89">
               <Properties>
                 <string name="Name">Leaderboard</string>
                 <string name="Source"><![CDATA[-- Global best shifts for one survival map (top 10) + your own best.
@@ -11603,7 +13308,7 @@ return Leaderboard
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="85">
+            <Item class="ModuleScript" referent="90">
               <Properties>
                 <string name="Name">Lobby</string>
                 <string name="Source"><![CDATA[-- Team screen: who is in this session, one-tap invite, clear solo message.
@@ -11718,7 +13423,7 @@ return Lobby
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="86">
+            <Item class="ModuleScript" referent="91">
               <Properties>
                 <string name="Name">MainMenu</string>
                 <string name="Source"><![CDATA[-- Main menu (mode "main") and in-game menu (mode "pause").
@@ -11834,7 +13539,7 @@ return MainMenu
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="87">
+            <Item class="ModuleScript" referent="92">
               <Properties>
                 <string name="Name">Play</string>
                 <string name="Source"><![CDATA[-- Play: choose a story chapter or a survival map. Everything comes from Shared/Content,
@@ -11964,7 +13669,7 @@ return Play
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="88">
+            <Item class="ModuleScript" referent="93">
               <Properties>
                 <string name="Name">Settings</string>
                 <string name="Source"><![CDATA[-- Settings. Every row works the same on every device:
@@ -12153,7 +13858,7 @@ return Settings
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="89">
+            <Item class="ModuleScript" referent="94">
               <Properties>
                 <string name="Name">Shop</string>
                 <string name="Source"><![CDATA[-- Shop: tabs (Equipment / Upgrades / Cosmetics) with large cards, Signal Mark balance,
@@ -12402,7 +14107,7 @@ return Shop
 ]]></string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="90">
+            <Item class="ModuleScript" referent="95">
               <Properties>
                 <string name="Name">Updates</string>
                 <string name="Source"><![CDATA[-- "What's new": optional, opened by the player from the main menu. Never a pop-up.
@@ -12456,7 +14161,7 @@ return UpdatesScreen
               </Properties>
             </Item>
           </Item>
-          <Item class="ModuleScript" referent="91">
+          <Item class="ModuleScript" referent="96">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[-- Visual language of every interface: quiet, cinematic, high contrast, one accent colour.
@@ -12514,7 +14219,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="VoiceChatService" referent="92">
+  <Item class="VoiceChatService" referent="97">
     <Properties>
       <string name="Name">VoiceChatService</string>
       <bool name="EnableDefaultVoice">false</bool>

@@ -19,7 +19,10 @@ REFERENCE = "en"
 ENTRY = re.compile(r'^\s*([A-Z][A-Z0-9_]*)\s*=\s*"((?:[^"\\]|\\.)*)"\s*,\s*$')
 PLACEHOLDER = re.compile(r"{([A-Za-z0-9_]+)}")
 # Keys referenced from code: string literals that look like our key format.
-KEY_USE = re.compile(r'"((?:MENU|LANG|LOBBY|CHAPTER|SETTINGS|VALUE|EXTRAS|CODE|ADMIN|TOUCH|INTERACT|OBJECT|OBJECTIVE|SPEAKER|SFX|RADIO|FAX|DOC|SIGN|NOTE|ERROR|PAUSE|DATE|ITEM|HUD|SHOP|MIC|VOICE|DOOR|REWARD|MODE|PLAY|MAP|SV|CONTENT|LEADERBOARD|SESSION|UPDATES|UPD)_[A-Z0-9_]+)"')
+KEY_USE = re.compile(r'"((?:MENU|LANG|LOBBY|CHAPTER|SETTINGS|VALUE|EXTRAS|CODE|ADMIN|TOUCH|INTERACT|OBJECT|OBJECTIVE|SPEAKER|SFX|RADIO|FAX|DOC|SIGN|NOTE|ERROR|PAUSE|DATE|ITEM|HUD|SHOP|MIC|VOICE|DOOR|REWARD|MODE|PLAY|MAP|SV|CONTENT|LEADERBOARD|SESSION|UPDATES|UPD|DECISION|SYS|FORECAST|CCTV|AREA|CAL|HINT)_[A-Z0-9_]+)"')
+
+
+STRUCTURAL = re.compile(r"^\s*(--.*)?$|^return \{\s*$|^\}\s*$")
 
 
 def load(path: Path) -> dict:
@@ -27,6 +30,9 @@ def load(path: Path) -> dict:
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         match = ENTRY.match(line)
         if not match:
+            if not STRUCTURAL.match(line):
+                # e.g. an unescaped " inside a value would break the whole language file
+                raise SystemExit(f"{path.name}:{number}: malformed line: {line.strip()[:80]}")
             continue
         key, value = match.groups()
         if key in table:
@@ -64,7 +70,7 @@ def main() -> int:
             continue
         for key in KEY_USE.findall(path.read_text(encoding="utf-8")):
             used.add((key, path.relative_to(ROOT)))
-    dynamic_prefixes = ("CHAPTER_0", "SV_EV_")  # built at runtime
+    dynamic_prefixes = ("CHAPTER_0", "SV_EV_", "RADIO_C1_POWER_NO_", "AREA_", "SV_FORECAST_", "FORECAST_BLACKOUT_", "OBJECT_BREAKER_")  # built at runtime
     for key, path in sorted(used):
         if key not in reference and not key.startswith(dynamic_prefixes):
             problems.append(f"{path}: uses unknown key {key}")

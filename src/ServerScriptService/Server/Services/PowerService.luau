@@ -8,7 +8,7 @@ local SessionState = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChi
 
 local PowerService = {}
 
-local DEFAULT = { A = true, B = false, C = true, D = true, E = true, CONTROL = true, CORE = false, HALL = true }
+local DEFAULT = { A = true, B = false, C = true, D = true, E = true, CONTROL = true, CORE = false, HALL = true, HALLS = false }
 local powered: { [string]: boolean } = {}
 local OFF_COLOR = Color3.fromRGB(40, 40, 38)
 

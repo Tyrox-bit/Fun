@@ -26,14 +26,23 @@ local NoiseService = require(Services.NoiseService)
 local HealthService = require(Services.HealthService)
 local DoorService = require(Services.DoorService)
 local LeaderboardService = require(Services.LeaderboardService)
+local ForecastService = require(Services.ForecastService)
+local DirectorService = require(Services.DirectorService)
 
 local Survival = {}
 Survival.StartCheckpoint = "C1_CONTROL"
 
 local SC = Config.Survival
 local TASKS = { "fuses", "uplink", "generators", "stations" }
-local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm" }
-local EVENT_NAMES = { blackout = "SV_EVN_BLACKOUT", static = "SV_EVN_STATIC", hunt = "SV_EVN_HUNT", lockdown = "SV_EVN_LOCKDOWN", calm = "SV_EVN_CALM" }
+local EVENTS = { "blackout", "static", "hunt", "lockdown", "calm", "forecast" }
+local EVENT_NAMES = { blackout = "SV_EVN_BLACKOUT", static = "SV_EVN_STATIC", hunt = "SV_EVN_HUNT", lockdown = "SV_EVN_LOCKDOWN", calm = "SV_EVN_CALM", forecast = "SV_EVN_FORECAST" }
+
+-- Light, repeatable scares for survival (the director keeps the gaps).
+local SURVIVAL_BEATS = {
+	{ id = "sv_flicker", kind = "flicker", condition = function(_p, info) return info.area ~= nil end },
+	{ id = "sv_footsteps", kind = "footsteps", condition = function(_p, info) return info.alone end },
+	{ id = "sv_apparition", kind = "apparition", condition = function(_p, info) return info.area == "HALL" end },
+}
 local STATIONS = { "c1_terminal", "c1_breaker_a", "c1_core" }
 local UPLINK_SECONDS = 40
 local UPLINK_RADIUS = 17
@@ -113,6 +122,7 @@ end
 -- Events
 ---------------------------------------------------------------------------
 local function clearEvent(r: Run)
+	ForecastService.Cancel()
 	if r.blackoutSector then
 		PowerService.Set(r.blackoutSector, true)
 		r.blackoutSector = nil
@@ -139,6 +149,32 @@ local function startEvent(r: Run)
 		StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
 	elseif event == "static" then
 		SessionState.Set("SvStatic", true)
+	elseif event == "forecast" then
+		-- A prediction you can break: hold the right breaker before the deadline.
+		local sector = pick({ "A", "C", "D", "E" }, nil)
+		ForecastService.Start({
+			id = "sv_blackout_" .. string.lower(sector),
+			text = "SV_FORECAST_" .. sector,
+			hud = "FORECAST_BLACKOUT_" .. sector,
+			seconds = 35,
+			breakWith = if sector == "A" then "c1_breaker_a" else "breaker",
+			breakFilter = function(instance)
+				return instance:GetAttribute("Sector") == sector
+			end,
+			onKept = function()
+				if run == r and r.phase == "task" then
+					r.blackoutSector = sector
+					PowerService.Set(sector, false)
+					StoryService.Say("all", { text = "SFX_POWER_DOWN", channel = "world", duration = 3, critical = true })
+				end
+			end,
+			onBroken = function()
+				r.banked += SC.ShiftReward -- breaking a forecast is worth an extra shift reward
+			end,
+			keptLine = "RADIO_C1_FORECAST_KEPT",
+			brokenLine = "RADIO_C1_FORECAST_BROKEN",
+		})
+		return -- the forecast line replaces the event announcement
 	elseif event == "lockdown" then
 		local candidates = {}
 		for _, panel in CollectionService:GetTagged("FZ_Door") do
@@ -369,6 +405,9 @@ function Survival.Begin(entry)
 	}
 	local r = run :: Run
 	PowerService.Set("B", true) -- the core is reachable in survival
+	PowerService.Set("HALLS", true)
+	SessionState.Set("Cameras", true)
+	DirectorService.Configure(SURVIVAL_BEATS, {}, ctx.playersInGame)
 	HealthService.TeamWipeHandler = function()
 		if run == r and active then
 			endRun(r, false)
@@ -457,6 +496,10 @@ function Survival.Stop()
 	end
 	run = nil
 	HealthService.TeamWipeHandler = nil
+	DirectorService.Stop()
+	ForecastService.Cancel()
+	SessionState.Set("Cameras", nil)
+	SessionState.Set("CctvArea", nil)
 	SessionState.Set("SvShift", nil)
 	SessionState.Set("SvEvent", nil)
 	SessionState.Set("SvPhase", nil)
@@ -473,6 +516,8 @@ end
 
 function Survival.Init(context)
 	ctx = context
+	ForecastService.Breakable("c1_breaker_a")
+	ForecastService.Breakable("breaker")
 
 	InteractionService.Register("sv_fuse", function(_player, fuse)
 		local r = run

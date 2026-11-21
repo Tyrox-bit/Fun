@@ -23,6 +23,8 @@ local SERVICES = {
 	"CreatureService",
 	"FlashlightService",
 	"LeaderboardService",
+	"DecisionService",
+	"DirectorService",
 	"PlaceService",
 	"SessionService",
 }

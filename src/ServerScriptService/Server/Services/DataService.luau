@@ -75,6 +75,11 @@ local function defaultData(): { [string]: any }
 			survival = {}, -- [survivalMapId] = { best = shifts, runs = n }
 		},
 		seenContent = {}, -- [contentId] = true (NEW badges)
+		storyChoices = {}, -- [decisionId] = option index chosen by the team
+		secrets = {
+			forecastsBroken = {}, -- [forecastId] = true
+			logs = {}, -- [logId] = unix time (archive entries)
+		},
 		lastSeenUpdate = "", -- newest update id the player opened in "What's new"
 		stats = { sessions = 0, firstJoin = os.time(), lastJoin = 0 },
 		inventory = {}, -- [itemId] = true

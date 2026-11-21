@@ -39,6 +39,10 @@ function DoorService.Open(panel: BasePart)
 	end
 end
 
+function DoorService.Close(panel: BasePart)
+	setOpen(panel, false)
+end
+
 function DoorService.SetLocked(panel: BasePart, locked: boolean)
 	panel:SetAttribute("Locked", locked)
 	local stripe = panel:FindFirstChild("Stripe")

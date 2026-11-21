@@ -41,6 +41,8 @@ local RadioController = require(Controllers.RadioController)
 local CreatureVisualsController = require(Controllers.CreatureVisualsController)
 local HealthController = require(Controllers.HealthController)
 local EquipmentController = require(Controllers.EquipmentController)
+local DirectorController = require(Controllers.DirectorController)
+local DecisionPanel = require(UI.DecisionPanel)
 
 local Components = require(UI.Components)
 local Theme = require(UI.Theme)
@@ -211,6 +213,28 @@ RadioController.Init(hudGui, SettingsController)
 CreatureVisualsController.Init(Hud.ShowSubtitle)
 HealthController.Init(hudGui, SettingsController)
 EquipmentController.Init()
+DirectorController.Init(SettingsController, Hud.ShowSubtitle)
+DecisionPanel.Init(hudGui, InputController)
+
+-- Forecast countdown (the prediction you can break)
+local function updateForecast()
+	local key = SessionState.Get("Forecast")
+	local ends = SessionState.Get("ForecastEnds")
+	if type(key) == "string" and type(ends) == "number" then
+		Hud.SetForecast(key, ends - workspace:GetServerTimeNow())
+	else
+		Hud.SetForecast(nil)
+	end
+end
+SessionState.Observe("Forecast", updateForecast)
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		if SessionState.Get("Forecast") then
+			updateForecast()
+		end
+	end
+end)
 
 -- Scare intensity: creature sounds are mixed down on "reduced" (medic set dampens too).
 local function applyScareMix()

@@ -21,6 +21,9 @@ local EVENTS = {
 	"Footprint", -- S->C (position) observer set only
 	"Hurt", -- S->C (amount)
 	"MarkSeen", -- C->S (contentId | "update:<id>") NEW badges
+	"Scare", -- S->C (beat, data) HorrorDirector moments (often for ONE player only)
+	"Decision", -- S->C (decision | nil) open / update / close a team decision
+	"DecisionVote", -- C->S (decisionId, optionIndex)
 }
 
 local FUNCTIONS = {

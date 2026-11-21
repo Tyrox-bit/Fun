@@ -258,13 +258,17 @@ end
 local function console(cf: CFrame)
 	block(props, "Console", Vector3.new(7, 3.4, 2.4), cf * CFrame.new(0, 1.7, 0), C.SteelDark, Enum.Material.Metal)
 	block(props, "ConsoleTop", Vector3.new(7, 0.3, 2.6), cf * CFrame.new(0, 3.5, 0) * CFrame.Angles(math.rad(-12), 0, 0), C.Steel, Enum.Material.Metal)
+	local screens = {}
 	for i = -1, 1 do
 		local screen = block(props, "Monitor", Vector3.new(1.9, 1.5, 1.2), cf * CFrame.new(i * 2.2, 4.6, 0.4), C.ConcreteDark, Enum.Material.SmoothPlastic)
 		local glass = block(props, "Screen", Vector3.new(1.6, 1.1, 0.05), screen.CFrame * CFrame.new(0, 0, -0.62), C.Screen, Enum.Material.Neon)
 		glass.Transparency = 0.25
 		glass.CanCollide = false
+		table.insert(screens, glass)
 	end
+	return screens
 end
+
 
 local function cabinet(cf: CFrame)
 	block(props, "Cabinet", Vector3.new(3, 7, 2), cf * CFrame.new(0, 3.5, 0), C.Steel, Enum.Material.Metal)
@@ -359,6 +363,13 @@ local function interactable(part: BasePart, id: string, action: string, object: 
 		attributes[key] = value
 	end
 	tag(part, "FZ_Interactable", attributes)
+end
+
+-- Breaker cabinet on a wall (forecasts are broken by holding the right breaker).
+local function breakerBox(cf: CFrame, sector: string, interactId: string)
+	local box = block(props, "Breaker" .. sector, Vector3.new(3, 4, 0.8), cf, C.Steel:Lerp(C.Emergency, 0.25), Enum.Material.Metal)
+	interactable(box, interactId, "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER_" .. sector, { MaxDistance = 8, Sector = sector })
+	return box
 end
 
 ---------------------------------------------------------------------------
@@ -488,7 +499,24 @@ end
 
 local function furnish()
 	-- Control room (start area, x 50..100, z 25..70)
-	console(CFrame.new(62, 0, 66) * CFrame.Angles(0, math.rad(180), 0))
+	local cctv = console(CFrame.new(62, 0, 66) * CFrame.Angles(0, math.rad(180), 0))
+	CollectionService:AddTag(cctv[2], "FZ_CctvScreen") -- the "future" camera feed
+	CollectionService:AddTag(cctv[3], "FZ_CctvText") -- live creature location (cameras powered)
+
+	-- Emergency power panel: the generator only carries two of three systems.
+	block(props, "PowerPanel", Vector3.new(0.6, 6, 12), CFrame.new(50.8, 4.5, 38), C.SteelDark, Enum.Material.Metal)
+	worldText(block(props, "PowerTitle", Vector3.new(10, 1, 0.1), CFrame.new(51.15, 8.1, 38) * CFrame.Angles(0, math.rad(90), 0), C.Plastic, Enum.Material.SmoothPlastic), Enum.NormalId.Back, "SYS_PANEL")
+	for index, system in { "cameras", "halls", "vents" } do
+		local z = 34 + (index - 1) * 4
+		local lever = block(props, "Lever_" .. system, Vector3.new(0.8, 2.2, 0.8), CFrame.new(51.5, 4.4, z), C.Plastic, Enum.Material.Metal)
+		interactable(lever, "c1_power", "INTERACT_SWITCH", "SYS_" .. string.upper(system), { System = system, MaxDistance = 8 })
+		local lamp = block(props, "LeverLamp_" .. system, Vector3.new(0.3, 0.5, 0.5), CFrame.new(51.25, 6.4, z), C.ConcreteDark, Enum.Material.Neon)
+		lamp:SetAttribute("LeverLamp", system)
+		CollectionService:AddTag(lamp, "FZ_LeverLamp")
+		local label = block(props, "LeverLabel_" .. system, Vector3.new(0.1, 0.8, 3.4), CFrame.new(51.2, 2.6, z) * CFrame.Angles(0, math.rad(90), 0), C.Plastic, Enum.Material.SmoothPlastic)
+		label.Size = Vector3.new(3.4, 0.8, 0.1)
+		worldText(label, Enum.NormalId.Back, "SYS_" .. string.upper(system))
+	end
 	console(CFrame.new(88, 0, 66) * CFrame.Angles(0, math.rad(180), 0))
 	console(CFrame.new(96, 0, 40) * CFrame.Angles(0, math.rad(90), 0))
 	local terminal = block(props, "ControlTerminal", Vector3.new(4, 3.6, 2.4), CFrame.new(75, 1.8, 38), C.SteelDark, Enum.Material.Metal)
@@ -512,7 +540,7 @@ local function furnish()
 	shelf(CFrame.new(99, 0, -14) * CFrame.Angles(0, math.rad(90), 0))
 	cabinet(CFrame.new(98, 0, 18))
 	local breaker = block(props, "BreakerA", Vector3.new(3, 4, 0.8), CFrame.new(99.2, 5, 4) * CFrame.Angles(0, math.rad(-90), 0), C.Steel:Lerp(C.Emergency, 0.25), Enum.Material.Metal)
-	interactable(breaker, "c1_breaker_a", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { MaxDistance = 8 })
+	interactable(breaker, "c1_breaker_a", "INTERACT_HOLD_BREAKER", "OBJECT_BREAKER", { MaxDistance = 8, Sector = "A" })
 	breaker:SetAttribute("Armed", false)
 	for x = 60, 90, 15 do
 		ceilingLight(Vector3.new(x, 0, -12), "A")
@@ -532,6 +560,15 @@ local function furnish()
 	end
 	ceilingLight(Vector3.new(66, 0, -70), "D", Color3.fromRGB(255, 214, 170))
 	ceilingLight(Vector3.new(84, 0, -45), "D", Color3.fromRGB(255, 214, 170))
+	breakerBox(CFrame.new(99.2, 5, -30) * CFrame.Angles(0, math.rad(-90), 0), "D", "breaker")
+	-- Break room corner: coffee still warm, calendar on November 2009 (document)
+	local table_ = block(props, "CoffeeTable", Vector3.new(4, 3, 3), CFrame.new(90, 1.5, -30), C.Wood, Enum.Material.Wood)
+	local mug = block(props, "Mug", Vector3.new(0.5, 0.6, 0.5), table_.CFrame * CFrame.new(0.8, 1.8, 0), C.Plastic, Enum.Material.SmoothPlastic)
+	mug.Shape = Enum.PartType.Cylinder
+	mug.CFrame = table_.CFrame * CFrame.new(0.8, 1.8, 0) * CFrame.Angles(0, 0, math.rad(90))
+	local calendar = block(props, "Calendar", Vector3.new(2, 2.6, 0.1), CFrame.new(99.4, 6, -36) * CFrame.Angles(0, math.rad(-90), 0), C.Paper, Enum.Material.SmoothPlastic)
+	worldText(calendar, Enum.NormalId.Front, nil, "NOV 2009\n14", nil, Color3.fromRGB(140, 30, 24))
+	interactable(calendar, "c1_calendar", "INTERACT_READ", "OBJECT_CALENDAR", { MaxDistance = 7 })
 	fuseSpot(CFrame.new(93, 5.8, -65), "D")
 	fuseSpot(CFrame.new(60, 2.2, -39), "D")
 
@@ -543,6 +580,7 @@ local function furnish()
 	desk(CFrame.new(-60, 0, -40))
 	ceilingLight(Vector3.new(-82, 0, -70), "C", nil, true)
 	ceilingLight(Vector3.new(-62, 0, -45), "C")
+	breakerBox(CFrame.new(-99.2, 5, -45) * CFrame.Angles(0, math.rad(90), 0), "C", "breaker")
 	fuseSpot(CFrame.new(-60, 3.45, -40), "C")
 	fuseSpot(CFrame.new(-82, 0.4, -82), "C")
 
@@ -574,6 +612,7 @@ local function furnish()
 	pipeRun(Vector3.new(-60, 12.5, 30), Vector3.new(-60, 12.5, 84), 0.9)
 	ceilingLight(Vector3.new(-70, 0, 40), "E", C.Sodium)
 	ceilingLight(Vector3.new(-70, 0, 72), "E", C.Sodium)
+	breakerBox(CFrame.new(-99.2, 5, 35) * CFrame.Angles(0, math.rad(90), 0), "E", "breaker")
 	fuseSpot(CFrame.new(-66, 0.4, 82), "E")
 	fuseSpot(CFrame.new(-95, 0.4, 56), "E")
 
@@ -581,6 +620,10 @@ local function furnish()
 	for x = -40, 40, 20 do
 		emergencyLight(Vector3.new(x, 12, -59), "HALL")
 		emergencyLight(Vector3.new(x, 12, 59), "HALL")
+	end
+	for x = -35, 35, 35 do
+		ceilingLight(Vector3.new(x, 0, -55), "HALLS", nil, false, true)
+		ceilingLight(Vector3.new(x, 0, 55), "HALLS", nil, false, true)
 	end
 	pipeRun(Vector3.new(-50, 13, -51), Vector3.new(50, 13, -51))
 	pipeRun(Vector3.new(-50, 13, 51), Vector3.new(50, 13, 51))
